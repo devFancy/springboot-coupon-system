@@ -1,0 +1,13 @@
+pluginManagement {
+    plugins {
+        id 'org.springframework.boot' version "${springBootVersion}"
+        id 'io.spring.dependency-management' version "${springDependencyManagementVersion}"
+        id 'org.asciidoctor.jvm.convert' version "${asciidoctorConvertVersion}"
+    }
+}
+
+rootProject.name = 'springboot-coupon-system'
+
+include("core:core-api")
+include("core:core-enum")
+include("support:logging")
