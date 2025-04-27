@@ -1,0 +1,18 @@
+bootJar.enabled = true
+jar.enabled = false
+
+dependencies {
+    implementation project(":coupon:coupon-enum")
+    implementation project(":support:logging")
+
+    // spring boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // spring data jpa
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // h2
+    runtimeOnly 'com.h2database:h2'
+
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${swaggerVersion}")
+}

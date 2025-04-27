@@ -8,6 +8,6 @@ pluginManagement {
 
 rootProject.name = 'springboot-coupon-system'
 
-include("core:core-api")
-include("core:core-enum")
+include("coupon:coupon-api")
+include("coupon:coupon-enum")
 include("support:logging")
