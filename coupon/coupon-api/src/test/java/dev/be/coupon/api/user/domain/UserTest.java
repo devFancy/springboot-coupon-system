@@ -2,6 +2,7 @@ package dev.be.coupon.api.user.domain;
 
 import dev.be.coupon.api.user.domain.vo.Password;
 import dev.be.coupon.api.user.domain.vo.Username;
+import dev.be.coupon.api.user.exception.InvalidUserException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,8 +37,8 @@ class UserTest {
     void should_throw_exception_when_username_is_null_or_blank(final String invalidUserName) {
         // given & when & then
         assertThatThrownBy(() -> new Username(invalidUserName))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("사용자의 이름이 존재해야 합니다.");
+                .isInstanceOf(InvalidUserException.class)
+                .hasMessage("사용자 관련 부분에서 예외가 발생했습니다.");
     }
 
     @DisplayName("사용자의 비밀번호가 존재하지 않으면 안된다")
@@ -47,7 +48,7 @@ class UserTest {
     void should_throw_exception_when_password_is_null_or_blank(final String invalidPassword) {
         // given & when & then
         assertThatThrownBy(() -> new Password(invalidPassword))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("사용자의 비밀번호가 존재해야 합니다.");
+                .isInstanceOf(InvalidUserException.class)
+                .hasMessage("사용자 관련 부분에서 예외가 발생했습니다.");
     }
 }
