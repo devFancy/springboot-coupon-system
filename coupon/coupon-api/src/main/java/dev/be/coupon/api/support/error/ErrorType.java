@@ -5,6 +5,11 @@ import org.springframework.http.HttpStatus;
 
 public enum ErrorType {
 
+    INVALID_USER(HttpStatus.BAD_REQUEST,
+            ErrorCode.E400,
+            "사용자 관련 부분에서 예외가 발생했습니다.",
+            LogLevel.WARN),
+
     DEFAULT_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,
             ErrorCode.E500,
             "An unexpected error has occurred.",

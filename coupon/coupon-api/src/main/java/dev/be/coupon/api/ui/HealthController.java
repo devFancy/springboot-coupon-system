@@ -1,4 +1,4 @@
-package dev.be.coupon.api.controller;
+package dev.be.coupon.api.ui;
 
 import dev.be.coupon.api.support.response.CommonResponse;
 import org.springframework.http.ResponseEntity;
