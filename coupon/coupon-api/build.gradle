@@ -12,8 +12,9 @@ dependencies {
     // spring data jpa
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-    // h2
+    // h2, mysql
     runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'com.mysql:mysql-connector-j'
 
     // test
     implementation 'org.springframework.boot:spring-boot-starter-web'
