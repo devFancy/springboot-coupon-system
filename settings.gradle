@@ -11,3 +11,5 @@ rootProject.name = 'springboot-coupon-system'
 include("coupon:coupon-api")
 include("coupon:coupon-enum")
 include("support:logging")
+include 'support:monitoring'
+

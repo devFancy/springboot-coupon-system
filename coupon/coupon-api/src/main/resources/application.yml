@@ -4,10 +4,17 @@ spring.profiles.active: local
 spring:
   config:
     import:
-#      - monitoring.yml
+      - monitoring.yml
       - logging.yml
 #      - db-core.yml
   web.resources.add-mappings: false
+
+server:
+  tomcat:
+    max-connections: 20000
+    threads:
+      max: 600
+      min-spare: 100
 
 ---
 spring.config.activate.on-profile: local
