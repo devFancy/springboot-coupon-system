@@ -4,6 +4,7 @@ jar.enabled = false
 dependencies {
     implementation project(":coupon:coupon-enum")
     implementation project(":support:logging")
+    implementation project(":support:monitoring")
 
     // spring boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
