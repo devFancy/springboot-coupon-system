@@ -1,4 +1,4 @@
-package dev.be.coupon.api.config;
+package dev.be.coupon.api.common.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

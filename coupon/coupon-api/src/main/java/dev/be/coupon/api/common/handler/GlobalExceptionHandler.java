@@ -1,8 +1,8 @@
-package dev.be.coupon.api.exceptionhanlder;
+package dev.be.coupon.api.common.handler;
 
-import dev.be.coupon.api.support.error.CouponException;
-import dev.be.coupon.api.support.error.ErrorType;
-import dev.be.coupon.api.support.response.CommonResponse;
+import dev.be.coupon.api.common.support.error.CouponException;
+import dev.be.coupon.api.common.support.error.ErrorType;
+import dev.be.coupon.api.common.support.response.CommonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;

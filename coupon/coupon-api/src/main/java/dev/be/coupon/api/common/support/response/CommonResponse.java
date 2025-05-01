@@ -1,7 +1,7 @@
-package dev.be.coupon.api.support.response;
+package dev.be.coupon.api.common.support.response;
 
-import dev.be.coupon.api.support.error.ErrorMessage;
-import dev.be.coupon.api.support.error.ErrorType;
+import dev.be.coupon.api.common.support.error.ErrorMessage;
+import dev.be.coupon.api.common.support.error.ErrorType;
 
 public record CommonResponse<T>(ResultType resultType, T data, ErrorMessage errorMessage) {
 

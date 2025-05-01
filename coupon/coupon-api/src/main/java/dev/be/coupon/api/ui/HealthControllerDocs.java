@@ -1,6 +1,6 @@
 package dev.be.coupon.api.ui;
 
-import dev.be.coupon.api.support.response.CommonResponse;
+import dev.be.coupon.api.common.support.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
