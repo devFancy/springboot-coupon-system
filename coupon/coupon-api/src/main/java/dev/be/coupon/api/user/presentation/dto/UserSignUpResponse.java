@@ -1,4 +1,4 @@
-package dev.be.coupon.api.user.ui.dto;
+package dev.be.coupon.api.user.presentation.dto;
 
 import java.util.UUID;
 
