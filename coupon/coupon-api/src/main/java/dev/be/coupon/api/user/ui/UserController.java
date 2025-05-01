@@ -29,7 +29,7 @@ public class UserController implements UserControllerDocs {
     public ResponseEntity<CommonResponse<UserSignUpResponse>> signUp(@Valid @RequestBody final UserSignUpRequest request) {
         UserSignUpCommand command = new UserSignUpCommand(request.username(), request.password());
         UserSignUpResult result = userService.signUp(command);
-        UserSignUpResponse response = new UserSignUpResponse(result.id(), result.username());
+        UserSignUpResponse response = new UserSignUpResponse(result.id(), result.username(), result.role());
 
         return ResponseEntity.created(URI.create("/api/users/" + response.id()))
                 .body(CommonResponse.success(response));
