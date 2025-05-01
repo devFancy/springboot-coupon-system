@@ -4,8 +4,8 @@ import dev.be.coupon.api.user.domain.User;
 
 import java.util.UUID;
 
-public record UserSignUpResult(UUID id, String username) {
+public record UserSignUpResult(UUID id, String username, String role) {
     public static UserSignUpResult from(final User user) {
-        return new UserSignUpResult(user.getId(), user.getUsername());
+        return new UserSignUpResult(user.getId(), user.getUsername(), user.getUserRole().name().toLowerCase());
     }
 }

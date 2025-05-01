@@ -1,10 +1,13 @@
 package dev.be.coupon.api.user.domain;
 
+import deb.be.coupon.UserRole;
 import dev.be.coupon.api.user.domain.vo.Password;
 import dev.be.coupon.api.user.domain.vo.Username;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -19,6 +22,10 @@ public class User {
     @Id
     private UUID id;
 
+    @Column(name = "user_role", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private UserRole userRole;
+
     @Embedded
     private Username username;
 
@@ -29,6 +36,7 @@ public class User {
     }
 
     public User(final String username, final String password) {
+        this.userRole = UserRole.USER;
         this.id = UUID.randomUUID();
         this.username = new Username(username);
         this.password = new Password(password);
@@ -48,6 +56,10 @@ public class User {
 
     public UUID getId() {
         return id;
+    }
+
+    public UserRole getUserRole() {
+        return userRole;
     }
 
     public String getUsername() {
