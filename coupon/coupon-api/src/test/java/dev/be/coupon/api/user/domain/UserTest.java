@@ -2,7 +2,7 @@ package dev.be.coupon.api.user.domain;
 
 import dev.be.coupon.api.user.domain.vo.Password;
 import dev.be.coupon.api.user.domain.vo.Username;
-import dev.be.coupon.api.user.exception.InvalidUserException;
+import dev.be.coupon.api.user.domain.exception.InvalidUserException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;

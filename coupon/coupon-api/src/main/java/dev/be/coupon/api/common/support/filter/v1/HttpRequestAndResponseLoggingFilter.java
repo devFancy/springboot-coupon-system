@@ -1,4 +1,4 @@
-package dev.be.coupon.api.support.filter.v1;
+package dev.be.coupon.api.common.support.filter.v1;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

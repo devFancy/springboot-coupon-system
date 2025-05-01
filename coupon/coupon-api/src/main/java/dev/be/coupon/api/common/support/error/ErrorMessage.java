@@ -1,4 +1,4 @@
-package dev.be.coupon.api.support.error;
+package dev.be.coupon.api.common.support.error;
 
 
 public class ErrorMessage {
