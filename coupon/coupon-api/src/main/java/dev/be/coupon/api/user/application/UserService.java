@@ -26,10 +26,10 @@ public class UserService {
 
     public UserSignUpResult signUp(final UserSignUpCommand command) {
         if (userRepository.existsByUsername(new Username(command.username()))) {
-            throw new RuntimeException("이미 존재하는 사용자 이름입니다.");
+            throw new InvalidUserException("이미 존재하는 사용자 이름입니다.");
         }
 
-        final User user = new User(command.username(), command.password());
+        final User user = new User(command.username(), command.password(), passwordHasher);
         return UserSignUpResult.from(userRepository.save(user));
     }
 

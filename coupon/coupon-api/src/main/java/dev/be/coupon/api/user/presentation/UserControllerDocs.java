@@ -24,10 +24,10 @@ public interface UserControllerDocs {
 
     @Operation(
             summary = "회원가입 성공",
-            description = "이름과 비밀번호를 기반으로 회원가입을 합니다."
+            description = "아이디와 비밀번호를 기반으로 회원가입을 합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "회원가입 성공"),
+            @ApiResponse(responseCode = "201", description = "회원가입 성공"),
     })
     ResponseEntity<CommonResponse<UserSignUpResponse>> signUp(
             @RequestBody final UserSignUpRequest request

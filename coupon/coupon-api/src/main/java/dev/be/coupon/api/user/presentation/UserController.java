@@ -29,7 +29,7 @@ public class UserController implements UserControllerDocs {
         this.userService = userService;
     }
 
-    @PostMapping("/users/signup")
+    @PostMapping(value = "/users/signup")
     public ResponseEntity<CommonResponse<UserSignUpResponse>> signUp(@Valid @RequestBody final UserSignUpRequest request) {
         UserSignUpCommand command = new UserSignUpCommand(request.username(), request.password());
         UserSignUpResult result = userService.signUp(command);
