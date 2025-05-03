@@ -7,4 +7,6 @@ public interface UserRepository {
     User save(final User user);
 
     boolean existsByUsername(final Username username);
+
+    User findByUsername(final Username username);
 }
