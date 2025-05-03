@@ -12,6 +12,9 @@ dependencies {
     // spring data jpa
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
+    // spring security
+    implementation 'org.springframework.security:spring-security-crypto'
+
     // h2, mysql
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
