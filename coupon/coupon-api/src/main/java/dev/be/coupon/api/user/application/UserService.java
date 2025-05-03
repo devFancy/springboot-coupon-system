@@ -10,9 +10,14 @@ import dev.be.coupon.api.user.domain.exception.InvalidUserException;
 import dev.be.coupon.api.user.domain.vo.PasswordHasher;
 import dev.be.coupon.api.user.domain.vo.Username;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Objects;
-
+/**
+ * User(사용자) 서비스.
+ *
+ * 현재는 규모가 크지 않기 때문에 단일 클래스로 유지하지만,
+ * 추후 기능이 많아질 경우 Reader, Writer 등 역할 기반 구현체로 분리할 수 있습니다.
+ */
 @Service
 public class UserService {
 
@@ -34,14 +39,17 @@ public class UserService {
     }
 
     public UserLoginResult login(final UserLoginCommand command) {
-        final User savedUser = userRepository.findByUsername(new Username(command.username()));
-        if (Objects.isNull(savedUser)) {
-            throw new InvalidUserException("존재하지 않는 사용자입니다");
-        }
+        final User savedUser = findUserByUsername(new Username(command.username()));
 
         if (!savedUser.isPasswordMatched(command.password(), passwordHasher)) {
             throw new InvalidUserException("비밀번호가 일치하지 않습니다");
         }
         return UserLoginResult.from(savedUser);
+    }
+
+    @Transactional(readOnly = true)
+    public User findUserByUsername(final Username username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new InvalidUserException("존재하지 않는 사용자입니다"));
     }
 }
