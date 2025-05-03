@@ -2,6 +2,7 @@ package dev.be.coupon.api.user.domain;
 
 import deb.be.coupon.UserRole;
 import dev.be.coupon.api.user.domain.vo.Password;
+import dev.be.coupon.api.user.domain.vo.PasswordHasher;
 import dev.be.coupon.api.user.domain.vo.Username;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -35,11 +36,15 @@ public class User {
     protected User() {
     }
 
-    public User(final String username, final String password) {
+    public User(final String username, final String password, final PasswordHasher passwordHasher) {
         this.userRole = UserRole.USER;
         this.id = UUID.randomUUID();
         this.username = new Username(username);
-        this.password = new Password(password);
+        this.password = new Password(password, passwordHasher); // 비밀번호 해싱 처리
+    }
+
+    public boolean isPasswordMatched(final String rawPassword, final PasswordHasher passwordHasher) {
+        return password.matches(rawPassword, passwordHasher);
     }
 
     @Override

@@ -19,11 +19,10 @@ public class Username {
         this.username = username;
     }
 
-    private String validate(final  String value) {
+    private void validate(final  String value) {
         if (isNull(value) || value.isBlank()) {
             throw new InvalidUserException("사용자의 이름이 존재해야 합니다.");
         }
-        return value;
     }
 
     public String getUsername() {
