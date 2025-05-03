@@ -60,9 +60,9 @@
 | 쿠폰 이름  | name          | 쿠폰 제목 또는 설명                                 |
 | 쿠폰 타입  | couponType    | CHICKEN, PIZZA, BURGER 등                    |
 | 발급 수량  | totalQuantity | 발급 가능한 총 수량                                 |
+| 쿠폰 상태  | status        | ACTIVE(사용 가능), EXPIRED(만료됨), DISABLED(비활성화) |
 | 유효 시작일 | validFrom     | 사용 가능 시작일                                   |
 | 유효 종료일 | validUntil    | 만료일                                         |
-| 쿠폰 상태  | status        | ACTIVE(사용 가능), EXPIRED(만료됨), DISABLED(비활성화) |
 
 ### IssuedCoupon (발급된 쿠폰)
 
