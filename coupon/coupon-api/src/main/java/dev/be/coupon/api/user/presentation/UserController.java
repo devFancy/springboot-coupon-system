@@ -2,8 +2,12 @@ package dev.be.coupon.api.user.presentation;
 
 import dev.be.coupon.api.common.support.response.CommonResponse;
 import dev.be.coupon.api.user.application.UserService;
+import dev.be.coupon.api.user.application.dto.UserLoginCommand;
+import dev.be.coupon.api.user.application.dto.UserLoginResult;
 import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.application.dto.UserSignUpResult;
+import dev.be.coupon.api.user.presentation.dto.UserLoginRequest;
+import dev.be.coupon.api.user.presentation.dto.UserLoginResponse;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpRequest;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpResponse;
 import jakarta.validation.Valid;
@@ -25,7 +29,7 @@ public class UserController implements UserControllerDocs {
         this.userService = userService;
     }
 
-    @PostMapping("/users/signup")
+    @PostMapping(value = "/users/signup")
     public ResponseEntity<CommonResponse<UserSignUpResponse>> signUp(@Valid @RequestBody final UserSignUpRequest request) {
         UserSignUpCommand command = new UserSignUpCommand(request.username(), request.password());
         UserSignUpResult result = userService.signUp(command);
@@ -33,5 +37,14 @@ public class UserController implements UserControllerDocs {
 
         return ResponseEntity.created(URI.create("/api/users/" + response.id()))
                 .body(CommonResponse.success(response));
+    }
+
+    @PostMapping(value = "/users/login")
+    public ResponseEntity<CommonResponse<UserLoginResponse>> login(@Valid @RequestBody final UserLoginRequest request) {
+        UserLoginCommand command = new UserLoginCommand(request.username(), request.password());
+        UserLoginResult result = userService.login(command);
+        UserLoginResponse response = new UserLoginResponse(result.id(), request.username());
+
+        return ResponseEntity.ok().body(CommonResponse.success(response));
     }
 }

@@ -6,6 +6,9 @@ import java.util.UUID;
 
 public record UserSignUpResult(UUID id, String username, String role) {
     public static UserSignUpResult from(final User user) {
-        return new UserSignUpResult(user.getId(), user.getUsername(), user.getUserRole().name().toLowerCase());
+        return new UserSignUpResult(
+                user.getId(),
+                user.getUsername(),
+                user.getUserRole().name().toLowerCase());
     }
 }
