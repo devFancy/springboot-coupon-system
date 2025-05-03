@@ -90,6 +90,10 @@ public class Coupon {
         }
     }
 
+    public void updateStatusBasedOnDate(final LocalDateTime now) {
+        this.couponStatus = CouponStatus.decideStatus(now, validFrom, validUntil);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
