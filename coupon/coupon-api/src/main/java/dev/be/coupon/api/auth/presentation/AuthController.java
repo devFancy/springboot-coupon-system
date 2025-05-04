@@ -29,6 +29,10 @@ public class AuthController implements AuthControllerDocs {
         AuthLoginCommand command = new AuthLoginCommand(request.username(), request.password());
         AuthLoginResult result = authService.login(command);
 
+        String accessToken = authService.generateAccessToken(result.id());
+        AuthLoginResult finalResult = result.withAccessToken(accessToken);
+
+        AuthLoginResponse response = new AuthLoginResponse(finalResult.id(), finalResult.username(), accessToken);
         return ResponseEntity.ok().body(CommonResponse.success(response));
     }
 }

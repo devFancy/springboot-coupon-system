@@ -46,6 +46,10 @@ public class AuthService {
                 .orElseThrow(() -> new InvalidUserException("존재하지 않는 사용자입니다"));
     }
 
+    public String generateAccessToken(final UUID userId) {
+        AuthAccessToken authAccessToken = tokenCreator.createAuthToken(userId);
+        return authAccessToken.getAccessToken();
+    }
 
     public UUID extractUserId(final String accessToken) {
         UUID userId = tokenCreator.extractPayLoad(accessToken);
