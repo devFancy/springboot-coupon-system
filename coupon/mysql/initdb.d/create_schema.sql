@@ -1,1 +1,4 @@
-create database couponDB;
+CREATE DATABASE IF NOT EXISTS couponDB;
+
+USE couponDB;
+

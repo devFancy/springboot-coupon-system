@@ -1,7 +1,5 @@
 package dev.be.coupon.api.user.application;
 
-import dev.be.coupon.api.user.application.dto.UserLoginCommand;
-import dev.be.coupon.api.user.application.dto.UserLoginResult;
 import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.application.dto.UserSignUpResult;
 import dev.be.coupon.api.user.domain.User;
@@ -10,7 +8,6 @@ import dev.be.coupon.api.user.domain.exception.InvalidUserException;
 import dev.be.coupon.api.user.domain.vo.PasswordHasher;
 import dev.be.coupon.api.user.domain.vo.Username;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * User(사용자) 서비스.
@@ -36,20 +33,5 @@ public class UserService {
 
         final User user = new User(command.username(), command.password(), passwordHasher);
         return UserSignUpResult.from(userRepository.save(user));
-    }
-
-    public UserLoginResult login(final UserLoginCommand command) {
-        final User savedUser = findUserByUsername(new Username(command.username()));
-
-        if (!savedUser.isPasswordMatched(command.password(), passwordHasher)) {
-            throw new InvalidUserException("비밀번호가 일치하지 않습니다");
-        }
-        return UserLoginResult.from(savedUser);
-    }
-
-    @Transactional(readOnly = true)
-    public User findUserByUsername(final Username username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new InvalidUserException("존재하지 않는 사용자입니다"));
     }
 }

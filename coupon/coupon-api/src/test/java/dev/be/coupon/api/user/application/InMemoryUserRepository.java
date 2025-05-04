@@ -11,7 +11,6 @@ import java.util.UUID;
 
 /**
  * In-memory 기반의 테스트용 UserRepository 구현체입니다.
- *
  * 테스트 환경에서 실제 DB 없이 사용자 데이터를 임시 저장하기 위해 사용됩니다.
  */
 public class InMemoryUserRepository implements UserRepository {
@@ -37,5 +36,15 @@ public class InMemoryUserRepository implements UserRepository {
                 .stream()
                 .filter(user -> user.getUsername().equals(username.getUsername()))
                 .findFirst();
+    }
+
+    @Override
+    public void validateExistById(UUID userId) {
+        UserRepository.super.validateExistById(userId);
+    }
+
+    @Override
+    public boolean existsById(UUID userId) {
+        return users.containsKey(userId);
     }
 }
