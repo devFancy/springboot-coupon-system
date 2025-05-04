@@ -1,1 +1,1 @@
-create database coupon;
+create database couponDB;
