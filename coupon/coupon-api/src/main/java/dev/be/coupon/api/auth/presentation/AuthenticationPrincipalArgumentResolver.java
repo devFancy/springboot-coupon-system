@@ -34,7 +34,7 @@ public class AuthenticationPrincipalArgumentResolver implements HandlerMethodArg
                                   final NativeWebRequest webRequest, final WebDataBinderFactory binderFactory) {
         HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
         String accessToken = AuthorizationExtractor.extract(request);
-        UUID id = authService.extractUserId(accessToken); // UUID 반환
+        UUID id = authService.extractUserId(accessToken); // 토큰에서 userId 추출
         return new LoginUser(id);
     }
 }

@@ -18,7 +18,7 @@ public class AuthorizationExtractor {
         }
 
         validationAuthorizationFormat(authorizationHeader);
-        return authorizationHeader.substring(BEARER_TYPE.length()).trim();
+        return authorizationHeader.substring(BEARER_TYPE.length()).trim(); // accessToken 문자열
     }
 
     private static void validationAuthorizationFormat(final String authorizationHeader) {
