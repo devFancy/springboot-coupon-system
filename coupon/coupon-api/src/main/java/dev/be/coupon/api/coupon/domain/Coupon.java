@@ -17,6 +17,20 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Coupon (쿠폰 정의)
+ * > 쿠폰 발급의 템플릿을 정의하고, 쿠폰의 속성 및 정책을 관리하는 도메인입니다.
+ * <p>
+ * | 한글명 | 영문명 | 설명 |
+ * | --- | --- | --- |
+ * | 쿠폰 ID | couponId | 쿠폰 정의의 고유 식별자 (UUID) |
+ * | 쿠폰 이름 | couponName | 쿠폰 제목 또는 설명 |
+ * | 쿠폰 타입 | couponType | `CHICKEN`, `PIZZA`, `BURGER` 등 |
+ * | 발급 수량 | totalQuantity | 발급 가능한 총 수량 |
+ * | 쿠폰 상태 | status | `ACTIVE`(사용 가능), `EXPIRED`(만료됨), `DISABLED`(비활성화) 등 |
+ * | 유효 시작일 | validFrom | 사용 가능 시작일 |
+ * | 유효 종료일 | validUntil | 만료일 |
+ */
 @Table(name = "coupons")
 @Entity
 public class Coupon {
@@ -37,7 +51,7 @@ public class Coupon {
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private CouponStatus couponStatus;
+    private CouponStatus couponStatus; // 쿠폰 발급시 기본값으로 사용 가능(ACTIVE) 으로 설정
 
     @Column(name = "valid_from", nullable = false)
     private LocalDateTime validFrom;
@@ -47,6 +61,7 @@ public class Coupon {
 
     protected Coupon() {
     }
+
     public Coupon(final String name,
                   final CouponType couponType,
                   final int totalQuantity,
@@ -85,7 +100,7 @@ public class Coupon {
     ) {
         if (isNull(couponId) || isNull(couponName) || isNull(couponType)
                 || isNull(totalQuantity) || isNull(couponStatus)
-        || isNull(validFrom) || isNull(validUntil)) {
+                || isNull(validFrom) || isNull(validUntil)) {
             throw new InvalidCouponException("쿠폰 생성에 필요한 정보가 누락되었습니다.");
         }
     }
