@@ -16,3 +16,10 @@ springdoc:
     path: /service-docs.html
     query-config-enabled: true
     enabled: true
+
+security:
+  jwt:
+    token:
+      secret-key: coupon@dPtnfwjdasdkkasjdnvxcu32ad128znczSs2n42dbashdyasdbav2Clvyx9vsnasd
+      access:
+        expire-length : 3600000 # 1시간

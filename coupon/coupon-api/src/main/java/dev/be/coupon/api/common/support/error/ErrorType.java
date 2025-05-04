@@ -9,6 +9,7 @@ public enum ErrorType {
             ErrorCode.E500,
             "An unexpected error has occurred.",
             LogLevel.ERROR),
+
     INVALID_USER(HttpStatus.BAD_REQUEST,
             ErrorCode.E400,
             "사용자 관련 부분에서 예외가 발생했습니다.",
@@ -17,7 +18,18 @@ public enum ErrorType {
     INVALID_COUPON(HttpStatus.BAD_REQUEST,
                  ErrorCode.E400,
             "쿠폰 관련 부분에서 예외가 발생했습니다.",
-                 LogLevel.WARN);
+                 LogLevel.WARN),
+    INVALID_AUTH(HttpStatus.BAD_REQUEST,
+            ErrorCode.E400,
+            "인증 관련 부분에서 예외가 발생했습니다.",
+            LogLevel.WARN),
+
+    AUTHORIZATION_HEADER_MISSING(
+            HttpStatus.UNAUTHORIZED,
+            ErrorCode.E401,
+            "Header에 Authorization이 존재하지 않습니다.",
+            LogLevel.WARN
+    );
 
     private final HttpStatus status;
     private final ErrorCode code;
