@@ -74,4 +74,8 @@ public class User {
     public String getPassword() {
         return password.getPassword();
     }
+
+    public void assignAdminRole() {
+        this.userRole = UserRole.ADMIN;
+    }
 }
