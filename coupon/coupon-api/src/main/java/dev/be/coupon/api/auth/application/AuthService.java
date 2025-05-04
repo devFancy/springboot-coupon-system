@@ -52,8 +52,8 @@ public class AuthService {
     }
 
     public UUID extractUserId(final String accessToken) {
-        UUID userId = tokenCreator.extractPayLoad(accessToken);
-        userRepository.validateExistById(userId);
+        UUID userId = tokenCreator.extractPayLoad(accessToken); // 내부적으로 JWT decode
+        userRepository.validateExistById(userId); // 유효 사용자인지 확인
         return userId;
     }
 }
