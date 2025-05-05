@@ -16,8 +16,7 @@ public class CouponService {
     }
 
     public CouponCreateResult create(final CouponCreateCommand command) {
-        final Coupon coupon= new Coupon(
-                command.name(), CouponTypeConverter.from(command.type()), command.totalQuantity(), command.validFrom(), command.validUntil());
+        final Coupon coupon = command.toDomain();
 
         return CouponCreateResult.from(couponRepository.save(coupon));
     }
