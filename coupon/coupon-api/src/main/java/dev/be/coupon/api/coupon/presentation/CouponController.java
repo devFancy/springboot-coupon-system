@@ -2,7 +2,6 @@ package dev.be.coupon.api.coupon.presentation;
 
 import dev.be.coupon.api.common.support.response.CommonResponse;
 import dev.be.coupon.api.coupon.application.CouponService;
-import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
@@ -28,13 +27,8 @@ public class CouponController implements CouponControllerDocs {
     public ResponseEntity<CommonResponse<CouponCreateResponse>> create(
             @RequestBody final CouponCreateRequest request) {
 
-        CouponCreateCommand command = new CouponCreateCommand(
-                request.name(), request.type(), request.totalQuantity(), request.validFrom(), request.validUntil());
-        CouponCreateResult result = couponService.create(command);
-        CouponCreateResponse response = new CouponCreateResponse(
-                result.id(), result.name(), result.type(), result.totalQuantity(), result.status(), result.validFrom(), result.validUntil());
-
-        return ResponseEntity.created(URI.create("/api/coupon/" + response.id()))
-                .body(CommonResponse.success(response));
+        CouponCreateResult result = couponService.create(request.toCommand());
+        return ResponseEntity.created(URI.create("/api/coupon/" + result.id()))
+                .body(CommonResponse.success(CouponCreateResponse.from(result)));
     }
 }
