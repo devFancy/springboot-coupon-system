@@ -44,6 +44,12 @@ public enum ErrorType {
     INVALID_COUPON_PERIOD(HttpStatus.BAD_REQUEST,
             ErrorCode.E400,
             "쿠폰 유효기간이 잘못되었습니다.",
+            LogLevel.WARN),
+
+    UNAUTHORIZED_ACCESS(
+            HttpStatus.UNAUTHORIZED,
+            ErrorCode.E403,
+            "권한이 없습니다.",
             LogLevel.WARN);
 
     private final HttpStatus status;

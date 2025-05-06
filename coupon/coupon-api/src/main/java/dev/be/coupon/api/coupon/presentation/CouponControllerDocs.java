@@ -31,6 +31,7 @@ public interface CouponControllerDocs {
             @ApiResponse(responseCode = "201", description = "쿠폰 생성 성공"),
     })
     ResponseEntity<CommonResponse<CouponCreateResponse>> create(
+            @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
             @RequestBody final CouponCreateRequest request
     );
 }
