@@ -9,17 +9,15 @@ import java.time.LocalDateTime;
 public enum CouponStatus {
     ACTIVE, EXPIRED, DISABLED;
 
-    public static CouponStatus decideStatus(LocalDateTime now,
-                                            LocalDateTime validFrom,
-                                            LocalDateTime validUntil) {
+    public static CouponStatus decideStatus(final LocalDateTime now,
+                                            final LocalDateTime validFrom,
+                                            final LocalDateTime validUntil) {
         if (now.isBefore(validFrom)) {
             return DISABLED;
         }
-
         if (now.isAfter(validUntil)) {
             return EXPIRED;
         }
-
         return ACTIVE;
     }
 }
