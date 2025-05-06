@@ -1,5 +1,6 @@
 package dev.be.coupon.api.user.infrastructure;
 
+import deb.be.coupon.UserRole;
 import dev.be.coupon.api.user.domain.User;
 import dev.be.coupon.api.user.domain.UserRepository;
 import dev.be.coupon.api.user.domain.vo.Username;
@@ -20,4 +21,11 @@ public interface JpaUserRepository extends UserRepository, JpaRepository<User, U
 
     @Override
     boolean existsById(UUID userId);
+
+    @Override
+    default boolean isAdmin(final UUID userId) {
+        return findById(userId)
+                .map(user -> user.getUserRole() == UserRole.ADMIN)
+                .orElse(false);
+    }
 }

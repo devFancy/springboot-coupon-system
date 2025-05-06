@@ -56,4 +56,8 @@ public class AuthService {
         userRepository.validateExistById(userId); // 유효 사용자인지 확인
         return userId;
     }
+
+    public boolean isAdmin(final UUID userId) {
+        return userRepository.isAdmin(userId);
+    }
 }
