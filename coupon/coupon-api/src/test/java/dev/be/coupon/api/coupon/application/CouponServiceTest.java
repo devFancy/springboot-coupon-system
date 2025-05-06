@@ -9,13 +9,19 @@ import dev.be.coupon.api.coupon.domain.CouponRepository;
 import dev.be.coupon.api.coupon.domain.FakeUserRoleChecker;
 import dev.be.coupon.api.coupon.domain.exception.InvalidCouponTypeException;
 import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
+import dev.be.coupon.api.coupon.infrastructure.CouponCountRedisRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -23,11 +29,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@SpringBootTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CouponServiceTest {
 
     private CouponService couponService;
     private FakeUserRoleChecker userRoleChecker;
     private InMemoryIssuedCouponRepository issuedCouponRepository;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     @BeforeEach
     void setUp() {
@@ -35,7 +46,14 @@ class CouponServiceTest {
         issuedCouponRepository = new InMemoryIssuedCouponRepository();
         userRoleChecker = new FakeUserRoleChecker();
         userRoleChecker.updateIsAdmin(true);
-        couponService = new CouponService(couponRepository, userRoleChecker, issuedCouponRepository);
+        CouponCountRedisRepository couponCountRedisRepository = new CouponCountRedisRepository(redisTemplate);
+        couponService = new CouponService(couponRepository, userRoleChecker, issuedCouponRepository, couponCountRedisRepository);
+    }
+
+    @AfterEach
+    void tearDown() {
+        redisTemplate.keys("coupon_count:*").forEach(redisTemplate::delete);
+        redisTemplate.keys("lock:coupon:*").forEach(redisTemplate::delete);
     }
 
     @DisplayName("쿠폰을 생성한다.")
@@ -151,6 +169,7 @@ class CouponServiceTest {
 
         // then
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
+        assertThat(issuedCouponRepository.countByCouponId(couponId)).isLessThanOrEqualTo(1);
     }
 
     @DisplayName("1000명의 사용자에게 수량 500개짜리 쿠폰을 발급하면 최대 500개만 발급된다. - 단일 스레드")
