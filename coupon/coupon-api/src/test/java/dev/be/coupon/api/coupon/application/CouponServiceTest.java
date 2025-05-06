@@ -2,6 +2,9 @@ package dev.be.coupon.api.coupon.application;
 
 import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
+import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
+import dev.be.coupon.api.coupon.application.dto.CouponIssueResult;
+import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
 import dev.be.coupon.api.coupon.domain.CouponRepository;
 import dev.be.coupon.api.coupon.domain.FakeUserRoleChecker;
 import dev.be.coupon.api.coupon.domain.exception.InvalidCouponTypeException;
@@ -21,13 +24,15 @@ class CouponServiceTest {
 
     private CouponService couponService;
     private FakeUserRoleChecker userRoleChecker;
+    private InMemoryIssuedCouponRepository issuedCouponRepository;
 
     @BeforeEach
     void setUp() {
         CouponRepository couponRepository = new InMemoryCouponRepository();
+        issuedCouponRepository = new InMemoryIssuedCouponRepository();
         userRoleChecker = new FakeUserRoleChecker();
         userRoleChecker.updateIsAdmin(true);
-        couponService = new CouponService(couponRepository, userRoleChecker);
+        couponService = new CouponService(couponRepository, userRoleChecker, issuedCouponRepository);
     }
 
     @DisplayName("쿠폰을 생성한다.")
@@ -35,9 +40,7 @@ class CouponServiceTest {
     void success_coupon() {
         // given
         final UUID userID = UUID.randomUUID();
-        final CouponCreateCommand expected = new CouponCreateCommand(
-                "치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7)
-        );
+        final CouponCreateCommand expected = new CouponCreateCommand("치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
 
         // when
         final CouponCreateResult actual = couponService.create(userID, expected);
@@ -53,14 +56,10 @@ class CouponServiceTest {
     void should_throw_exception_when_coupon_type_is_invalid(final String type) {
         // given
         final UUID userID = UUID.randomUUID();
-        final CouponCreateCommand expected = new CouponCreateCommand(
-                "치킨", type, 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7)
-        );
+        final CouponCreateCommand expected = new CouponCreateCommand("치킨", type, 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
 
         // when & then
-        assertThatThrownBy(() -> couponService.create(userID, expected))
-                .isInstanceOf(InvalidCouponTypeException.class)
-                .hasMessage("쿠폰 타입이 지정되지 않았습니다.");
+        assertThatThrownBy(() -> couponService.create(userID, expected)).isInstanceOf(InvalidCouponTypeException.class).hasMessage("쿠폰 타입이 지정되지 않았습니다.");
     }
 
     @DisplayName("쿠폰을 생성할 때 관리자 권한이 아니라면 예외가 발생한다.")
@@ -68,14 +67,33 @@ class CouponServiceTest {
     void should_throw_exception_when_user_is_not_admin() {
         // given
         final UUID userID = UUID.randomUUID();
-        final CouponCreateCommand expected = new CouponCreateCommand(
-                "치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7)
-        );
+        final CouponCreateCommand expected = new CouponCreateCommand("치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
         userRoleChecker.updateIsAdmin(false); // 관리자 권한이 아닌 경우: false
 
         // when & then
-        assertThatThrownBy(() -> couponService.create(userID, expected))
-                .isInstanceOf(UnauthorizedAccessException.class)
-                .hasMessage("권한이 없습니다.");
+        assertThatThrownBy(() -> couponService.create(userID, expected)).isInstanceOf(UnauthorizedAccessException.class).hasMessage("권한이 없습니다.");
     }
+
+    @DisplayName("사용자가 쿠폰 발급 요청을 하면 쿠폰 발급이 처리된다.")
+    @Test
+    void success_issued_coupon() {
+        // given
+        final UUID userId = UUID.randomUUID();
+        final CouponCreateCommand createCommand = new CouponCreateCommand("피자 할인 쿠폰", "PIZZA", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateResult created = couponService.create(UUID.randomUUID(), createCommand);
+        final UUID couponId = created.id();
+
+        final CouponIssueCommand issueCommand = new CouponIssueCommand(userId, couponId);
+
+        // when
+        final CouponIssueResult result = couponService.issue(issueCommand);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.userId()).isEqualTo(userId);
+        assertThat(result.couponId()).isEqualTo(couponId);
+        assertThat(result.used()).isFalse();
+        assertThat(result.issuedAt()).isNotNull();
+    }
+
 }
