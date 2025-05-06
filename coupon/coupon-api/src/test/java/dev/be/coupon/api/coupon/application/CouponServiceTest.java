@@ -137,7 +137,7 @@ class CouponServiceTest {
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
     }
 
-    @DisplayName("동일한 사용자에게 쿠폰을 1000번 동시 발급 요청해도 중복 발급은 1회만 된다. - 멀티 스레드")
+    @DisplayName("동일한 사용자에게 쿠폰을 1,000,000번 동시 발급 요청해도 중복 발급은 1회만 된다. - 멀티 스레드")
     @Test
     void should_only_issue_once_for_same_user_multi_thread() throws InterruptedException {
         // given
@@ -147,10 +147,10 @@ class CouponServiceTest {
         final UUID couponId = result.id();
 
         ExecutorService executor = Executors.newFixedThreadPool(50);
-        CountDownLatch latch = new CountDownLatch(1000);
+        CountDownLatch latch = new CountDownLatch(1000000);
 
         // when
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 1000000; i++) {
             executor.execute(() -> {
                 try {
                     couponService.issue(new CouponIssueCommand(userId, couponId));
@@ -168,9 +168,10 @@ class CouponServiceTest {
         // then
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isLessThanOrEqualTo(1);
+        System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
     }
 
-    @DisplayName("1000명의 사용자에게 수량 500개짜리 쿠폰을 발급하면 최대 500개만 발급된다. - 단일 스레드")
+    @DisplayName("1,000명의 사용자에게 수량 500개짜리 쿠폰을 발급하면 최대 500개만 발급된다. - 단일 스레드")
     @Test
     void should_only_issue_up_to_total_quantity_limit() {
         // given
@@ -193,7 +194,7 @@ class CouponServiceTest {
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500);
     }
 
-    @DisplayName("1000명의 사용자에게 동시 발급 요청 시 수량 500개 초과 발급되지 않는다. - 멀티 스레드")
+    @DisplayName("1,000,000명의 사용자에게 동시 발급 요청 시 수량 500개 초과 발급되지 않는다. - 멀티 스레드")
     @Test
     void should_only_issue_up_to_total_quantity_limit_multithreaded() throws InterruptedException {
         // given
@@ -202,10 +203,10 @@ class CouponServiceTest {
         final UUID couponId = couponService.create(adminId, command).id();
 
         ExecutorService executor = Executors.newFixedThreadPool(50);
-        CountDownLatch latch = new CountDownLatch(1000);
+        CountDownLatch latch = new CountDownLatch(1000000);
 
         // when
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 1000000; i++) {
             final UUID userId = UUID.randomUUID(); // 각각 다른 사용자
             executor.execute(() -> {
                 try {
@@ -223,6 +224,7 @@ class CouponServiceTest {
 
         // then
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500);
+        assertThat(issuedCouponRepository.countByCouponId(couponId)).isLessThanOrEqualTo(500);
+        System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
     }
-
 }
