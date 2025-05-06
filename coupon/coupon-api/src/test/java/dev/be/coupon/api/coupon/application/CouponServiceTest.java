@@ -19,6 +19,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 class CouponServiceTest {
 
@@ -94,6 +97,51 @@ class CouponServiceTest {
         assertThat(result.couponId()).isEqualTo(couponId);
         assertThat(result.used()).isFalse();
         assertThat(result.issuedAt()).isNotNull();
+    }
+
+    @DisplayName("동일한 사용자에게 쿠폰을 1000번 발급 요청해도 중복 발급은 1회만 된다. - 단일 스레드")
+    @Test
+    void should_only_issue_once_for_same_user() {
+        // given
+        final UUID userId = UUID.randomUUID();
+        final CouponCreateCommand command = new CouponCreateCommand("햄버거 쿠폰", "BURGER", 1000, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateResult result = couponService.create(userId, command);
+        final UUID couponId = result.id();
+
+        // when
+        for (int i = 0; i < 1000; i++) {
+            try {
+                couponService.issue(new CouponIssueCommand(userId, couponId));
+            } catch (InvalidIssuedCouponException ignore) {
+                // 중복 쿠폰 발급 무시
+            }
+        }
+
+        // then
+        assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
+    }
+
+    @DisplayName("1000명의 사용자에게 수량 500개짜리 쿠폰을 발급하면 최대 500개만 발급된다. - 단일 스레드")
+    @Test
+    void should_only_issue_up_to_total_quantity_limit() {
+        // given
+        final UUID adminId = UUID.randomUUID();
+        final CouponCreateCommand command = new CouponCreateCommand("피자 쿠폰", "PIZZA", 500, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        final CouponCreateResult result = couponService.create(adminId, command);
+        final UUID couponId = result.id();
+
+        // when
+        for (int i = 0; i < 1000; i++) {
+            UUID userId = UUID.randomUUID();
+            try {
+                couponService.issue(new CouponIssueCommand(userId, couponId));
+            } catch (InvalidIssuedCouponException ignore) {
+                // 수량 초과 예외 무시
+            }
+        }
+
+        // then
+        assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500);
     }
 
 }
