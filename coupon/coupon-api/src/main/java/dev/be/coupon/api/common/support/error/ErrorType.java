@@ -10,15 +10,6 @@ public enum ErrorType {
             "An unexpected error has occurred.",
             LogLevel.ERROR),
 
-    INVALID_USER(HttpStatus.BAD_REQUEST,
-            ErrorCode.E400,
-            "사용자 관련 부분에서 예외가 발생했습니다.",
-            LogLevel.WARN),
-
-    INVALID_COUPON(HttpStatus.BAD_REQUEST,
-                 ErrorCode.E400,
-            "쿠폰 관련 부분에서 예외가 발생했습니다.",
-                 LogLevel.WARN),
     INVALID_AUTH(HttpStatus.BAD_REQUEST,
             ErrorCode.E400,
             "인증 관련 부분에서 예외가 발생했습니다.",
@@ -28,8 +19,38 @@ public enum ErrorType {
             HttpStatus.UNAUTHORIZED,
             ErrorCode.E401,
             "Header에 Authorization이 존재하지 않습니다.",
-            LogLevel.WARN
-    );
+            LogLevel.WARN),
+
+    INVALID_USER(HttpStatus.BAD_REQUEST,
+            ErrorCode.E400,
+            "사용자 관련 부분에서 예외가 발생했습니다.",
+            LogLevel.WARN),
+
+    INVALID_COUPON(HttpStatus.BAD_REQUEST,
+            ErrorCode.E400,
+            "쿠폰 관련 부분에서 예외가 발생했습니다.",
+            LogLevel.WARN),
+
+    INVALID_COUPON_TYPE(HttpStatus.BAD_REQUEST,
+            ErrorCode.E400,
+            "쿠폰 타입이 지정되지 않았습니다.",
+            LogLevel.WARN),
+
+    INVALID_COUPON_QUANTITY(HttpStatus.BAD_REQUEST,
+            ErrorCode.E400,
+            "쿠폰 발급 수량은 1 이상이야 합니다.",
+            LogLevel.WARN),
+
+    INVALID_COUPON_PERIOD(HttpStatus.BAD_REQUEST,
+            ErrorCode.E400,
+            "쿠폰 유효기간이 잘못되었습니다.",
+            LogLevel.WARN),
+
+    UNAUTHORIZED_ACCESS(
+            HttpStatus.UNAUTHORIZED,
+            ErrorCode.E403,
+            "권한이 없습니다.",
+            LogLevel.WARN);
 
     private final HttpStatus status;
     private final ErrorCode code;

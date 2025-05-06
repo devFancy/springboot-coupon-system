@@ -20,5 +20,7 @@ public interface UserRepository {
         }
     }
 
-    boolean existsById(UUID userId);
+    boolean existsById(final UUID userId);
+
+    boolean isAdmin(final UUID loginUserId);
 }

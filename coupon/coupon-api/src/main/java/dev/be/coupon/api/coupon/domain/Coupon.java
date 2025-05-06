@@ -3,6 +3,8 @@ package dev.be.coupon.api.coupon.domain;
 import deb.be.coupon.CouponStatus;
 import deb.be.coupon.CouponType;
 import dev.be.coupon.api.coupon.domain.exception.InvalidCouponException;
+import dev.be.coupon.api.coupon.domain.exception.InvalidCouponPeriodException;
+import dev.be.coupon.api.coupon.domain.exception.InvalidCouponQuantityException;
 import dev.be.coupon.api.coupon.domain.vo.CouponName;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -79,7 +81,8 @@ public class Coupon {
                   final LocalDateTime validUntil) {
 
         validateCouponCreation(id, couponName, couponType, totalQuantity, status, validFrom, validUntil);
-
+        validateCouponTotalQuantity(totalQuantity);
+        validateCouponValidPeriod(validFrom, validUntil);
         this.id = id;
         this.couponName = couponName;
         this.couponType = couponType;
@@ -105,6 +108,33 @@ public class Coupon {
         }
     }
 
+    private void validateCouponTotalQuantity(final int totalQuantity) {
+        if (totalQuantity < 1) {
+            throw new InvalidCouponQuantityException("쿠폰 발급 수량은 1 이상이야 합니다");
+        }
+    }
+
+    private void validateCouponValidPeriod(final LocalDateTime validFrom, final LocalDateTime validUntil) {
+        if (validFrom.isAfter(validUntil)) {
+            throw new InvalidCouponPeriodException("쿠폰의 유효 시작일은 만료일보다 이전이어야 합니다.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(validFrom) || now.isAfter(validUntil)) {
+            throw new InvalidCouponPeriodException("현재 시점은 쿠폰의 유효기간이 아닙니다.");
+        }
+    }
+
+    /**
+     * 현재 시점을 기준으로 쿠폰 상태를 갱신합니다.
+     * <p>
+     * - 유효 시작일 ~ 유효 종료일 사이이면 ACTIVE
+     * - 유효 종료일이 지났으면 EXPIRED
+     * <p>
+     * 추후 확장 고려:
+     * - 매일 자정 등 주기적으로 실행되는 스케줄러에서 전체 쿠폰 상태 일괄 갱신
+     * - 또는 쿠폰 조회/발급 시점에 동적으로 상태 갱신
+     */
     public void updateStatusBasedOnDate(final LocalDateTime now) {
         this.couponStatus = CouponStatus.decideStatus(now, validFrom, validUntil);
     }

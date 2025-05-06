@@ -31,7 +31,7 @@ public class UserController implements UserControllerDocs {
         UserSignUpResult result = userService.signUp(command);
         UserSignUpResponse response = new UserSignUpResponse(result.id(), result.username(), result.role());
 
-        return ResponseEntity.created(URI.create("/api/users/" + response.id()))
+        return ResponseEntity.created(URI.create("/api/users/signup/" + response.id()))
                 .body(CommonResponse.success(response));
     }
 }
