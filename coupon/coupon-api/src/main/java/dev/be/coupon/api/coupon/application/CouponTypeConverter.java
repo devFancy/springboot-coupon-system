@@ -1,7 +1,7 @@
 package dev.be.coupon.api.coupon.application;
 
 import deb.be.coupon.CouponType;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponException;
+import dev.be.coupon.api.coupon.domain.exception.InvalidCouponTypeException;
 
 public class CouponTypeConverter {
 
@@ -9,7 +9,7 @@ public class CouponTypeConverter {
         try {
             return CouponType.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new InvalidCouponException("올바르지 않은 쿠폰 타입입니다: " + type);
+            throw new InvalidCouponTypeException(type);
         }
     }
 }
