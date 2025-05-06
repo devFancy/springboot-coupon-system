@@ -121,6 +121,38 @@ class CouponServiceTest {
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
     }
 
+    @DisplayName("동일한 사용자에게 쿠폰을 1000번 동시 발급 요청해도 중복 발급은 1회만 된다. - 멀티 스레드")
+    @Test
+    void should_only_issue_once_for_same_user_multi_thread() throws InterruptedException {
+        // given
+        final UUID userId = UUID.randomUUID();
+        final CouponCreateCommand command = new CouponCreateCommand("햄버거 쿠폰", "BURGER", 1000, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateResult result = couponService.create(userId, command);
+        final UUID couponId = result.id();
+
+        ExecutorService executor = Executors.newFixedThreadPool(50);
+        CountDownLatch latch = new CountDownLatch(1000);
+
+        // when
+        for (int i = 0; i < 1000; i++) {
+            executor.execute(() -> {
+                try {
+                    couponService.issue(new CouponIssueCommand(userId, couponId));
+                } catch (InvalidIssuedCouponException ignore) {
+                    // 중복 쿠폰 발급 무시
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+
+        // then
+        assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
+    }
+
     @DisplayName("1000명의 사용자에게 수량 500개짜리 쿠폰을 발급하면 최대 500개만 발급된다. - 단일 스레드")
     @Test
     void should_only_issue_up_to_total_quantity_limit() {
@@ -139,6 +171,38 @@ class CouponServiceTest {
                 // 수량 초과 예외 무시
             }
         }
+
+        // then
+        assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500);
+    }
+
+    @DisplayName("1000명의 사용자에게 동시 발급 요청 시 수량 500개 초과 발급되지 않는다. - 멀티 스레드")
+    @Test
+    void should_only_issue_up_to_total_quantity_limit_multithreaded() throws InterruptedException {
+        // given
+        final UUID adminId = UUID.randomUUID();
+        final CouponCreateCommand command = new CouponCreateCommand("피자 쿠폰", "PIZZA", 500, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        final UUID couponId = couponService.create(adminId, command).id();
+
+        ExecutorService executor = Executors.newFixedThreadPool(50);
+        CountDownLatch latch = new CountDownLatch(1000);
+
+        // when
+        for (int i = 0; i < 1000; i++) {
+            final UUID userId = UUID.randomUUID(); // 각각 다른 사용자
+            executor.execute(() -> {
+                try {
+                    couponService.issue(new CouponIssueCommand(userId, couponId));
+                } catch (InvalidIssuedCouponException ignore) {
+                    // 수량 초과 예외 무시
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
 
         // then
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500);
