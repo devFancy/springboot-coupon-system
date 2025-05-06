@@ -3,7 +3,7 @@ package dev.be.coupon.api.coupon.application;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.domain.CouponRepository;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponException;
+import dev.be.coupon.api.coupon.domain.exception.InvalidCouponTypeException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +52,7 @@ class CouponServiceTest {
 
         // when & then
         assertThatThrownBy(() -> couponService.create(expected))
-                .isInstanceOf(InvalidCouponException.class)
-                .hasMessage("쿠폰 관련 부분에서 예외가 발생했습니다.");
+                .isInstanceOf(InvalidCouponTypeException.class)
+                .hasMessage("쿠폰 타입이 지정되지 않았습니다.");
     }
 }
