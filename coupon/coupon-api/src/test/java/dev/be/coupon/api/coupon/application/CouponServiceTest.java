@@ -76,6 +76,6 @@ class CouponServiceTest {
         // when & then
         assertThatThrownBy(() -> couponService.create(userID, expected))
                 .isInstanceOf(UnauthorizedAccessException.class)
-                .hasMessage("쿠폰 생성은 관리자만 가능합니다.");
+                .hasMessage("권한이 없습니다.");
     }
 }
