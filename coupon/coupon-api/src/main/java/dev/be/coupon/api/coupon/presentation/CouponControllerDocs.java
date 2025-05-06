@@ -5,13 +5,17 @@ import dev.be.coupon.api.auth.presentation.dto.LoginUser;
 import dev.be.coupon.api.common.support.response.CommonResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
+import dev.be.coupon.api.coupon.presentation.dto.CouponIssueResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.UUID;
 
 @Tag(
         name = "쿠폰",
@@ -33,5 +37,17 @@ public interface CouponControllerDocs {
     ResponseEntity<CommonResponse<CouponCreateResponse>> create(
             @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
             @RequestBody final CouponCreateRequest request
+    );
+
+    @Operation(
+            summary = "쿠폰 발급 성공",
+            description = "사용자는 1번만 쿠폰을 발급할 수 있다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "쿠폰 발급 성공"),
+    })
+    ResponseEntity<CommonResponse<CouponIssueResponse>> issue(
+            @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
+            @PathVariable final UUID couponId
     );
 }
