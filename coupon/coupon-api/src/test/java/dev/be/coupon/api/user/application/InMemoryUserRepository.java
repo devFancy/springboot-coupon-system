@@ -1,5 +1,6 @@
 package dev.be.coupon.api.user.application;
 
+import deb.be.coupon.UserRole;
 import dev.be.coupon.api.user.domain.User;
 import dev.be.coupon.api.user.domain.UserRepository;
 import dev.be.coupon.api.user.domain.vo.Username;
@@ -39,12 +40,18 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public void validateExistById(UUID userId) {
+    public void validateExistById(final UUID userId) {
         UserRepository.super.validateExistById(userId);
     }
 
     @Override
-    public boolean existsById(UUID userId) {
+    public boolean existsById(final UUID userId) {
         return users.containsKey(userId);
+    }
+
+    @Override
+    public boolean isAdmin(final UUID loginUserId) {
+        return users.containsKey(loginUserId)
+                && users.get(loginUserId).getUserRole() == UserRole.ADMIN;
     }
 }
