@@ -54,6 +54,8 @@ public class CouponService {
      * 쿠폰 발급 시 핵심 검증 포인트
      * 1. 전체 발급 수량 제한 - Redis INCR 기반 제어 (coupon_count:{couponId})
      * 2. 사용자별 중복 발급 방지 - Redis 락 + DB 중복 확인
+     *
+     * 발급하는 쿠폰의 수량이 많아질수록 RDB 부하가 커짐 -> Kafka 기술 사용
      */
     @Transactional
     public CouponIssueResult issue(final CouponIssueCommand command) {

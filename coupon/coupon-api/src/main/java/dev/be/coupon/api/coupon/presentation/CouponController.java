@@ -11,8 +11,6 @@ import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +48,11 @@ public class CouponController implements CouponControllerDocs {
     public ResponseEntity<CommonResponse<CouponIssueResponse>> issue(
             @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable final UUID couponId) {
+
+        if (loginUser == null || loginUser.id() == null) {
+            throw new UnauthorizedAccessException("로그인된 사용자만 쿠폰을 발급받을 수 있습니다.");
+        }
+
         CouponIssueCommand command = new CouponIssueCommand(loginUser.id(), couponId);
         CouponIssueResult result = couponService.issue(command);
         return ResponseEntity.created(URI.create("/api/coupon/" + result.couponId()))
