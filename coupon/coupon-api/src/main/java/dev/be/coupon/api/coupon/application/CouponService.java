@@ -40,10 +40,9 @@ public class CouponService {
     }
 
     public CouponCreateResult create(
-            final UUID loginUserId,
             final CouponCreateCommand command) {
 
-        if (!userRoleChecker.isAdmin(loginUserId)) {
+        if (!userRoleChecker.isAdmin(command.userId())) {
             throw new UnauthorizedAccessException("쿠폰 생성은 관리자만 가능합니다.");
         }
 

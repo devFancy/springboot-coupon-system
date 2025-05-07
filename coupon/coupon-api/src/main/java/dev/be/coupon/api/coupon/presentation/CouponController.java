@@ -11,6 +11,8 @@ import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +26,6 @@ import java.util.UUID;
 @RequestMapping("/api")
 @RestController
 public class CouponController implements CouponControllerDocs {
-    private static final String ADMIN = "ADMIN";
 
     private final CouponService couponService;
 
@@ -37,11 +38,10 @@ public class CouponController implements CouponControllerDocs {
             @AuthenticationPrincipal final LoginUser loginUser,
             @RequestBody final CouponCreateRequest request) {
 
-        if (!loginUser.hasRole(ADMIN)) {
-            throw new UnauthorizedAccessException("쿠폰 생성은 관리자(ADMIN)만 가능합니다.");
+        if (loginUser == null || loginUser.id() == null) {
+            throw new UnauthorizedAccessException("로그인된 사용자만 쿠폰을 생성할 수 있습니다.");
         }
-
-        CouponCreateResult result = couponService.create(loginUser.id(), request.toCommand());
+        CouponCreateResult result = couponService.create(request.toCommand(loginUser.id()));
         return ResponseEntity.created(URI.create("/api/coupon/" + result.id()))
                 .body(CommonResponse.success(CouponCreateResponse.from(result)));
     }
