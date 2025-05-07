@@ -4,8 +4,10 @@ import dev.be.coupon.api.coupon.application.CouponTypeConverter;
 import dev.be.coupon.api.coupon.domain.Coupon;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record CouponCreateCommand(
+        UUID userId,
         String name,
         String type,
         int totalQuantity,

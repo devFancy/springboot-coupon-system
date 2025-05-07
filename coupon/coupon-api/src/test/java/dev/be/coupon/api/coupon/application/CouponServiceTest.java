@@ -59,10 +59,10 @@ class CouponServiceTest {
     void success_coupon() {
         // given
         final UUID userID = UUID.randomUUID();
-        final CouponCreateCommand expected = new CouponCreateCommand("치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateCommand expected = new CouponCreateCommand(userID, "치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
 
         // when
-        final CouponCreateResult actual = couponService.create(userID, expected);
+        final CouponCreateResult actual = couponService.create(expected);
 
         // then
         assertThat(actual.id()).isNotNull();
@@ -75,10 +75,10 @@ class CouponServiceTest {
     void should_throw_exception_when_coupon_type_is_invalid(final String type) {
         // given
         final UUID userID = UUID.randomUUID();
-        final CouponCreateCommand expected = new CouponCreateCommand("치킨", type, 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateCommand expected = new CouponCreateCommand(userID, "치킨", type, 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
 
         // when & then
-        assertThatThrownBy(() -> couponService.create(userID, expected)).isInstanceOf(InvalidCouponTypeException.class).hasMessage("쿠폰 타입이 지정되지 않았습니다.");
+        assertThatThrownBy(() -> couponService.create(expected)).isInstanceOf(InvalidCouponTypeException.class).hasMessage("쿠폰 타입이 지정되지 않았습니다.");
     }
 
     @DisplayName("쿠폰을 생성할 때 관리자 권한이 아니라면 예외가 발생한다.")
@@ -86,11 +86,11 @@ class CouponServiceTest {
     void should_throw_exception_when_user_is_not_admin() {
         // given
         final UUID userID = UUID.randomUUID();
-        final CouponCreateCommand expected = new CouponCreateCommand("치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateCommand expected = new CouponCreateCommand(userID, "치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
         userRoleChecker.updateIsAdmin(false); // 관리자 권한이 아닌 경우: false
 
         // when & then
-        assertThatThrownBy(() -> couponService.create(userID, expected)).isInstanceOf(UnauthorizedAccessException.class).hasMessage("권한이 없습니다.");
+        assertThatThrownBy(() -> couponService.create(expected)).isInstanceOf(UnauthorizedAccessException.class).hasMessage("권한이 없습니다.");
     }
 
     @DisplayName("사용자가 쿠폰 발급 요청을 하면 쿠폰 발급이 처리된다.")
@@ -98,8 +98,8 @@ class CouponServiceTest {
     void success_issued_coupon() {
         // given
         final UUID userId = UUID.randomUUID();
-        final CouponCreateCommand createCommand = new CouponCreateCommand("피자 할인 쿠폰", "PIZZA", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
-        final CouponCreateResult created = couponService.create(UUID.randomUUID(), createCommand);
+        final CouponCreateCommand createCommand = new CouponCreateCommand(userId,"피자 할인 쿠폰", "PIZZA", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateResult created = couponService.create(createCommand);
         final UUID couponId = created.id();
 
         final CouponIssueCommand issueCommand = new CouponIssueCommand(userId, couponId);
@@ -120,8 +120,8 @@ class CouponServiceTest {
     void should_only_issue_once_for_same_user() {
         // given
         final UUID userId = UUID.randomUUID();
-        final CouponCreateCommand command = new CouponCreateCommand("햄버거 쿠폰", "BURGER", 1000, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
-        final CouponCreateResult result = couponService.create(userId, command);
+        final CouponCreateCommand command = new CouponCreateCommand(userId, "햄버거 쿠폰", "BURGER", 1000, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateResult result = couponService.create(command);
         final UUID couponId = result.id();
 
         // when
@@ -142,8 +142,8 @@ class CouponServiceTest {
     void should_only_issue_once_for_same_user_multi_thread() throws InterruptedException {
         // given
         final UUID userId = UUID.randomUUID();
-        final CouponCreateCommand command = new CouponCreateCommand("햄버거 쿠폰", "BURGER", 1000, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
-        final CouponCreateResult result = couponService.create(userId, command);
+        final CouponCreateCommand command = new CouponCreateCommand(userId, "햄버거 쿠폰", "BURGER", 1000, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateResult result = couponService.create(command);
         final UUID couponId = result.id();
 
         ExecutorService executor = Executors.newFixedThreadPool(50);
@@ -176,8 +176,8 @@ class CouponServiceTest {
     void should_only_issue_up_to_total_quantity_limit() {
         // given
         final UUID adminId = UUID.randomUUID();
-        final CouponCreateCommand command = new CouponCreateCommand("피자 쿠폰", "PIZZA", 500, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
-        final CouponCreateResult result = couponService.create(adminId, command);
+        final CouponCreateCommand command = new CouponCreateCommand(adminId, "피자 쿠폰", "PIZZA", 500, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        final CouponCreateResult result = couponService.create(command);
         final UUID couponId = result.id();
 
         // when
@@ -199,8 +199,8 @@ class CouponServiceTest {
     void should_only_issue_up_to_total_quantity_limit_multithreaded() throws InterruptedException {
         // given
         final UUID adminId = UUID.randomUUID();
-        final CouponCreateCommand command = new CouponCreateCommand("피자 쿠폰", "PIZZA", 500, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
-        final UUID couponId = couponService.create(adminId, command).id();
+        final CouponCreateCommand command = new CouponCreateCommand(adminId, "피자 쿠폰", "PIZZA", 500, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        final UUID couponId = couponService.create(command).id();
 
         ExecutorService executor = Executors.newFixedThreadPool(50);
         CountDownLatch latch = new CountDownLatch(1000000);
