@@ -10,6 +10,8 @@ import dev.be.coupon.api.coupon.domain.FakeUserRoleChecker;
 import dev.be.coupon.api.coupon.domain.exception.InvalidCouponTypeException;
 import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
 import dev.be.coupon.api.coupon.infrastructure.CouponCountRedisRepository;
+import dev.be.coupon.api.coupon.infrastructure.kafka.dto.CouponIssueMessage;
+import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +23,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -38,6 +41,9 @@ class CouponServiceTest {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
+    @Autowired
+    private KafkaTemplate<String, CouponIssueMessage> kafkaTemplate;
+
     @BeforeEach
     void setUp() {
         CouponRepository couponRepository = new InMemoryCouponRepository();
@@ -45,7 +51,17 @@ class CouponServiceTest {
         userRoleChecker = new FakeUserRoleChecker();
         userRoleChecker.updateIsAdmin(true);
         CouponCountRedisRepository couponCountRedisRepository = new CouponCountRedisRepository(redisTemplate);
-        couponService = new CouponService(couponRepository, userRoleChecker, issuedCouponRepository, couponCountRedisRepository);
+
+        // 실제 KafkaProducer 사용
+        CouponIssueProducer couponIssueProducer = new CouponIssueProducer(kafkaTemplate);
+
+        couponService = new CouponService(
+                couponRepository,
+                userRoleChecker,
+                issuedCouponRepository,
+                couponCountRedisRepository,
+                couponIssueProducer
+        );
     }
 
     @AfterEach
@@ -98,7 +114,7 @@ class CouponServiceTest {
     void success_issued_coupon() {
         // given
         final UUID userId = UUID.randomUUID();
-        final CouponCreateCommand createCommand = new CouponCreateCommand(userId,"피자 할인 쿠폰", "PIZZA", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final CouponCreateCommand createCommand = new CouponCreateCommand(userId, "피자 할인 쿠폰", "PIZZA", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
         final CouponCreateResult created = couponService.create(createCommand);
         final UUID couponId = created.id();
 
@@ -226,5 +242,26 @@ class CouponServiceTest {
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500);
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isLessThanOrEqualTo(500);
         System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
+    }
+
+    @DisplayName("Kafka 메시지가 전송된다.")
+    @Test
+    void should_send_kafka_message_on_issue() {
+        // given
+        final UUID userId = UUID.randomUUID();
+        final CouponCreateCommand createCommand = new CouponCreateCommand(
+                userId, "치킨", "CHICKEN", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(1)
+        );
+        final UUID couponId = couponService.create(createCommand).id();
+
+        final CouponIssueCommand issueCommand = new CouponIssueCommand(userId, couponId);
+
+        // when
+        final CouponIssueResult result = couponService.issue(issueCommand);
+
+        // then
+        assertThat(result.userId()).isEqualTo(userId);
+        assertThat(result.couponId()).isEqualTo(couponId);
+        System.out.println("Kafka 메시지 전송 완료 (터미널에서 확인)");
     }
 }
