@@ -264,4 +264,35 @@ class CouponServiceTest {
         assertThat(result.couponId()).isEqualTo(couponId);
         System.out.println("Kafka 메시지 전송 완료 (터미널에서 확인)");
     }
+
+    @DisplayName("Kafka 메시지가 100명의 사용자에 대해 전송된다.")
+    @Test
+    void should_send_kafka_message_for_100_users() {
+        // given
+        final UUID adminId = UUID.randomUUID();
+        final CouponCreateCommand createCommand = new CouponCreateCommand(
+                adminId, "100명 대상 테스트 쿠폰", "CHICKEN", 100, LocalDateTime.now(), LocalDateTime.now().plusDays(1)
+        );
+        final UUID couponId = couponService.create(createCommand).id();
+
+        // when
+        for (int i = 0; i < 100; i++) {
+            final UUID userId = UUID.randomUUID(); // 100명의 서로 다른 사용자
+            try {
+                final CouponIssueResult result = couponService.issue(new CouponIssueCommand(userId, couponId));
+                assertThat(result.userId()).isEqualTo(userId);
+                assertThat(result.couponId()).isEqualTo(couponId);
+            } catch (InvalidIssuedCouponException ignore) {
+                // 수량 초과가 발생하지 않도록 생성 수량을 100으로 지정했기 때문에 무시 X
+                throw new AssertionError("예상치 못한 발급 실패 발생: " + ignore.getMessage());
+            }
+        }
+
+        // then
+        String redisKey = "coupon_count:" + couponId;
+        String countValue = redisTemplate.opsForValue().get(redisKey);
+        assertThat(countValue).isEqualTo("100");
+
+        System.out.println("✔ Kafka 메시지 100건 발송 및 Redis 발급 수량 확인 완료");
+    }
 }
