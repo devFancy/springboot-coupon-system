@@ -1,0 +1,19 @@
+bootJar.enabled = true
+jar.enabled = false
+
+dependencies {
+	implementation project(":coupon:coupon-enum")
+	implementation project(":support:logging")
+
+	// spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.kafka:spring-kafka'
+
+	// db - mysql
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+}
