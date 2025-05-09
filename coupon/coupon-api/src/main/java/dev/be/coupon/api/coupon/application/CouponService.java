@@ -9,12 +9,12 @@ import dev.be.coupon.api.coupon.application.exception.CouponNotFoundException;
 import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
 import dev.be.coupon.api.coupon.domain.Coupon;
 import dev.be.coupon.api.coupon.domain.CouponRepository;
-import dev.be.coupon.api.coupon.domain.IssuedCoupon;
 import dev.be.coupon.api.coupon.domain.IssuedCouponRepository;
 import dev.be.coupon.api.coupon.domain.UserRoleChecker;
 import dev.be.coupon.api.coupon.domain.exception.InvalidCouponException;
 import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
 import dev.be.coupon.api.coupon.infrastructure.CouponCountRedisRepository;
+import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,15 +28,18 @@ public class CouponService {
     private final UserRoleChecker userRoleChecker;
     private final IssuedCouponRepository issuedCouponRepository;
     private final CouponCountRedisRepository couponCountRedisRepository;
+    private final CouponIssueProducer couponIssueProducer;
 
     public CouponService(final CouponRepository couponRepository,
                          final UserRoleChecker userRoleChecker,
                          final IssuedCouponRepository issuedCouponRepository,
-                         final CouponCountRedisRepository couponCountRedisRepository) {
+                         final CouponCountRedisRepository couponCountRedisRepository,
+                         final CouponIssueProducer couponIssueProducer) {
         this.couponRepository = couponRepository;
         this.userRoleChecker = userRoleChecker;
         this.issuedCouponRepository = issuedCouponRepository;
         this.couponCountRedisRepository = couponCountRedisRepository;
+        this.couponIssueProducer = couponIssueProducer;
     }
 
     public CouponCreateResult create(
@@ -54,10 +57,10 @@ public class CouponService {
      * 쿠폰 발급 시 핵심 검증 포인트
      * 1. 전체 발급 수량 제한 - Redis INCR 기반 제어 (coupon_count:{couponId})
      * 2. 사용자별 중복 발급 방지 - Redis 락 + DB 중복 확인
-     *
+     * <p>
      * 발급하는 쿠폰의 수량이 많아질수록 RDB 부하가 커짐 -> Kafka 기술 사용
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public CouponIssueResult issue(final CouponIssueCommand command) {
         final UUID userId = command.userId();
         final UUID couponId = command.couponId();
@@ -93,10 +96,12 @@ public class CouponService {
                 throw new InvalidIssuedCouponException("해당 쿠폰의 발급 수량이 초과되었습니다.");
             }
 
-            final IssuedCoupon issuedCoupon = new IssuedCoupon(userId, couponId);
-            issuedCouponRepository.save(issuedCoupon);
-
-            return CouponIssueResult.from(issuedCoupon);
+            // [이전 동기 방식] Kafka 도입 전에는 아래 로직으로 발급 즉시 DB에 저장했습니다.
+//            final IssuedCoupon issuedCoupon = new IssuedCoupon(userId, couponId);
+//            issuedCouponRepository.save(issuedCoupon);
+//            return CouponIssueResult.from(issuedCoupon);
+            couponIssueProducer.issue(userId, couponId);
+            return new CouponIssueResult(userId, couponId, false, LocalDateTime.now());
 
         } finally {
             couponCountRedisRepository.releaseLock(lockKey);
