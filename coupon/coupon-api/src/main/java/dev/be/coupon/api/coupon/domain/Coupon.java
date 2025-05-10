@@ -125,6 +125,13 @@ public class Coupon {
         }
     }
 
+    public void validateIssuable(final LocalDateTime now) {
+        updateStatusBasedOnDate(now);
+        if (this.couponStatus != CouponStatus.ACTIVE) {
+            throw new InvalidCouponException("현재 쿠폰은 발급 가능한 상태가 아닙니다.");
+        }
+    }
+
     /**
      * 현재 시점을 기준으로 쿠폰 상태를 갱신합니다.
      * <p>
@@ -135,7 +142,7 @@ public class Coupon {
      * - 매일 자정 등 주기적으로 실행되는 스케줄러에서 전체 쿠폰 상태 일괄 갱신
      * - 또는 쿠폰 조회/발급 시점에 동적으로 상태 갱신
      */
-    public void updateStatusBasedOnDate(final LocalDateTime now) {
+    private void updateStatusBasedOnDate(final LocalDateTime now) {
         this.couponStatus = CouponStatus.decideStatus(now, validFrom, validUntil);
     }
 

@@ -1,6 +1,5 @@
 package dev.be.coupon.api.coupon.application;
 
-import deb.be.coupon.CouponStatus;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
@@ -13,7 +12,6 @@ import dev.be.coupon.api.coupon.domain.FailedIssuedCoupon;
 import dev.be.coupon.api.coupon.domain.FailedIssuedCouponRepository;
 import dev.be.coupon.api.coupon.domain.IssuedCouponRepository;
 import dev.be.coupon.api.coupon.domain.UserRoleChecker;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponException;
 import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
 import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.api.coupon.infrastructure.redis.AppliedUserRepository;
@@ -110,10 +108,7 @@ public class CouponService {
                         return fromDb;
                     });
 
-            coupon.updateStatusBasedOnDate(LocalDateTime.now());
-            if (coupon.getCouponStatus() != CouponStatus.ACTIVE) {
-                throw new InvalidCouponException("현재 쿠폰은 발급 가능한 상태가 아닙니다.");
-            }
+            coupon.validateIssuable(LocalDateTime.now());
 
 //            if (issuedCouponRepository.existsByUserIdAndCouponId(userId, couponId)) {
 //                throw new InvalidIssuedCouponException("이미 해당 쿠폰을 발급받았습니다.");
