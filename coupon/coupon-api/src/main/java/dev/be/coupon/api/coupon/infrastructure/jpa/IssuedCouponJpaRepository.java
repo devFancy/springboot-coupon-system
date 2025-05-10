@@ -1,4 +1,4 @@
-package dev.be.coupon.api.coupon.infrastructure;
+package dev.be.coupon.api.coupon.infrastructure.jpa;
 
 import dev.be.coupon.api.coupon.domain.IssuedCoupon;
 import dev.be.coupon.api.coupon.domain.IssuedCouponRepository;
