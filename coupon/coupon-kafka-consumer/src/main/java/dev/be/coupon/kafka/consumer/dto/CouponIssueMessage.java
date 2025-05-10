@@ -1,4 +1,4 @@
-package dev.be.coupon.kafka.dto;
+package dev.be.coupon.kafka.consumer.dto;
 
 import java.util.UUID;
 

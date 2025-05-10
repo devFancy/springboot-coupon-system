@@ -1,4 +1,4 @@
-package dev.be.coupon.api.coupon.infrastructure;
+package dev.be.coupon.api.coupon.infrastructure.redis;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -17,7 +17,13 @@ public class CouponCountRedisRepository {
     public Long increment(final String key) {
         return redisTemplate
                 .opsForValue()
-                .increment(key);
+                .increment(key); // INCR
+    }
+
+    public Long decrement(final String key) {
+        return redisTemplate
+                .opsForValue()
+                .decrement(key); // DECR
     }
 
     public boolean tryLock(final String lockKey, final long timeoutSeconds) {
