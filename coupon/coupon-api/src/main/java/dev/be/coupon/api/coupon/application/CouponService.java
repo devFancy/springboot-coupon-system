@@ -69,65 +69,50 @@ public class CouponService {
     }
 
     /**
-     * 쿠폰 발급 시 핵심 검증 포인트
+     * 쿠폰 발급 요청 처리 흐름(주요 내용)
      * <p>
-     * 1. 사용자별 중복 발급 방지 - Redis Set 기반 제어 (key: applied_user:{couponId})
-     * - 최초 요청만 true, 이후는 중복으로 간주
+     * 1. 분산 락: Redis SETNX 기반 사용자 단위 락 (lock:coupon:{couponId}:user:{userId})
+     * - 동일 사용자의 중복 요청을 직렬화하여 race condition 방지
+     * <p>
+     * 2. 중복 발급 방지: Redis Set(applied_user:{couponId})
+     * - 최초 요청만 true, 이후는 중복으로 간주하고 차단
      * - 중복이면 발급 수량 증가를 수행하지 않음 (정확한 수량 보장 목적)
      * <p>
-     * 2. 전체 발급 수량 제한 - Redis INCR 기반 제어 (key: coupon_count:{couponId})
+     * 3. 수량 제한: Redis INCR(coupon_count:{couponId})
      * - 최초 요청인 경우에만 수량 증가
-     * - 초과 시 Redis 값 롤백 (decrement)
+     * - 발급 수량 초과 시 Redis DECR 로 롤백
      * <p>
-     * 3. Kafka 기반 비동기 처리
+     * 4. Kafka 기반 비동기 처리
      * - 발급은 Redis 기준으로 선검증 → Kafka 메시지 전송 → Consumer가 DB 저장
-     * - RDB 부하는 줄이고, 발급 속도는 향상됨
+     * - RDB 부하 감소
      * <p>
-     * 캐시된 쿠폰 정보를 사용해 RDB 조회 부하도 최소화함
+     * 5. 실패 처리: 예외 발생 시 FailedIssuedCoupon 엔티티에 실패 기록 저장
+     * - 향후 배치 프로그램을 통해 실패 건 재처리 또는 알림 시스템과 연계 가능
      */
     @Transactional(readOnly = true)
     public CouponIssueResult issue(final CouponIssueCommand command) {
-        final UUID userId = command.userId();
         final UUID couponId = command.couponId();
+        final UUID userId = command.userId();
+        final String lockKey = generateLockKey(couponId, userId);
 
         // Redis 기반 분산 락 (SETNX) - 사용자 단위 중복 발급 방지 목적
-        final String lockKey = "lock:coupon:" + couponId + ":user:" + userId;
         boolean locked = couponCountRedisRepository.tryLock(lockKey, 5);
-
         if (!locked) {
-            throw new InvalidIssuedCouponException("현재 쿠폰 발급 처리 중입니다. 잠시 후 다시 시도해주세요."); // 이미 누가 처리 중
+            throw new InvalidIssuedCouponException("현재 쿠폰 발급 처리 중입니다. 잠시 후 다시 시도해주세요.");
         }
 
         try {
-
-            final Coupon coupon = couponCacheRepository.findById(couponId)
-                    .orElseGet(() -> {
-                        Coupon fromDb = couponRepository.findById(couponId)
-                                .orElseThrow(() -> new CouponNotFoundException("존재하지 않는 쿠폰입니다."));
-                        couponCacheRepository.save(fromDb);
-                        return fromDb;
-                    });
-
+            final Coupon coupon = loadCouponWithCaching(couponId);
             coupon.validateIssuable(LocalDateTime.now());
 
-//            if (issuedCouponRepository.existsByUserIdAndCouponId(userId, couponId)) {
-//                throw new InvalidIssuedCouponException("이미 해당 쿠폰을 발급받았습니다.");
-//            }
-            // Redis 기반 사용자 중복 발급 방지 (최초 요청만 true 반환)
-            boolean isFirstIssue = appliedUserRepository.add(couponId, userId);
-            if (!isFirstIssue) {
-                throw new InvalidIssuedCouponException("이미 해당 쿠폰을 발급받았습니다.");
+            CouponIssueResult duplicateResult = validateDuplicateIssue(couponId, userId);
+            if (duplicateResult != null) {
+                return duplicateResult;
             }
 
-            //int issuedCount = issuedCouponRepository.countByCouponId(couponId);
-            // 기존 DB 기반 발급 수량 계산 대신
-            // Redis 기반 발급 수량 제어 (key: coupon_count:{couponId})
-            String countKey = "coupon_count:" + couponId;
-            Long issuedCount = couponCountRedisRepository.increment(countKey);
-            if (issuedCount > coupon.getTotalQuantity()) {
-                couponCountRedisRepository.decrement(countKey);
-                appliedUserRepository.remove(couponId, userId);
-                throw new InvalidIssuedCouponException("해당 쿠폰의 발급 수량이 초과되었습니다.");
+            CouponIssueResult quantityLimitResult = validateQuantityLimit(couponId, userId, coupon.getTotalQuantity());
+            if (quantityLimitResult != null) {
+                return quantityLimitResult;
             }
 
             // [이전 - 동기식 처리] Kafka 도입 전에는 아래 로직으로 발급 즉시 DB에 저장했습니다.
@@ -139,6 +124,8 @@ public class CouponService {
             return CouponIssueResult.success(userId, couponId);
 
         } catch (Exception e) {
+            // 발급 실패 로그 기록 및 실패 이력 저장
+            // 향후 배치 프로그램 또는 알림 시스템을 통해 실패 건 재처리 또는 관리자에게 알림 가능
             log.error("failed to issue coupon - userId: {}, couponId: {}", userId, couponId, e);
             failedIssuedCouponRepository.save(new FailedIssuedCoupon(userId, couponId));
             return CouponIssueResult.failure(userId, couponId);
@@ -146,5 +133,50 @@ public class CouponService {
         } finally {
             couponCountRedisRepository.releaseLock(lockKey);
         }
+    }
+
+    private String generateLockKey(final UUID couponId, final UUID userId) {
+        return "lock:coupon:" + couponId + ":user:" + userId;
+    }
+
+    private Coupon loadCouponWithCaching(final UUID couponId) {
+        return couponCacheRepository.findById(couponId)
+                .orElseGet(() -> {
+                    Coupon fromDb = couponRepository.findById(couponId)
+                            .orElseThrow(() -> new CouponNotFoundException("존재하지 않는 쿠폰입니다."));
+                    couponCacheRepository.save(fromDb);
+                    return fromDb;
+                });
+    }
+
+    /**
+     * Redis 기반 사용자 중복 발급 방지 (최초 요청만 true 반환)
+     */
+    private CouponIssueResult validateDuplicateIssue(final UUID couponId, final UUID userId) {
+//        if (issuedCouponRepository.existsByUserIdAndCouponId(userId, couponId)) {
+//            return CouponIssueResult.alreadyIssued(userId, couponId);
+//        }
+        boolean isFirstIssue = appliedUserRepository.add(couponId, userId);
+        if (!isFirstIssue) {
+            log.info("중복 발급 요청 감지 - userId: {}, couponId: {}", userId, couponId);
+            return CouponIssueResult.alreadyIssued(userId, couponId);
+        }
+        return null;
+    }
+
+    /**
+     * 기존 DB 기반 발급 수량 계산 대신
+     * Redis 기반 발급 수량 제어 (key: coupon_count:{couponId})
+     */
+    private CouponIssueResult validateQuantityLimit(final UUID couponId, final UUID userId, final int totalQuantity) {
+//        int issuedCount = issuedCouponRepository.countByCouponId(couponId);
+        String countKey = "coupon_count:" + couponId;
+        Long issuedCount = couponCountRedisRepository.increment(countKey);
+        if (issuedCount > totalQuantity) {
+            couponCountRedisRepository.decrement(countKey);
+            log.info("쿠폰 수량 초과 - userId: {}, couponId: {}", userId, couponId);
+            return CouponIssueResult.quantityExceeded(userId, couponId);
+        }
+        return null;
     }
 }

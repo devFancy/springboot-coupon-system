@@ -17,13 +17,13 @@ public class CouponCountRedisRepository {
     public Long increment(final String key) {
         return redisTemplate
                 .opsForValue()
-                .increment(key);
+                .increment(key); // INCR
     }
 
     public Long decrement(final String key) {
         return redisTemplate
                 .opsForValue()
-                .decrement(key);
+                .decrement(key); // DECR
     }
 
     public boolean tryLock(final String lockKey, final long timeoutSeconds) {
