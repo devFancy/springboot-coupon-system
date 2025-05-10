@@ -2,7 +2,7 @@ package dev.be.coupon.kafka.consumer;
 
 import dev.be.coupon.kafka.consumer.domain.IssuedCoupon;
 import dev.be.coupon.kafka.consumer.domain.IssuedCouponRepository;
-import dev.be.coupon.kafka.dto.CouponIssueMessage;
+import dev.be.coupon.kafka.consumer.dto.CouponIssueMessage;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

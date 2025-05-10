@@ -99,7 +99,7 @@ class CouponTest {
         Coupon coupon = new Coupon("쿠폰", CouponType.PIZZA, 10, now.minusDays(1), now.plusDays(1));
 
         // when
-        coupon.updateStatusBasedOnDate(now);
+        coupon.validateIssuable(now);
 
         // then
         assertThat(coupon.getCouponStatus()).isEqualTo(CouponStatus.ACTIVE);

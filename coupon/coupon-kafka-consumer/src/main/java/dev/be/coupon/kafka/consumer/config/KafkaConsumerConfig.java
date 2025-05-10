@@ -1,6 +1,6 @@
 package dev.be.coupon.kafka.consumer.config;
 
-import dev.be.coupon.kafka.dto.CouponIssueMessage;
+import dev.be.coupon.kafka.consumer.dto.CouponIssueMessage;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;

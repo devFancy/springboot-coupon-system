@@ -1,4 +1,4 @@
-package dev.be.coupon.api.coupon.infrastructure;
+package dev.be.coupon.api.coupon.infrastructure.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;

@@ -6,12 +6,16 @@ import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueResult;
 import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
 import dev.be.coupon.api.coupon.domain.CouponRepository;
+import dev.be.coupon.api.coupon.domain.FailedIssuedCouponRepository;
 import dev.be.coupon.api.coupon.domain.FakeUserRoleChecker;
+import dev.be.coupon.api.coupon.domain.IssuedCouponRepository;
 import dev.be.coupon.api.coupon.domain.exception.InvalidCouponTypeException;
 import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
-import dev.be.coupon.api.coupon.infrastructure.CouponCountRedisRepository;
 import dev.be.coupon.api.coupon.infrastructure.kafka.dto.CouponIssueMessage;
 import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
+import dev.be.coupon.api.coupon.infrastructure.redis.AppliedUserRepository;
+import dev.be.coupon.api.coupon.infrastructure.redis.CouponCacheRepository;
+import dev.be.coupon.api.coupon.infrastructure.redis.CouponCountRedisRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.AfterEach;
@@ -26,17 +30,43 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * CouponServiceTest 주의사항:
+ * <p>
+ * 이 테스트는 Kafka Consumer 가 실제 DB(JPA Repository)에 접근해 데이터를 저장하는 구조이므로,
+ * 테스트에서도 Spring Context 에서 관리하는 실제 JPA 기반 Repository 를 사용해야 합니다.
+ * <p>
+ * 특히, InMemoryCouponRepository 또는 InMemoryIssuedCouponRepository 를 직접 생성해 사용할 경우,
+ * Kafka Consumer 가 접근하는 Repository 와 분리되어 테스트 결과가 어긋나게 됩니다.
+ * <p>
+ * 따라서 아래 Repository 들은 모두 @Autowired 로 주입 받아야 합니다:
+ * - CouponRepository
+ * - IssuedCouponRepository
+ */
 @SpringBootTest
 class CouponServiceTest {
 
     private CouponService couponService;
     private FakeUserRoleChecker userRoleChecker;
-    private InMemoryIssuedCouponRepository issuedCouponRepository;
+
+    @Autowired
+    private CouponRepository couponRepository;
+
+    @Autowired
+    private CouponCacheRepository couponCacheRepository;
+
+    @Autowired
+    private IssuedCouponRepository issuedCouponRepository;
+
+    @Autowired
+    private FailedIssuedCouponRepository failedIssuedCouponRepository;
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
@@ -44,38 +74,50 @@ class CouponServiceTest {
     @Autowired
     private KafkaTemplate<String, CouponIssueMessage> kafkaTemplate;
 
+    @Autowired
+    private AppliedUserRepository appliedUserRepository;
+
     @BeforeEach
     void setUp() {
-        CouponRepository couponRepository = new InMemoryCouponRepository();
-        issuedCouponRepository = new InMemoryIssuedCouponRepository();
         userRoleChecker = new FakeUserRoleChecker();
-        userRoleChecker.updateIsAdmin(true);
-        CouponCountRedisRepository couponCountRedisRepository = new CouponCountRedisRepository(redisTemplate);
+        userRoleChecker.updateIsAdmin(true); // 기본값으로 관리자 권한을 부여함
 
-        // 실제 KafkaProducer 사용
+        CouponCountRedisRepository couponCountRedisRepository = new CouponCountRedisRepository(redisTemplate);
         CouponIssueProducer couponIssueProducer = new CouponIssueProducer(kafkaTemplate);
 
         couponService = new CouponService(
                 couponRepository,
-                userRoleChecker,
-                issuedCouponRepository,
+                couponCacheRepository,
                 couponCountRedisRepository,
-                couponIssueProducer
+                couponIssueProducer,
+                issuedCouponRepository,
+                appliedUserRepository,
+                failedIssuedCouponRepository,
+                userRoleChecker
         );
     }
 
     @AfterEach
     void tearDown() {
-        redisTemplate.keys("coupon_count:*").forEach(redisTemplate::delete);
-        redisTemplate.keys("lock:coupon:*").forEach(redisTemplate::delete);
+        safeDelete("coupon_count:*");
+        safeDelete("lock:coupon:*");
+        safeDelete("applied_user:*");
+        safeDelete("coupon:*");
     }
 
-    @DisplayName("쿠폰을 생성한다.")
+    private void safeDelete(final String pattern) {
+        Optional.ofNullable(redisTemplate.keys(pattern))
+                .ifPresent(keys -> keys.stream()
+                        .filter(Objects::nonNull)
+                        .forEach(redisTemplate::delete));
+    }
+
+    @DisplayName("관리자가 쿠폰을 생성한다.")
     @Test
     void success_coupon() {
         // given
-        final UUID userID = UUID.randomUUID();
-        final CouponCreateCommand expected = new CouponCreateCommand(userID, "치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final UUID adminId = UUID.randomUUID();
+        final CouponCreateCommand expected = new CouponCreateCommand(adminId, "치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
 
         // when
         final CouponCreateResult actual = couponService.create(expected);
@@ -90,8 +132,8 @@ class CouponServiceTest {
     @ValueSource(strings = {"KHICKEN", "BIZZA", "VURGER"})
     void should_throw_exception_when_coupon_type_is_invalid(final String type) {
         // given
-        final UUID userID = UUID.randomUUID();
-        final CouponCreateCommand expected = new CouponCreateCommand(userID, "치킨", type, 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final UUID adminId = UUID.randomUUID();
+        final CouponCreateCommand expected = new CouponCreateCommand(adminId, "치킨", type, 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
 
         // when & then
         assertThatThrownBy(() -> couponService.create(expected)).isInstanceOf(InvalidCouponTypeException.class).hasMessage("쿠폰 타입이 지정되지 않았습니다.");
@@ -101,8 +143,8 @@ class CouponServiceTest {
     @Test
     void should_throw_exception_when_user_is_not_admin() {
         // given
-        final UUID userID = UUID.randomUUID();
-        final CouponCreateCommand expected = new CouponCreateCommand(userID, "치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
+        final UUID adminId = UUID.randomUUID();
+        final CouponCreateCommand expected = new CouponCreateCommand(adminId, "치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
         userRoleChecker.updateIsAdmin(false); // 관리자 권한이 아닌 경우: false
 
         // when & then
@@ -133,7 +175,7 @@ class CouponServiceTest {
 
     @DisplayName("동일한 사용자에게 쿠폰을 1000번 발급 요청해도 중복 발급은 1회만 된다. - 단일 스레드")
     @Test
-    void should_only_issue_once_for_same_user() {
+    void should_only_issue_once_for_same_user() throws InterruptedException {
         // given
         final UUID userId = UUID.randomUUID();
         final CouponCreateCommand command = new CouponCreateCommand(userId, "햄버거 쿠폰", "BURGER", 1000, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
@@ -149,8 +191,16 @@ class CouponServiceTest {
             }
         }
 
+        Thread.sleep(10000);
+
         // then
+        // Redis 중복 발급 방지 키 확인
+        final String key = "applied_user:" + couponId;
+        final Long size = redisTemplate.opsForSet().size(key);
+        assertThat(size).isEqualTo(1);
+
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
+        System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
     }
 
     @DisplayName("동일한 사용자에게 쿠폰을 1,000,000번 동시 발급 요청해도 중복 발급은 1회만 된다. - 멀티 스레드")
@@ -181,7 +231,13 @@ class CouponServiceTest {
         latch.await();
         executor.shutdown();
 
+        Thread.sleep(10000);
+
         // then
+        final String appliedKey = "applied_user:" + couponId;
+        final Long userSetSize = redisTemplate.opsForSet().size(appliedKey);
+        assertThat(userSetSize).isEqualTo(1); // Redis 기반 중복 방지 확인
+
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isLessThanOrEqualTo(1);
         System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
@@ -189,7 +245,7 @@ class CouponServiceTest {
 
     @DisplayName("1,000명의 사용자에게 수량 500개짜리 쿠폰을 발급하면 최대 500개만 발급된다. - 단일 스레드")
     @Test
-    void should_only_issue_up_to_total_quantity_limit() {
+    void should_only_issue_up_to_total_quantity_limit() throws InterruptedException {
         // given
         final UUID adminId = UUID.randomUUID();
         final CouponCreateCommand command = new CouponCreateCommand(adminId, "피자 쿠폰", "PIZZA", 500, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
@@ -206,11 +262,19 @@ class CouponServiceTest {
             }
         }
 
+        Thread.sleep(10000);
+
         // then
+
+        final String countKey = "coupon_count:" + couponId;
+        final String count = redisTemplate.opsForValue().get(countKey);
+        assertThat(count).isEqualTo("500");
+
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500);
+        System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
     }
 
-    @DisplayName("1,000,000명의 사용자에게 동시 발급 요청 시 수량 500개 초과 발급되지 않는다. - 멀티 스레드")
+    @DisplayName("1,000,000명의 사용자에게 동시 발급 요청 시 수량 500개가 초과 발급되지 않는다. - 멀티 스레드")
     @Test
     void should_only_issue_up_to_total_quantity_limit_multithreaded() throws InterruptedException {
         // given
@@ -238,29 +302,63 @@ class CouponServiceTest {
         latch.await();
         executor.shutdown();
 
+        Thread.sleep(10000);
+
         // then
+
+        final String countKey = "coupon_count:" + couponId;
+        final String count = redisTemplate.opsForValue().get(countKey);
+        assertThat(count).isEqualTo("500");
+
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500);
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isLessThanOrEqualTo(500);
         System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
+    }
+
+    @DisplayName("쿠폰 수량 초과 시 쿠폰 발급 수량이 롤백된다.")
+    @Test
+    void should_decrement_count_when_quantity_exceeded() throws InterruptedException {
+        // given
+        final UUID adminId = UUID.randomUUID();
+        final CouponCreateCommand command = new CouponCreateCommand(adminId, "수량 1 쿠폰", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        final UUID couponId = couponService.create(command).id();
+
+        final UUID user1 = UUID.randomUUID();
+        final UUID user2 = UUID.randomUUID();
+
+        // when
+        couponService.issue(new CouponIssueCommand(user1, couponId));
+        try {
+            couponService.issue(new CouponIssueCommand(user2, couponId));
+        } catch (InvalidIssuedCouponException ignore) {
+        }
+
+        Thread.sleep(5000);
+
+        // then
+        final String countKey = "coupon_count:" + couponId;
+        final Long count = Long.parseLong(Objects.requireNonNull(redisTemplate.opsForValue().get(countKey)));
+        assertThat(count).isEqualTo(1); // 롤백이 되지 않으면 2가 됨
+        assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
     }
 
     @DisplayName("Kafka 메시지가 전송된다.")
     @Test
     void should_send_kafka_message_on_issue() {
         // given
-        final UUID userId = UUID.randomUUID();
+        final UUID adminId = UUID.randomUUID();
         final CouponCreateCommand createCommand = new CouponCreateCommand(
-                userId, "치킨", "CHICKEN", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(1)
+                adminId, "치킨", "CHICKEN", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(1)
         );
         final UUID couponId = couponService.create(createCommand).id();
 
-        final CouponIssueCommand issueCommand = new CouponIssueCommand(userId, couponId);
+        final CouponIssueCommand issueCommand = new CouponIssueCommand(adminId, couponId);
 
         // when
         final CouponIssueResult result = couponService.issue(issueCommand);
 
         // then
-        assertThat(result.userId()).isEqualTo(userId);
+        assertThat(result.userId()).isEqualTo(adminId);
         assertThat(result.couponId()).isEqualTo(couponId);
         System.out.println("Kafka 메시지 전송 완료 (터미널에서 확인)");
     }
@@ -282,9 +380,9 @@ class CouponServiceTest {
                 final CouponIssueResult result = couponService.issue(new CouponIssueCommand(userId, couponId));
                 assertThat(result.userId()).isEqualTo(userId);
                 assertThat(result.couponId()).isEqualTo(couponId);
-            } catch (InvalidIssuedCouponException ignore) {
+            } catch (InvalidIssuedCouponException e) {
                 // 수량 초과가 발생하지 않도록 생성 수량을 100으로 지정했기 때문에 무시 X
-                throw new AssertionError("예상치 못한 발급 실패 발생: " + ignore.getMessage());
+                throw new AssertionError("예상치 못한 발급 실패 발생: " + e.getMessage());
             }
         }
 
@@ -293,6 +391,6 @@ class CouponServiceTest {
         String countValue = redisTemplate.opsForValue().get(redisKey);
         assertThat(countValue).isEqualTo("100");
 
-        System.out.println("✔ Kafka 메시지 100건 발송 및 Redis 발급 수량 확인 완료");
+        System.out.println("Kafka 메시지 100건 발송 및 Redis 발급 수량 확인 완료");
     }
 }
