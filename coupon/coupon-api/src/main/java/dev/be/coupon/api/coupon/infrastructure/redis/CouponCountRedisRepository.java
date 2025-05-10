@@ -20,6 +20,12 @@ public class CouponCountRedisRepository {
                 .increment(key);
     }
 
+    public Long decrement(final String key) {
+        return redisTemplate
+                .opsForValue()
+                .decrement(key);
+    }
+
     public boolean tryLock(final String lockKey, final long timeoutSeconds) {
         return Boolean.TRUE.equals(redisTemplate
                 .opsForValue()
