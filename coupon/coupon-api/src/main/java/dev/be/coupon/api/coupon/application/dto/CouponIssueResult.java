@@ -11,6 +11,8 @@ public record CouponIssueResult(
         boolean used,
         LocalDateTime issuedAt
 ) {
+
+    // 동기 저장 시 사용
     public static CouponIssueResult from(final IssuedCoupon issuedCoupon) {
         return new CouponIssueResult(
                 issuedCoupon.getUserId(),
@@ -18,5 +20,13 @@ public record CouponIssueResult(
                 issuedCoupon.isUsed(),
                 issuedCoupon.getIssuedAt()
         );
+    }
+
+    public static CouponIssueResult success(final UUID userId, final UUID couponId) {
+        return new CouponIssueResult(userId, couponId, false, LocalDateTime.now());
+    }
+
+    public static CouponIssueResult failure(final UUID userId, final UUID couponId) {
+        return new CouponIssueResult(userId, couponId, false, LocalDateTime.now());
     }
 }
