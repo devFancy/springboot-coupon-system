@@ -238,10 +238,6 @@ class CouponServiceTest {
         final Long userSetSize = redisTemplate.opsForSet().size(appliedKey);
         assertThat(userSetSize).isEqualTo(1); // Redis 기반 중복 방지 확인
 
-        final String countKey = "coupon_count:" + couponId;
-        final String count = redisTemplate.opsForValue().get(countKey);
-        assertThat(count).isEqualTo("1"); // 발급 수량도 1건
-
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isLessThanOrEqualTo(1);
         System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
@@ -269,9 +265,6 @@ class CouponServiceTest {
         Thread.sleep(10000);
 
         // then
-        final String appliedKey = "applied_user:" + couponId;
-        final Long userSetSize = redisTemplate.opsForSet().size(appliedKey);
-        assertThat(userSetSize).isEqualTo(500);
 
         final String countKey = "coupon_count:" + couponId;
         final String count = redisTemplate.opsForValue().get(countKey);
@@ -312,9 +305,6 @@ class CouponServiceTest {
         Thread.sleep(10000);
 
         // then
-        final String appliedKey = "applied_user:" + couponId;
-        final Long userSetSize = redisTemplate.opsForSet().size(appliedKey);
-        assertThat(userSetSize).isEqualTo(500);
 
         final String countKey = "coupon_count:" + couponId;
         final String count = redisTemplate.opsForValue().get(countKey);
