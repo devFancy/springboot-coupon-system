@@ -1,8 +1,8 @@
 bootJar.enabled = true
-jar.enabled = false
+jar.enabled = true
 
 dependencies {
-	implementation project(":coupon:coupon-enum")
+	implementation project(":coupon:coupon-domain")
 	implementation project(":support:logging")
 
 	// spring

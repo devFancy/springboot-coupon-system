@@ -1,9 +1,9 @@
 package dev.be.coupon.kafka.consumer;
 
-import dev.be.coupon.kafka.consumer.domain.FailedIssuedCoupon;
-import dev.be.coupon.kafka.consumer.domain.FailedIssuedCouponRepository;
-import dev.be.coupon.kafka.consumer.domain.IssuedCoupon;
-import dev.be.coupon.kafka.consumer.domain.IssuedCouponRepository;
+import dev.be.coupon.domain.coupon.FailedIssuedCoupon;
+import dev.be.coupon.domain.coupon.FailedIssuedCouponRepository;
+import dev.be.coupon.domain.coupon.IssuedCoupon;
+import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import dev.be.coupon.kafka.consumer.dto.CouponIssueMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

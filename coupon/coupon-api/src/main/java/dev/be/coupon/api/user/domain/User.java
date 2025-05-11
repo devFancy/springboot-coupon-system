@@ -1,6 +1,6 @@
 package dev.be.coupon.api.user.domain;
 
-import deb.be.coupon.UserRole;
+import dev.be.coupon.domain.user.UserRole;
 import dev.be.coupon.api.user.domain.vo.Password;
 import dev.be.coupon.api.user.domain.vo.PasswordHasher;
 import dev.be.coupon.api.user.domain.vo.Username;

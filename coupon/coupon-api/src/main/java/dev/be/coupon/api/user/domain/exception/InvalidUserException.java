@@ -1,7 +1,8 @@
 package dev.be.coupon.api.user.domain.exception;
 
-import dev.be.coupon.api.common.support.error.CouponException;
-import dev.be.coupon.api.common.support.error.ErrorType;
+
+import dev.be.coupon.common.support.error.CouponException;
+import dev.be.coupon.common.support.error.ErrorType;
 
 public class InvalidUserException extends CouponException {
     public InvalidUserException() {

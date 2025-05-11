@@ -2,15 +2,15 @@ package dev.be.coupon.api.coupon.presentation;
 
 import dev.be.coupon.api.auth.presentation.AuthenticationPrincipal;
 import dev.be.coupon.api.auth.presentation.dto.LoginUser;
-import dev.be.coupon.api.common.support.response.CommonResponse;
 import dev.be.coupon.api.coupon.application.CouponService;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueResult;
-import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueResponse;
+import dev.be.coupon.common.support.response.CommonResponse;
+import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
