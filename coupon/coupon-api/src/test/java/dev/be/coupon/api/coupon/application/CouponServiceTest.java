@@ -6,7 +6,6 @@ import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueResult;
 import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
 import dev.be.coupon.api.coupon.domain.CouponRepository;
-import dev.be.coupon.api.coupon.domain.FailedIssuedCouponRepository;
 import dev.be.coupon.api.coupon.domain.FakeUserRoleChecker;
 import dev.be.coupon.api.coupon.domain.IssuedCouponRepository;
 import dev.be.coupon.api.coupon.domain.exception.InvalidCouponTypeException;
@@ -66,9 +65,6 @@ class CouponServiceTest {
     private IssuedCouponRepository issuedCouponRepository;
 
     @Autowired
-    private FailedIssuedCouponRepository failedIssuedCouponRepository;
-
-    @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
     @Autowired
@@ -92,7 +88,6 @@ class CouponServiceTest {
                 couponIssueProducer,
                 issuedCouponRepository,
                 appliedUserRepository,
-                failedIssuedCouponRepository,
                 userRoleChecker
         );
     }
