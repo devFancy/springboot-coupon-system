@@ -1,4 +1,4 @@
-package dev.be.coupon.api.coupon.domain;
+package dev.be.coupon.domain.coupon;
 
 import java.util.Optional;
 import java.util.UUID;

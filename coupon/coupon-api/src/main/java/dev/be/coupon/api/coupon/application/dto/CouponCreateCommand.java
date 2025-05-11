@@ -1,7 +1,8 @@
 package dev.be.coupon.api.coupon.application.dto;
 
-import dev.be.coupon.api.coupon.domain.CouponTypeConverter;
-import dev.be.coupon.api.coupon.domain.Coupon;
+
+import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.domain.coupon.CouponTypeConverter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

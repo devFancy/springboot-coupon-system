@@ -1,4 +1,4 @@
-package dev.be.coupon.kafka.consumer.domain;
+package dev.be.coupon.domain.coupon;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,6 +9,22 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * FailedIssuedCoupon (발급 실패 이력)
+ * > 쿠폰 발급 처리 도중 실패한 이력을 저장하고, 추후 재처리 스케줄러에서 재시도하는 도메인입니다.
+ * <p>
+ * | 한글명       | 영문명     | 설명                                                         |
+ * |------------|----------|------------------------------------------------------------|
+ * | 실패 ID     | id       | 실패 이력의 고유 식별자 (UUID)                                     |
+ * | 사용자 ID   | userId   | 발급 실패가 발생한 사용자 식별자                                  |
+ * | 쿠폰 ID     | couponId | 발급에 실패한 쿠폰의 식별자                                      |
+ * | 실패 일시    | failedAt | 쿠폰 발급 실패가 발생한 시점                                     |
+ * | 재시도 횟수  | retryCount | 해당 실패 이력에 대해 재시도한 횟수                                 |
+ * | 해결 여부    | isResolved | 실패 건이 정상적으로 재처리되어 해결되었는지 여부 (`true` = 해결됨) |
+ * <p>
+ * 도메인 모듈(coupon-domain)에 위치하며,
+ * coupon-api, coupon-kafka-consumer 모듈에서 함께 사용됩니다.
+ */
 @Table(name = "failed_issued_coupons")
 @Entity
 public class FailedIssuedCoupon {

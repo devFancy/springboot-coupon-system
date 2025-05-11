@@ -1,11 +1,9 @@
-package dev.be.coupon.api.coupon.domain;
+package dev.be.coupon.domain.coupon;
 
-import deb.be.coupon.CouponStatus;
-import deb.be.coupon.CouponType;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponException;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponPeriodException;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponQuantityException;
-import dev.be.coupon.api.coupon.domain.vo.CouponName;
+import dev.be.coupon.domain.coupon.exception.InvalidCouponException;
+import dev.be.coupon.domain.coupon.exception.InvalidCouponPeriodException;
+import dev.be.coupon.domain.coupon.exception.InvalidCouponQuantityException;
+import dev.be.coupon.domain.coupon.vo.CouponName;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;

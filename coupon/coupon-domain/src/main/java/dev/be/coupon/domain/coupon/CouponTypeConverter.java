@@ -1,7 +1,6 @@
-package dev.be.coupon.api.coupon.domain;
+package dev.be.coupon.domain.coupon;
 
-import deb.be.coupon.CouponType;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponTypeException;
+import dev.be.coupon.domain.coupon.exception.InvalidCouponTypeException;
 
 public class CouponTypeConverter {
 

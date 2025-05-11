@@ -1,7 +1,7 @@
-package dev.be.coupon.kafka.consumer.infrastructure;
+package dev.be.coupon.domain.coupon.infrastructure;
 
-import dev.be.coupon.kafka.consumer.domain.FailedIssuedCoupon;
-import dev.be.coupon.kafka.consumer.domain.FailedIssuedCouponRepository;
+import dev.be.coupon.domain.coupon.FailedIssuedCoupon;
+import dev.be.coupon.domain.coupon.FailedIssuedCouponRepository;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

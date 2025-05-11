@@ -1,7 +1,8 @@
 package dev.be.coupon.api.coupon.application;
 
-import dev.be.coupon.api.coupon.domain.Coupon;
-import dev.be.coupon.api.coupon.domain.CouponRepository;
+
+import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.domain.coupon.CouponRepository;
 
 import java.util.Map;
 import java.util.Optional;

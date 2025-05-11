@@ -1,6 +1,6 @@
-package dev.be.coupon.api.coupon.domain.vo;
+package dev.be.coupon.domain.coupon.vo;
 
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponException;
+import dev.be.coupon.domain.coupon.exception.InvalidCouponException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import static java.util.Objects.isNull;

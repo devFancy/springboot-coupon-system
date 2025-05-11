@@ -1,4 +1,4 @@
-package dev.be.coupon.api.coupon.domain;
+package dev.be.coupon.domain.coupon;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,12 +27,10 @@ import java.util.UUID;
  */
 
 /**
- * IssuedCoupon 도메인은 coupon-api, coupon-kafka-consumer 양쪽에서 사용됩니다.
+ * 도메인 모듈(coupon-domain)에 위치하며,
+ * coupon-api, coupon-kafka-consumer 모듈에서 함께 사용됩니다.
  *
- * 현재 구조에서는 중복 정의 없이 하나의 도메인을 공유하고 있으며,
- * 추후 도메인 공유 구조 개선 또는 별도 모듈 분리를 고려할 수 있습니다.
- *
- * 예시. 추후 도메인 전용 모듈(coupon-domain)로 분리하여 도메인 계층을 통합 관리
+ * 중복 발급 방지를 위해 userId + couponId 조합에 대해 유니크 제약 조건이 적용됩니다.
  */
 @Table(name = "issued_coupons",
         uniqueConstraints = {

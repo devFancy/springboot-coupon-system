@@ -1,4 +1,6 @@
-package dev.be.coupon.api.coupon.domain;
+package dev.be.coupon.api.coupon.application;
+
+import dev.be.coupon.domain.coupon.UserRoleChecker;
 
 import java.util.UUID;
 

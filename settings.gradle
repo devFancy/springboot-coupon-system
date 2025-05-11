@@ -9,7 +9,7 @@ pluginManagement {
 rootProject.name = 'springboot-coupon-system'
 
 include("coupon:coupon-api")
-include("coupon:coupon-enum")
+include("coupon:coupon-domain")
 include("coupon:coupon-kafka-consumer")
 include("support:logging")
 include("support:monitoring")

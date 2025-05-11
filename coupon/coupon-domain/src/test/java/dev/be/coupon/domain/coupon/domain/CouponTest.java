@@ -1,10 +1,11 @@
-package dev.be.coupon.api.coupon.domain;
+package dev.be.coupon.domain.coupon.domain;
 
-import deb.be.coupon.CouponStatus;
-import deb.be.coupon.CouponType;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponException;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponPeriodException;
-import dev.be.coupon.api.coupon.domain.exception.InvalidCouponQuantityException;
+import dev.be.coupon.domain.coupon.CouponStatus;
+import dev.be.coupon.domain.coupon.CouponType;
+import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.domain.coupon.exception.InvalidCouponException;
+import dev.be.coupon.domain.coupon.exception.InvalidCouponPeriodException;
+import dev.be.coupon.domain.coupon.exception.InvalidCouponQuantityException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.DisplayName;

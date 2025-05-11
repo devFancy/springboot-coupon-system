@@ -1,7 +1,7 @@
-package dev.be.coupon.api.coupon.infrastructure.jpa;
+package dev.be.coupon.domain.coupon.infrastructure;
 
-import dev.be.coupon.api.coupon.domain.IssuedCoupon;
-import dev.be.coupon.api.coupon.domain.IssuedCouponRepository;
+import dev.be.coupon.domain.coupon.IssuedCoupon;
+import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

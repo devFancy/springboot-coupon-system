@@ -1,5 +1,6 @@
-package dev.be.coupon.api.coupon.domain;
+package dev.be.coupon.domain.coupon.domain;
 
+import dev.be.coupon.domain.coupon.IssuedCoupon;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
