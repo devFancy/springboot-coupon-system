@@ -1,6 +1,5 @@
 package dev.be.coupon.kafka.consumer;
 
-import dev.be.coupon.kafka.consumer.domain.FailedIssuedCouponRepository;
 import dev.be.coupon.kafka.consumer.domain.IssuedCouponRepository;
 import dev.be.coupon.kafka.consumer.dto.CouponIssueMessage;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,15 +22,13 @@ class CouponIssueConsumerTest {
     @Autowired
     private IssuedCouponRepository issuedCouponRepository;
 
-    @Autowired
-    private FailedIssuedCouponRepository failedIssuedCouponRepository;
 
     @Test
     @DisplayName("쿠폰 발급 메시지를 정상 처리하면 발급된 쿠폰 테이블에 저장된다")
     void success_save_issued_coupon_when_kafka_message_processed_successfully() throws Exception {
         // given
-        UUID userId = UUID.randomUUID();
-        UUID couponId = UUID.randomUUID();
+        final UUID userId = UUID.randomUUID();
+        final UUID couponId = UUID.randomUUID();
         CouponIssueMessage message = new CouponIssueMessage(userId, couponId);
 
         // when
