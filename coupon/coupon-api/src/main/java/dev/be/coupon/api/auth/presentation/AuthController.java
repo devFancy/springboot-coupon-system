@@ -6,7 +6,7 @@ import dev.be.coupon.api.auth.application.dto.AuthLoginCommand;
 import dev.be.coupon.api.auth.application.dto.AuthLoginResult;
 import dev.be.coupon.api.auth.presentation.dto.request.AuthLoginRequest;
 import dev.be.coupon.api.auth.presentation.dto.response.AuthLoginResponse;
-import dev.be.coupon.api.common.support.response.CommonResponse;
+import dev.be.coupon.common.support.response.CommonResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

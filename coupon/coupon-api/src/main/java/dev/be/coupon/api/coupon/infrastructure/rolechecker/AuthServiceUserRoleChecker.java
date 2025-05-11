@@ -1,7 +1,7 @@
 package dev.be.coupon.api.coupon.infrastructure.rolechecker;
 
 import dev.be.coupon.api.auth.application.AuthService;
-import dev.be.coupon.api.coupon.domain.UserRoleChecker;
+import dev.be.coupon.domain.coupon.UserRoleChecker;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

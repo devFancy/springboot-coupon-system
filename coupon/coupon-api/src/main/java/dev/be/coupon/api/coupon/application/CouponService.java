@@ -6,15 +6,15 @@ import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueResult;
 import dev.be.coupon.api.coupon.application.exception.CouponNotFoundException;
 import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
-import dev.be.coupon.api.coupon.domain.Coupon;
-import dev.be.coupon.api.coupon.domain.CouponRepository;
-import dev.be.coupon.api.coupon.domain.IssuedCouponRepository;
-import dev.be.coupon.api.coupon.domain.UserRoleChecker;
-import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
 import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.api.coupon.infrastructure.redis.AppliedUserRepository;
 import dev.be.coupon.api.coupon.infrastructure.redis.CouponCacheRepository;
 import dev.be.coupon.api.coupon.infrastructure.redis.CouponCountRedisRepository;
+import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.domain.coupon.CouponRepository;
+import dev.be.coupon.domain.coupon.IssuedCouponRepository;
+import dev.be.coupon.domain.coupon.UserRoleChecker;
+import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -81,8 +81,6 @@ public class CouponService {
      * - 발급은 Redis 기준으로 선검증 → Kafka 메시지 전송 → Consumer가 DB 저장
      * - RDB 부하 감소
      * <p>
-     * 5. 실패 처리: 예외 발생 시 FailedIssuedCoupon 엔티티에 실패 기록 저장
-     * - 향후 배치 프로그램을 통해 실패 건 재처리 또는 알림 시스템과 연계 가능
      */
     @Transactional
     public CouponIssueResult issue(final CouponIssueCommand command) {

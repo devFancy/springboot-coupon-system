@@ -1,6 +1,6 @@
 package dev.be.coupon.api.coupon.infrastructure.redis;
 
-import dev.be.coupon.api.coupon.domain.Coupon;
+import dev.be.coupon.domain.coupon.Coupon;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 

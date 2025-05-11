@@ -1,7 +1,8 @@
 package dev.be.coupon.api.auth.exception;
 
-import dev.be.coupon.api.common.support.error.CouponException;
-import dev.be.coupon.api.common.support.error.ErrorType;
+
+import dev.be.coupon.common.support.error.CouponException;
+import dev.be.coupon.common.support.error.ErrorType;
 
 public class InvalidTokenException extends CouponException {
 

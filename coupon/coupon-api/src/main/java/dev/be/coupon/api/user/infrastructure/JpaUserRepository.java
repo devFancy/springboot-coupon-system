@@ -1,6 +1,6 @@
 package dev.be.coupon.api.user.infrastructure;
 
-import deb.be.coupon.UserRole;
+import dev.be.coupon.domain.user.UserRole;
 import dev.be.coupon.api.user.domain.User;
 import dev.be.coupon.api.user.domain.UserRepository;
 import dev.be.coupon.api.user.domain.vo.Username;
