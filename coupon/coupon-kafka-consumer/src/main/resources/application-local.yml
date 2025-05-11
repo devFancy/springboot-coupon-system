@@ -10,3 +10,16 @@ spring:
       hibernate:
         format_sql: true
         show_sql: true
+
+  kafka:
+    consumer:
+      enable-auto-commit: false # 자동 커밋 비활성화 -> 수동 커밋 필요
+      max-poll-records: 100     # 한 번 poll() 할 때 최대 100개 메시지를 가져옴
+    listener:
+      ack-mode: manual          # 메시지 수신 후 수동으로 ack 해야 offset 커밋됨
+      default-error-handler:
+        recoverer:
+          type: dead-letter     # 실패 시 Dead Letter Queue(DLQ)로 메시지를 전송
+        backoff:
+          initialInterval: 10000 # 첫 재시도까지 10초 대기
+          maxAttempts: 5        # 최대 재시도 횟수 5회

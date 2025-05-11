@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/couponDB
+    username: root
+    password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      bootstrap-servers: localhost:9092
+      enable-auto-commit: false
+      max-poll-records: 100
+    listener:
+      ack-mode: manual
+      default-error-handler:
+        recoverer:
+          type: dead-letter
+        backoff:
+          initialInterval: 10000
+          maxAttempts: 5
