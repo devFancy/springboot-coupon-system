@@ -1,8 +1,8 @@
 package dev.be.coupon.api.auth.presentation;
 
-import dev.be.coupon.api.common.support.response.CommonResponse;
 import dev.be.coupon.api.auth.presentation.dto.request.AuthLoginRequest;
 import dev.be.coupon.api.auth.presentation.dto.response.AuthLoginResponse;
+import dev.be.coupon.common.support.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

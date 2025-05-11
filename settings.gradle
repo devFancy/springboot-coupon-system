@@ -13,4 +13,5 @@ include("coupon:coupon-domain")
 include("coupon:coupon-kafka-consumer")
 include("support:logging")
 include("support:monitoring")
+include("support:common")
 

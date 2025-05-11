@@ -2,10 +2,10 @@ package dev.be.coupon.api.coupon.presentation;
 
 import dev.be.coupon.api.auth.presentation.AuthenticationPrincipal;
 import dev.be.coupon.api.auth.presentation.dto.LoginUser;
-import dev.be.coupon.api.common.support.response.CommonResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueResponse;
+import dev.be.coupon.common.support.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
