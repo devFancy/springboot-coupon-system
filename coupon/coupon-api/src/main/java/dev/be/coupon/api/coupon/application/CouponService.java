@@ -8,8 +8,6 @@ import dev.be.coupon.api.coupon.application.exception.CouponNotFoundException;
 import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
 import dev.be.coupon.api.coupon.domain.Coupon;
 import dev.be.coupon.api.coupon.domain.CouponRepository;
-import dev.be.coupon.api.coupon.domain.FailedIssuedCoupon;
-import dev.be.coupon.api.coupon.domain.FailedIssuedCouponRepository;
 import dev.be.coupon.api.coupon.domain.IssuedCouponRepository;
 import dev.be.coupon.api.coupon.domain.UserRoleChecker;
 import dev.be.coupon.api.coupon.domain.exception.UnauthorizedAccessException;
@@ -34,7 +32,6 @@ public class CouponService {
     private final CouponIssueProducer couponIssueProducer;
     private final IssuedCouponRepository issuedCouponRepository;
     private final AppliedUserRepository appliedUserRepository;
-    private final FailedIssuedCouponRepository failedIssuedCouponRepository;
     private final UserRoleChecker userRoleChecker;
 
     private final Logger log = LoggerFactory.getLogger(CouponService.class);
@@ -45,7 +42,6 @@ public class CouponService {
                          final CouponIssueProducer couponIssueProducer,
                          final IssuedCouponRepository issuedCouponRepository,
                          final AppliedUserRepository appliedUserRepository,
-                         final FailedIssuedCouponRepository failedIssuedCouponRepository,
                          final UserRoleChecker userRoleChecker) {
         this.couponRepository = couponRepository;
         this.couponCacheRepository = couponCacheRepository;
@@ -53,7 +49,6 @@ public class CouponService {
         this.couponIssueProducer = couponIssueProducer;
         this.issuedCouponRepository = issuedCouponRepository;
         this.appliedUserRepository = appliedUserRepository;
-        this.failedIssuedCouponRepository = failedIssuedCouponRepository;
         this.userRoleChecker = userRoleChecker;
     }
 
@@ -89,7 +84,7 @@ public class CouponService {
      * 5. 실패 처리: 예외 발생 시 FailedIssuedCoupon 엔티티에 실패 기록 저장
      * - 향후 배치 프로그램을 통해 실패 건 재처리 또는 알림 시스템과 연계 가능
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public CouponIssueResult issue(final CouponIssueCommand command) {
         final UUID couponId = command.couponId();
         final UUID userId = command.userId();
@@ -122,13 +117,6 @@ public class CouponService {
             // [현재 - 비동기 처리]
             couponIssueProducer.issue(userId, couponId);
             return CouponIssueResult.success(userId, couponId);
-
-        } catch (Exception e) {
-            // 발급 실패 로그 기록 및 실패 이력 저장
-            // 향후 배치 프로그램 또는 알림 시스템을 통해 실패 건 재처리 또는 관리자에게 알림 가능
-            log.error("failed to issue coupon - userId: {}, couponId: {}", userId, couponId, e);
-            failedIssuedCouponRepository.save(new FailedIssuedCoupon(userId, couponId));
-            return CouponIssueResult.failure(userId, couponId);
 
         } finally {
             couponCountRedisRepository.releaseLock(lockKey);
