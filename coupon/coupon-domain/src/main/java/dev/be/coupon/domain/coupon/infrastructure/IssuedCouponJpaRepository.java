@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface IssuedCouponJpaRepository extends IssuedCouponRepository, JpaRepository<IssuedCoupon, UUID> {
@@ -18,4 +19,7 @@ public interface IssuedCouponJpaRepository extends IssuedCouponRepository, JpaRe
 
     @Override
     IssuedCoupon save(final IssuedCoupon issuedCoupon);
+
+    @Override
+    Optional<IssuedCoupon> findByUserIdAndCouponId(final UUID userId, final UUID couponId);
 }
