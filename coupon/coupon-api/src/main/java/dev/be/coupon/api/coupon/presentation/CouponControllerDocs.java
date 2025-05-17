@@ -9,12 +9,14 @@ import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
 import dev.be.coupon.common.support.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 import java.util.UUID;
 
@@ -31,6 +33,21 @@ public interface CouponControllerDocs {
     @Operation(
             summary = "쿠폰 생성",
             description = "관리자 권한이 있는 계정만 쿠폰을 생성할 수 있다."
+    )
+    @RequestBody(
+            description = "쿠폰 생성 요청 예시",
+            content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                            {
+                              "name": "치킨 할인 쿠폰",
+                              "type": "CHICKEN",
+                              "totalQuantity": 100,
+                              "validFrom": "2025-05-01T00:00:00",
+                              "validUntil": "2025-12-31T23:59:59"
+                            }
+                            """)
+            )
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "쿠폰 생성 성공"),

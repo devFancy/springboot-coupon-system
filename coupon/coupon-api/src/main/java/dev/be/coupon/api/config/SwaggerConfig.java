@@ -3,6 +3,7 @@ package dev.be.coupon.api.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
@@ -19,20 +20,27 @@ public class SwaggerConfig {
                 .addSecuritySchemes(
                         AUTHORIZATION,
                         new SecurityScheme()
-                                .name(AUTHORIZATION)
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
                                 .in(SecurityScheme.In.HEADER)
-                                .type(SecurityScheme.Type.APIKEY)
-                                .description("Bearer ${ACCESS_TOKEN}")
+                                .name(AUTHORIZATION)
+                                .description("(Bearer) ${ACCESS_TOKEN}")
                 );
+        SecurityRequirement securityRequirement = new SecurityRequirement().addList(AUTHORIZATION);
+
+
         return new OpenAPI()
                 .components(components)
+                .addSecurityItem(securityRequirement)
                 .addServersItem(new Server().url("http://localhost:8080"))
                 .info(getServerInfo());
     }
+
     private Info getServerInfo() {
         return new Info()
                 .title("[Coupon] Server API")
                 .description("[Coupon] Server API 명세서입니다.")
-                .version("0.0.1");
+                .version("0.2.0");
     }
 }
