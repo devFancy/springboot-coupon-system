@@ -1,2 +1,3 @@
 spring.application.name: coupon-kafka-consumer
 spring.profiles.active: local
+server.port: 8081

@@ -6,9 +6,12 @@ import dev.be.coupon.api.coupon.application.CouponService;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueResult;
+import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
+import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueResponse;
+import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
 import dev.be.coupon.common.support.response.CommonResponse;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import org.springframework.http.ResponseEntity;
@@ -57,5 +60,19 @@ public class CouponController implements CouponControllerDocs {
         CouponIssueResult result = couponService.issue(command);
         return ResponseEntity.created(URI.create("/api/coupon/" + result.couponId()))
                 .body(CommonResponse.success(CouponIssueResponse.from(result)));
+    }
+
+    @PostMapping(value = "/coupon/{couponId}/usage")
+    public ResponseEntity<CommonResponse<CouponUsageResponse>> usage(
+            @AuthenticationPrincipal final LoginUser loginUser,
+            @PathVariable final UUID couponId) {
+
+        if (loginUser == null || loginUser.id() == null) {
+            throw new UnauthorizedAccessException("로그인된 사용자만 쿠폰을 발급받을 수 있습니다.");
+        }
+
+        CouponUsageCommand command = new CouponUsageCommand(loginUser.id(), couponId);
+        CouponUsageResult result = couponService.usage(command);
+        return ResponseEntity.ok().body(CommonResponse.success(CouponUsageResponse.from(result)));
     }
 }

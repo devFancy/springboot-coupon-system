@@ -1,5 +1,6 @@
 package dev.be.coupon.domain.coupon;
 
+import dev.be.coupon.domain.coupon.exception.CouponAlreadyUsedException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -82,7 +83,7 @@ public class IssuedCoupon {
 
     public void use(final LocalDateTime usedAt) {
         if (this.used) {
-            throw new IllegalStateException("이미 사용된 쿠폰입니다.");
+            throw new CouponAlreadyUsedException("이미 사용된 쿠폰입니다.");
         }
         this.used = true;
         this.usedAt = usedAt;

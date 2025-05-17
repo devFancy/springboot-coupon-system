@@ -1,6 +1,7 @@
 package dev.be.coupon.domain.coupon;
 
 import dev.be.coupon.domain.coupon.exception.InvalidCouponException;
+import dev.be.coupon.domain.coupon.exception.CouponNotCurrentlyUsableException;
 import dev.be.coupon.domain.coupon.exception.InvalidCouponPeriodException;
 import dev.be.coupon.domain.coupon.exception.InvalidCouponQuantityException;
 import dev.be.coupon.domain.coupon.vo.CouponName;
@@ -27,7 +28,7 @@ import java.util.UUID;
  * | 쿠폰 이름 | couponName | 쿠폰 제목 또는 설명 |
  * | 쿠폰 타입 | couponType | `CHICKEN`, `PIZZA`, `BURGER` 등 |
  * | 발급 수량 | totalQuantity | 발급 가능한 총 수량 |
- * | 쿠폰 상태 | status | `ACTIVE`(사용 가능), `EXPIRED`(만료됨), `DISABLED`(비활성화) 등 |
+ * | 쿠폰 상태 | status | `PENDING`(대기), `ACTIVE`(사용 가능), `EXPIRED`(만료됨), `DISABLED`(비활성화) 등 |
  * | 유효 시작일 | validFrom | 사용 가능 시작일 |
  * | 유효 종료일 | validUntil | 만료일 |
  */
@@ -116,17 +117,27 @@ public class Coupon {
         if (validFrom.isAfter(validUntil)) {
             throw new InvalidCouponPeriodException("쿠폰의 유효 시작일은 만료일보다 이전이어야 합니다.");
         }
-
-        LocalDateTime now = LocalDateTime.now();
-        if (now.isBefore(validFrom) || now.isAfter(validUntil)) {
-            throw new InvalidCouponPeriodException("현재 시점은 쿠폰의 유효기간이 아닙니다.");
-        }
     }
 
     public void validateIssuable(final LocalDateTime now) {
         updateStatusBasedOnDate(now);
         if (this.couponStatus != CouponStatus.ACTIVE) {
             throw new InvalidCouponException("현재 쿠폰은 발급 가능한 상태가 아닙니다.");
+        }
+    }
+
+    /**
+     * 쿠폰이 현재 사용 가능한지 검증합니다.
+     * 상태를 업데이트하고, ACTIVE 상태가 아니거나 유효기간이 아니면 예외를 발생시킵니다.
+     */
+    public void validateCanBeUsed(final LocalDateTime now) {
+        updateStatusBasedOnDate(now);
+
+        if(this.couponStatus != CouponStatus.ACTIVE) {
+            throw new CouponNotCurrentlyUsableException("현재 쿠폰은 사용 가능한 상태가 아닙니다. 상태: " + this.couponStatus);
+        }
+        if (now.isBefore(validFrom) || now.isAfter(validUntil)) {
+            throw new CouponNotCurrentlyUsableException("현재 시각(" + now + ")이 쿠폰 유효 기간(From: " + validFrom + ", Until: " + validUntil + ")에 해당하지 않습니다.");
         }
     }
 
@@ -143,7 +154,6 @@ public class Coupon {
     private void updateStatusBasedOnDate(final LocalDateTime now) {
         this.couponStatus = CouponStatus.decideStatus(now, validFrom, validUntil);
     }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
