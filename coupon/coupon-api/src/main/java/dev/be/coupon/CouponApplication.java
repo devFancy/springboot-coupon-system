@@ -7,7 +7,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication(scanBasePackages = {
         "dev.be.coupon.api",
-        "dev.be.coupon.domain"
+        "dev.be.coupon.domain",
+        "dev.be.coupon.common"
 })
 @EnableJpaRepositories(basePackages = {
         "dev.be.coupon.api",
