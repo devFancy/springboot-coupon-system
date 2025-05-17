@@ -65,6 +65,11 @@ public enum ErrorType {
             "존재하지 않는 쿠폰입니다.",
             LogLevel.WARN),
 
+    NOTFOUND_ISSUED_COUPON(HttpStatus.NOT_FOUND,
+            ErrorCode.E404,
+            "발급되지 않았거나 소유하지 않은 쿠폰입니다.",
+            LogLevel.WARN),
+
     UNAUTHORIZED_ACCESS(
             HttpStatus.UNAUTHORIZED,
             ErrorCode.E403,
