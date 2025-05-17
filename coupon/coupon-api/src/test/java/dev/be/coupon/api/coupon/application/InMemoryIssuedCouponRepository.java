@@ -5,6 +5,7 @@ import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,5 +30,12 @@ public class InMemoryIssuedCouponRepository implements IssuedCouponRepository {
     public IssuedCoupon save(final IssuedCoupon issuedCoupon) {
         issuedCoupons.put(issuedCoupon.getId(), issuedCoupon);
         return issuedCoupon;
+    }
+
+    @Override
+    public Optional<IssuedCoupon> findByUserIdAndCouponId(final UUID userId, final UUID couponId) {
+        return issuedCoupons.values().stream()
+                .filter(ic -> ic.getUserId().equals(userId) && ic.getCouponId().equals(couponId))
+                .findFirst();
     }
 }

@@ -66,15 +66,15 @@
 
 > 쿠폰 발급의 템플릿을 정의하고, 쿠폰의 속성 및 정책을 관리하는 도메인입니다.
 
-| 한글명    | 영문명           | 설명                                          |
-| ------ | ------------- | ------------------------------------------- |
-| 쿠폰 ID  | couponId      | 쿠폰 정의의 고유 식별자 (UUID)                        |
-| 쿠폰 이름  | name          | 쿠폰 제목 또는 설명                                 |
-| 쿠폰 타입  | couponType    | CHICKEN, PIZZA, BURGER 등                    |
-| 발급 수량  | totalQuantity | 발급 가능한 총 수량                                 |
-| 유효 시작일 | validFrom     | 사용 가능 시작일                                   |
-| 유효 종료일 | validUntil    | 만료일                                         |
-| 쿠폰 상태  | status        | ACTIVE(사용 가능), EXPIRED(만료됨), DISABLED(비활성화) |
+| 한글명    | 영문명           | 설명                                                       |
+| ------ | ------------- |----------------------------------------------------------|
+| 쿠폰 ID  | couponId      | 쿠폰 정의의 고유 식별자 (UUID)                                     |
+| 쿠폰 이름  | name          | 쿠폰 제목 또는 설명                                              |
+| 쿠폰 타입  | couponType    | CHICKEN, PIZZA, BURGER 등                                 |
+| 발급 수량  | totalQuantity | 발급 가능한 총 수량                                              |
+| 유효 시작일 | validFrom     | 사용 가능 시작일                                                |
+| 유효 종료일 | validUntil    | 만료일                                                      |
+| 쿠폰 상태  | status        | PENDING(대기), ACTIVE(사용 가능), EXPIRED(만료됨), DISABLED(비활성화) |
 
 ### IssuedCoupon (발급된 쿠폰)
 
@@ -164,7 +164,7 @@
 
 * 쿠폰에는 쿠폰 이름, 쿠폰 타입, 쿠폰 상태, 발급 수량, 유효 시작일, 유효 종료일가 있다.
   * 쿠폰 타입에는 치킨(`CHICKEN`), 햄버거(`HAMBURGER`), 피자(`PIZZA`)가 있다.
-  * 쿠폰 상태는 `ACTIVE`(사용 가능), `EXPIRED`(사용됨), `DISABLED`(사용 불가)가 있다.
+  * 쿠폰 상태는 `PENDING`(대기), `ACTIVE`(사용 가능), `EXPIRED`(사용됨), `DISABLED`(사용 불가)가 있다.
 
 행위(기능)
 

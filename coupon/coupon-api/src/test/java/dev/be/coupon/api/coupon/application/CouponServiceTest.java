@@ -4,7 +4,10 @@ import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueResult;
+import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
+import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
+import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
 import dev.be.coupon.api.coupon.infrastructure.kafka.dto.CouponIssueMessage;
 import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.api.coupon.infrastructure.redis.AppliedUserRepository;
@@ -12,6 +15,7 @@ import dev.be.coupon.api.coupon.infrastructure.redis.CouponCacheRepository;
 import dev.be.coupon.api.coupon.infrastructure.redis.CouponCountRedisRepository;
 import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
+import dev.be.coupon.domain.coupon.exception.CouponAlreadyUsedException;
 import dev.be.coupon.domain.coupon.exception.InvalidCouponTypeException;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -386,5 +390,88 @@ class CouponServiceTest {
         assertThat(countValue).isEqualTo("100");
 
         System.out.println("Kafka 메시지 100건 발송 및 Redis 발급 수량 확인 완료");
+    }
+
+    @DisplayName("쿠폰을 사용하면 사용 처리된다.")
+    @Test
+    void success_coupon_usage() throws InterruptedException {
+        // given
+        final UUID adminId = UUID.randomUUID();
+        final UUID userId = UUID.randomUUID();
+        final LocalDateTime now = LocalDateTime.now();
+
+        final UUID couponId = createAndIssueCoupon(
+                adminId, userId, "치킨 쿠폰", "CHICKEN", 10, now.minusDays(1), now.plusDays(1)
+        );
+
+        // when
+        final CouponUsageResult result = couponService.usage(new CouponUsageCommand(userId, couponId));
+
+        // then
+        assertThat(result.userId()).isEqualTo(userId);
+        assertThat(result.couponId()).isEqualTo(couponId);
+        assertThat(result.used()).isTrue();
+        assertThat(result.usedAt()).isNotNull();
+    }
+
+    @DisplayName("발급받지 않은 쿠폰을 사용하려고 하면 예외가 발생한다.")
+    @Test
+    void should_throw_exception_when_coupon_not_issued() throws InterruptedException {
+        // given
+        final UUID adminId = UUID.randomUUID();
+        final UUID userId = UUID.randomUUID();
+        final UUID otherUserId = UUID.randomUUID();
+        final LocalDateTime now = LocalDateTime.now();
+
+        // when
+        final UUID couponId = createAndIssueCoupon(
+                adminId, userId, "치킨 쿠폰", "CHICKEN", 10, now.minusDays(1), now.plusDays(1)
+        );
+
+        // then
+        assertThatThrownBy(() -> couponService.usage(new CouponUsageCommand(otherUserId, couponId)))
+                .isInstanceOf(IssuedCouponNotFoundException.class)
+                .hasMessage("발급되지 않았거나 소유하지 않은 쿠폰입니다.");
+
+    }
+
+    @DisplayName("이미 사용한 쿠폰을 다시 사용하면 예외가 발생한다.")
+    @Test
+    void should_throw_exception_when_coupon_already_used() throws InterruptedException {
+        // given
+        final UUID adminId = UUID.randomUUID();
+        final UUID userId = UUID.randomUUID();
+        final LocalDateTime now = LocalDateTime.now();
+
+        final UUID couponId = createAndIssueCoupon(
+                adminId, userId, "치킨 쿠폰", "CHICKEN", 1, now.minusDays(1), now.plusDays(1)
+        );
+
+        // when
+        couponService.usage(new CouponUsageCommand(userId, couponId));
+
+        // then
+        assertThatThrownBy(() -> couponService.usage(new CouponUsageCommand(userId, couponId)))
+                .isInstanceOf(CouponAlreadyUsedException.class)
+                .hasMessage("이미 사용된 쿠폰입니다.");
+
+    }
+
+    private UUID createAndIssueCoupon(final UUID adminId, final UUID userId,
+                                      final String name, final String type, final int quantity,
+                                      final LocalDateTime validFrom, final LocalDateTime validUntil) throws InterruptedException {
+        // 1. 쿠폰 생성
+        final UUID couponId = couponService.create(new CouponCreateCommand(
+                adminId, name, type, quantity, validFrom, validUntil
+        )).id();
+
+        // 2. 쿠폰 발급
+        final CouponIssueResult issued = couponService.issue(new CouponIssueCommand(userId, couponId));
+        assertThat(issued.used()).isFalse();
+
+        // 3. Kafka Consumer 가 비동기로 쿠폰 발급을 저장하는 동안 대기
+        Thread.sleep(5000);
+
+        return couponId;
     }
 }
