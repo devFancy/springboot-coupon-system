@@ -14,10 +14,3 @@ spring:
   kafka:
     listener:
       ack-mode: manual
-      default-error-handler:
-        recoverer:
-          type: dead-letter
-          dead-letter-topic-name: coupon_issue.DLT
-        backoff:
-          initialInterval: 10000
-          maxAttempts: 5
