@@ -6,6 +6,6 @@ import dev.be.coupon.common.support.error.ErrorType;
 public class CouponNotCurrentlyUsableException extends CouponException {
 
     public CouponNotCurrentlyUsableException(final Object data) {
-        super(ErrorType.INVALID_COUPON_NOT_CURRENTLY_USABLE, data);
+        super(ErrorType.INVALID_COUPON_USAGE_STATUS, data);
     }
 }

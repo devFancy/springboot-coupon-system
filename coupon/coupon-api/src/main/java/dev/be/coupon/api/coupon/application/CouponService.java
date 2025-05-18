@@ -101,7 +101,7 @@ public class CouponService {
 
         try {
             final Coupon coupon = loadCouponWithCaching(couponId);
-            coupon.validateIssuable(LocalDateTime.now());
+            coupon.validateIssuableStatus(LocalDateTime.now());
 
             CouponIssueResult duplicateResult = validateDuplicateIssue(couponId, userId);
             if (duplicateResult != null) {
@@ -184,7 +184,7 @@ public class CouponService {
                 });
 
         Coupon coupon = loadCouponWithCaching(issuedCoupon.getCouponId());
-        coupon.validateCanBeUsed(now);
+        coupon.validateUsableStatus(now);
 
         issuedCoupon.use(now);
         issuedCouponRepository.save(issuedCoupon);
