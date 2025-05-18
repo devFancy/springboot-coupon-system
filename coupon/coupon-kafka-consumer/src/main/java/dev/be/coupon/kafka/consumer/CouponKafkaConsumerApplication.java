@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication(scanBasePackages = {
 		"dev.be.coupon.kafka.consumer",
-		"dev.be.coupon.domain",
+		"dev.be.coupon.domain.coupon",
 		"dev.be.coupon.common"
 })
 @EnableJpaRepositories(basePackages = {
