@@ -8,19 +8,19 @@ export const options = {
         constant_requesters: {
             executor: 'constant-vus',
             vus: 1000,
-            duration: '60s',
+            duration: '100s',
         },
     },
     thresholds: {
         http_req_failed: ['rate<0.05'],
-        http_req_duration: ['p(95)<1500'],
+        http_req_duration: ['p(95)<1000'],
     },
 };
 
 const couponId = '4f3db4eb-21d3-44db-abca-7ac43df1ab55'; // 쿠폰 ID
 
 export default function () {
-    sleep(5);
+    sleep(2);
 
     const userId = uuidv4();
     const url = `http://localhost:8080/api/coupon/${couponId}/issue/test?userId=${userId}`;
