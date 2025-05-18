@@ -2,11 +2,11 @@ package dev.be.coupon.api.user.application;
 
 import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.application.dto.UserSignUpResult;
-import dev.be.coupon.api.user.domain.User;
-import dev.be.coupon.api.user.domain.UserRepository;
-import dev.be.coupon.api.user.domain.exception.InvalidUserException;
-import dev.be.coupon.api.user.domain.vo.PasswordHasher;
-import dev.be.coupon.api.user.domain.vo.Username;
+import dev.be.coupon.domain.user.User;
+import dev.be.coupon.domain.user.UserRepository;
+import dev.be.coupon.domain.user.exception.InvalidUserException;
+import dev.be.coupon.domain.user.vo.PasswordHasher;
+import dev.be.coupon.domain.user.vo.Username;
 import org.springframework.stereotype.Service;
 
 /**

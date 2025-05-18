@@ -1,7 +1,7 @@
-package dev.be.coupon.api.user.domain;
+package dev.be.coupon.domain.user;
 
-import dev.be.coupon.api.user.domain.vo.PasswordHasher;
-import dev.be.coupon.api.user.domain.vo.Username;
+import dev.be.coupon.domain.user.vo.PasswordHasher;
+import dev.be.coupon.domain.user.vo.Username;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;

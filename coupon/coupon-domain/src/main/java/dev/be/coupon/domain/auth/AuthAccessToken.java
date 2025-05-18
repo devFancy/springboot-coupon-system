@@ -1,4 +1,4 @@
-package dev.be.coupon.api.auth.domain;
+package dev.be.coupon.domain.auth;
 
 public class AuthAccessToken {
 

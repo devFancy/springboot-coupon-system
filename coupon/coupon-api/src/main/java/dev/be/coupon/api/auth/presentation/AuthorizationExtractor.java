@@ -1,7 +1,7 @@
 package dev.be.coupon.api.auth.presentation;
 
-import dev.be.coupon.api.auth.exception.EmptyAuthorizationHeaderException;
-import dev.be.coupon.api.auth.exception.InvalidTokenException;
+import dev.be.coupon.api.auth.presentation.exception.EmptyAuthorizationHeaderException;
+import dev.be.coupon.api.auth.application.exception.InvalidTokenException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 

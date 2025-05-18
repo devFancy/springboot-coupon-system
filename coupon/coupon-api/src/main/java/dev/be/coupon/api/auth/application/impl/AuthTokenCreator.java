@@ -2,7 +2,7 @@ package dev.be.coupon.api.auth.application.impl;
 
 import dev.be.coupon.api.auth.application.TokenCreator;
 import dev.be.coupon.api.auth.application.TokenProvider;
-import dev.be.coupon.api.auth.domain.AuthAccessToken;
+import dev.be.coupon.domain.auth.AuthAccessToken;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

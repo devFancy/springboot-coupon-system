@@ -1,9 +1,9 @@
 package dev.be.coupon.api.user.application;
 
 import dev.be.coupon.domain.user.UserRole;
-import dev.be.coupon.api.user.domain.User;
-import dev.be.coupon.api.user.domain.UserRepository;
-import dev.be.coupon.api.user.domain.vo.Username;
+import dev.be.coupon.domain.user.User;
+import dev.be.coupon.domain.user.UserRepository;
+import dev.be.coupon.domain.user.vo.Username;
 
 import java.util.HashMap;
 import java.util.Map;

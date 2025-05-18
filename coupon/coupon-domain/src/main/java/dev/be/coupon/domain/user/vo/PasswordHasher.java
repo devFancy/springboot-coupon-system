@@ -1,4 +1,4 @@
-package dev.be.coupon.api.user.domain.vo;
+package dev.be.coupon.domain.user.vo;
 
 public interface PasswordHasher {
     String encrypt(final String password);

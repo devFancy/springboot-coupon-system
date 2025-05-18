@@ -2,9 +2,9 @@ package dev.be.coupon.api.user.application;
 
 import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.application.dto.UserSignUpResult;
-import dev.be.coupon.api.user.domain.UserRepository;
-import dev.be.coupon.api.user.domain.exception.InvalidUserException;
-import dev.be.coupon.api.user.domain.vo.PasswordHasher;
+import dev.be.coupon.domain.user.UserRepository;
+import dev.be.coupon.domain.user.exception.InvalidUserException;
+import dev.be.coupon.domain.user.vo.PasswordHasher;
 import dev.be.coupon.api.user.infrastructure.FakePasswordHasherClient;
 import org.assertj.core.api.Assertions;
 import static org.assertj.core.api.Assertions.assertThat;

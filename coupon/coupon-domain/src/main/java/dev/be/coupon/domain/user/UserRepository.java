@@ -1,7 +1,7 @@
-package dev.be.coupon.api.user.domain;
+package dev.be.coupon.domain.user;
 
-import dev.be.coupon.api.user.domain.exception.InvalidUserException;
-import dev.be.coupon.api.user.domain.vo.Username;
+import dev.be.coupon.domain.user.exception.InvalidUserException;
+import dev.be.coupon.domain.user.vo.Username;
 
 import java.util.Optional;
 import java.util.UUID;

@@ -1,9 +1,8 @@
-package dev.be.coupon.api.user.domain;
+package dev.be.coupon.domain.user;
 
-import dev.be.coupon.domain.user.UserRole;
-import dev.be.coupon.api.user.domain.vo.Password;
-import dev.be.coupon.api.user.domain.vo.PasswordHasher;
-import dev.be.coupon.api.user.domain.vo.Username;
+import dev.be.coupon.domain.user.vo.Password;
+import dev.be.coupon.domain.user.vo.PasswordHasher;
+import dev.be.coupon.domain.user.vo.Username;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;

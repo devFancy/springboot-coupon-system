@@ -1,7 +1,7 @@
 package dev.be.coupon.api.auth.application.impl;
 
 import dev.be.coupon.api.auth.application.TokenProvider;
-import dev.be.coupon.api.auth.exception.InvalidTokenException;
+import dev.be.coupon.api.auth.application.exception.InvalidTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
