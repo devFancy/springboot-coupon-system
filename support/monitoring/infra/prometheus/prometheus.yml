@@ -7,4 +7,10 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: [ 'host.docker.internal:8080' ]
+      - targets: [ 'host.docker.internal:8082' ]
+
+# Spring Boot 애플리케이션의 메트릭 엔드포인트(/actuator/prometheus)를 8082 포트에서 노출하도록 설정
+# monitoring.yml 내 management.server.port = 8082 설정 추가
+# prometheus.yml 에서 scrape 대상 포트를 host.docker.internal:8082로 수정
+# 애플리케이션 서비스 포트(8080)와 분리하여 운영 트래픽과 모니터링 트래픽을 분리하기 위함
+# 예시 URL: http://localhost:8082/actuator/prometheus
