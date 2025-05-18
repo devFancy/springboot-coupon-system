@@ -62,6 +62,17 @@ public class CouponController implements CouponControllerDocs {
                 .body(CommonResponse.success(CouponIssueResponse.from(result)));
     }
 
+    @PostMapping(value = "/coupon/{couponId}/issue/test")
+    public ResponseEntity<CommonResponse<CouponIssueResponse>> issue(
+            @RequestBody final UUID userId,
+            @PathVariable final UUID couponId) {
+
+        CouponIssueCommand command = new CouponIssueCommand(userId, couponId);
+        CouponIssueResult result = couponService.issue(command);
+        return ResponseEntity.created(URI.create("/api/coupon/" + result.couponId()))
+                .body(CommonResponse.success(CouponIssueResponse.from(result)));
+    }
+
     @PostMapping(value = "/coupon/{couponId}/usage")
     public ResponseEntity<CommonResponse<CouponUsageResponse>> usage(
             @AuthenticationPrincipal final LoginUser loginUser,
