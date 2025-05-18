@@ -18,6 +18,8 @@ services:
       - "9090:9090"
     volumes:
       - ./support/monitoring/infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    environment:
+      - TZ=Asia/Seoul
 
   grafana:
     image: grafana/grafana:latest
@@ -27,6 +29,8 @@ services:
     volumes:
       - ./support/monitoring/infra/grafana/dashboards:/etc/grafana/provisioning/dashboards
       - ./support/monitoring/infra/grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - TZ=Asia/Seoul
 
   influxdb:
     image: influxdb:1.8
@@ -34,6 +38,7 @@ services:
     ports:
       - "8086:8086"
     environment:
+      - TZ=Asia/Seoul
       - INFLUXDB_DB=k6
       - INFLUXDB_ADMIN_USER=admin
       - INFLUXDB_ADMIN_PASSWORD=admin1234
