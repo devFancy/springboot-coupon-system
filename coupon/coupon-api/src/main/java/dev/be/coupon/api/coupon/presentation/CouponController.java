@@ -10,6 +10,7 @@ import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
+import dev.be.coupon.api.coupon.presentation.dto.CouponIssueRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
 import dev.be.coupon.common.support.response.CommonResponse;
@@ -64,10 +65,10 @@ public class CouponController implements CouponControllerDocs {
 
     @PostMapping(value = "/coupon/{couponId}/issue/test")
     public ResponseEntity<CommonResponse<CouponIssueResponse>> issue(
-            @RequestBody final UUID userId,
+            @RequestBody final CouponIssueRequest request,
             @PathVariable final UUID couponId) {
 
-        CouponIssueCommand command = new CouponIssueCommand(userId, couponId);
+        CouponIssueCommand command = new CouponIssueCommand(request.userId(), couponId);
         CouponIssueResult result = couponService.issue(command);
         return ResponseEntity.created(URI.create("/api/coupon/" + result.couponId()))
                 .body(CommonResponse.success(CouponIssueResponse.from(result)));
