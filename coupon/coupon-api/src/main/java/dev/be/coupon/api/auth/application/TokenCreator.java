@@ -1,7 +1,7 @@
 package dev.be.coupon.api.auth.application;
 
 
-import dev.be.coupon.api.auth.domain.AuthAccessToken;
+import dev.be.coupon.domain.auth.AuthAccessToken;
 
 import java.util.UUID;
 

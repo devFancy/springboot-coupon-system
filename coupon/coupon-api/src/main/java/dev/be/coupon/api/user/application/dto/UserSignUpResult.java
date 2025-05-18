@@ -1,6 +1,6 @@
 package dev.be.coupon.api.user.application.dto;
 
-import dev.be.coupon.api.user.domain.User;
+import dev.be.coupon.domain.user.User;
 
 import java.util.UUID;
 

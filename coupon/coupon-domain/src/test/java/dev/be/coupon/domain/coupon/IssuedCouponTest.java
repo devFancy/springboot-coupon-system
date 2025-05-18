@@ -1,6 +1,6 @@
-package dev.be.coupon.domain.coupon.domain;
+package dev.be.coupon.domain.coupon;
 
-import dev.be.coupon.domain.coupon.IssuedCoupon;
+import dev.be.coupon.domain.coupon.exception.CouponAlreadyUsedException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -61,7 +61,7 @@ class IssuedCouponTest {
         coupon.use(usedAt);
 
         assertThatThrownBy(() -> coupon.use(LocalDateTime.now().plusMinutes(1)))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(CouponAlreadyUsedException.class)
                 .hasMessage("이미 사용된 쿠폰입니다.");
     }
 }

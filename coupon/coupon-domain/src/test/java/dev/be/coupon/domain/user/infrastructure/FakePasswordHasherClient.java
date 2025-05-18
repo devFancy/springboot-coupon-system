@@ -1,4 +1,4 @@
-package dev.be.coupon.api.user.infrastructure;
+package dev.be.coupon.domain.user.infrastructure;
 
 import dev.be.coupon.domain.user.vo.PasswordHasher;
 

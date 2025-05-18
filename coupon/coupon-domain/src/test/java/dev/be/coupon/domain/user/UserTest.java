@@ -1,10 +1,10 @@
-package dev.be.coupon.api.user.domain;
+package dev.be.coupon.domain.user;
 
-import dev.be.coupon.api.user.domain.exception.InvalidUserException;
-import dev.be.coupon.api.user.domain.vo.Password;
-import dev.be.coupon.api.user.domain.vo.PasswordHasher;
-import dev.be.coupon.api.user.domain.vo.Username;
-import dev.be.coupon.api.user.infrastructure.BCryptPasswordHasher;
+import dev.be.coupon.domain.user.exception.InvalidUserException;
+import dev.be.coupon.domain.user.infrastructure.FakePasswordHasherClient;
+import dev.be.coupon.domain.user.vo.Password;
+import dev.be.coupon.domain.user.vo.PasswordHasher;
+import dev.be.coupon.domain.user.vo.Username;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 class UserTest {
 
@@ -23,8 +21,7 @@ class UserTest {
 
     @BeforeEach
     void setUp() {
-        PasswordEncoder encoder = new BCryptPasswordEncoder();
-        passwordHasher = new BCryptPasswordHasher(encoder);
+        passwordHasher = new FakePasswordHasherClient();
     }
 
     @DisplayName("사용자의 이름과 비밀번호를 입력하면 사용자가 생성된다.")

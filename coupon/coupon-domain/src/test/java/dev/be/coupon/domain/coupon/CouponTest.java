@@ -1,4 +1,4 @@
-package dev.be.coupon.domain.coupon.domain;
+package dev.be.coupon.domain.coupon;
 
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponStatus;

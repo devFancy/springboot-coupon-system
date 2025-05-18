@@ -1,6 +1,6 @@
 package dev.be.coupon.api.user.infrastructure;
 
-import dev.be.coupon.api.user.domain.vo.PasswordHasher;
+import dev.be.coupon.domain.user.vo.PasswordHasher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 

@@ -1,4 +1,4 @@
-package dev.be.coupon.api.auth.exception;
+package dev.be.coupon.api.auth.presentation.exception;
 
 
 import dev.be.coupon.common.support.error.CouponException;

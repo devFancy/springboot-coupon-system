@@ -3,12 +3,12 @@ package dev.be.coupon.api.auth.application;
 
 import dev.be.coupon.api.auth.application.dto.AuthLoginCommand;
 import dev.be.coupon.api.auth.application.dto.AuthLoginResult;
-import dev.be.coupon.api.auth.domain.AuthAccessToken;
-import dev.be.coupon.api.user.domain.User;
-import dev.be.coupon.api.user.domain.UserRepository;
-import dev.be.coupon.api.user.domain.exception.InvalidUserException;
-import dev.be.coupon.api.user.domain.vo.PasswordHasher;
-import dev.be.coupon.api.user.domain.vo.Username;
+import dev.be.coupon.domain.auth.AuthAccessToken;
+import dev.be.coupon.domain.user.User;
+import dev.be.coupon.domain.user.UserRepository;
+import dev.be.coupon.domain.user.exception.InvalidUserException;
+import dev.be.coupon.domain.user.vo.PasswordHasher;
+import dev.be.coupon.domain.user.vo.Username;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,4 +1,4 @@
-package dev.be.coupon.api.user.domain.exception;
+package dev.be.coupon.domain.user.exception;
 
 
 import dev.be.coupon.common.support.error.CouponException;
