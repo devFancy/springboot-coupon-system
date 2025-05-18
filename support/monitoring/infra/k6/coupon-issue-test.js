@@ -1,7 +1,7 @@
 import http from 'k6/http';
 import {check} from 'k6';
 import {uuidv4} from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
-import { sleep } from 'k6';
+import {sleep} from 'k6';
 
 export const options = {
     scenarios: {
@@ -23,8 +23,9 @@ export default function () {
     sleep(2);
 
     const userId = uuidv4();
-    const url = `http://localhost:8080/api/coupon/${couponId}/issue/test?userId=${userId}`;
+    const url = `http://localhost:8080/api/coupon/${couponId}/issue/test`;
     const headers = {'Content-Type': 'application/json'};
+    const payload = JSON.stringify({userId});
 
     const res = http.post(url, null, {headers});
 

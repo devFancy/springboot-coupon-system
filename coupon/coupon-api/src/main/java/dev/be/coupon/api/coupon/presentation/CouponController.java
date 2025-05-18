@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -65,7 +64,7 @@ public class CouponController implements CouponControllerDocs {
 
     @PostMapping(value = "/coupon/{couponId}/issue/test")
     public ResponseEntity<CommonResponse<CouponIssueResponse>> issue(
-            @RequestParam final UUID userId,
+            @RequestBody final UUID userId,
             @PathVariable final UUID couponId) {
 
         CouponIssueCommand command = new CouponIssueCommand(userId, couponId);
