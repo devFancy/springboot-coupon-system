@@ -50,7 +50,17 @@ public enum ErrorType {
             "발급된 쿠폰 관련 부분에서 예외가 발생했습니다.",
             LogLevel.WARN),
 
-    INVALID_COUPON_NOT_CURRENTLY_USABLE(HttpStatus.BAD_REQUEST,
+    INVALID_COUPON_STATUS(HttpStatus.BAD_REQUEST,
+            ErrorCode.E400,
+            "쿠폰 상태가 활성 상태가 아닙니다.",
+            LogLevel.WARN),
+
+    INVALID_COUPON_ISSUABLE(HttpStatus.BAD_REQUEST,
+            ErrorCode.E400,
+            "현재 쿠폰은 발급 가능한 상태가 아닙니다.",
+            LogLevel.WARN),
+
+    INVALID_COUPON_USAGE_STATUS(HttpStatus.BAD_REQUEST,
             ErrorCode.E400,
             "현재 쿠폰은 사용 가능한 상태가 아닙니다.",
             LogLevel.WARN),
