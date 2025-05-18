@@ -11,12 +11,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "dev.be.coupon.common"
 })
 @EnableJpaRepositories(basePackages = {
-        "dev.be.coupon.api",
-        "dev.be.coupon.domain.coupon.infrastructure"
+        "dev.be.coupon.domain.user.infrastructure",
+        "dev.be.coupon.domain.coupon.infrastructure",
 })
 @EntityScan(basePackages = {
-        "dev.be.coupon.api.auth.domain",
-        "dev.be.coupon.api.user.domain",
+        "dev.be.coupon.domain.user",
         "dev.be.coupon.domain.coupon"
 })
 public class CouponApplication {
