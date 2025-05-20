@@ -1,2 +1,31 @@
 spring.application.name: coupon-kafka-consumer
 spring.profiles.active: test
+
+spring:
+  config:
+    import:
+      - monitoring.yml
+      - logging.yml
+  web.resources.add-mappings: false
+
+server:
+  tomcat:
+    max-connections: 20000
+    threads:
+      max: 600
+      min-spare: 100
+
+---
+spring.config.activate.on-profile: local
+
+
+---
+spring.config.activate.on-profile: dev
+
+
+---
+spring.config.activate.on-profile: staging
+
+
+---
+spring.config.activate.on-profile: live

@@ -4,6 +4,7 @@ jar.enabled = true
 dependencies {
 	implementation project(":coupon:coupon-domain")
 	implementation project(":support:logging")
+	implementation project(":support:monitoring")
 
 	// spring
 	implementation 'org.springframework.boot:spring-boot-starter'
