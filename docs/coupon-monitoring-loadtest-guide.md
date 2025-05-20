@@ -64,25 +64,21 @@ docker compose up -d # Redis, Kafka, Prometheus, Grafana, InfluxDB 등 포함
 
 ### Dashboards
 
-- Prometheus
-  - 위치: `Home > Dashboards > TPS, Response Time for Coupon Issue`
+- Prometheus 기반 대시보드 지표
+  - 위치: `Home > Dashboards > coupon > Coupon Issue - Prometheus Dashboard`
   - TPS (초당 요청 수, req/s)
-    - rate(http_server_requests_seconds_count{uri="/api/coupon/{couponId}/issue/test"}[1m])
+    - rate(http_server_requests_seconds_count{uri=~"/api/coupon/.*/issue/test"}[1m])
   - 평균 응답 시간 (ms)
-    - rate(http_server_requests_seconds_sum{uri="/api/coupon/{couponId}/issue/test"}[1m]) 
-      / rate(http_server_requests_seconds_count{uri="/api/coupon/{couponId}/issue/test"}[1m]) * 1000
+    - (rate(http_server_requests_seconds_sum{uri=~"/api/coupon/.*/issue/test"}[1m]) / rate(http_server_requests_seconds_count{uri=~"/api/coupon/.*/issue/test"}[1m])) * 1000
   - 에러율 (5xx 비율, %)
-    - 100 * rate(http_server_requests_seconds_count{uri="/api/coupon/{couponId}/issue/test",status=~"5.."}[1m])
-      / rate(http_server_requests_seconds_count{uri="/api/coupon/{couponId}/issue/test"}[1m])
+    - 100 * rate(http_server_requests_seconds_count{uri=~"/api/coupon/.*/issue/test",status=~"5.."}[1m]) / rate(http_server_requests_seconds_count{uri=~"/api/coupon/.*/issue/test"}[1m])
     - 의미: 전체 요청 대비 5xx 응답 비율
 
-- InfluxDB 기반 대시보드 (K6 연동) 
+- InfluxDB 기반 대시보드 (K6 연동)
   - 위치: `Home > Dashboards > K6 Load Test for Coupon Issue`
   - 설정 위치
     - DataSource: `support/monitoring/infra/grafana/datasources/datasource.yml`
     - Dashboard: `support/monitoring/infra/grafana/dashboards/dashboard.yml`
-  - 주의
-    - InfluxDB `max-values-per-tag` 초과 방지를 위해 쿼리 파라미터 대신 RequestBody 방식 사용 권장
 
 > Grafana - influxdb Dashboards 만들기
 
