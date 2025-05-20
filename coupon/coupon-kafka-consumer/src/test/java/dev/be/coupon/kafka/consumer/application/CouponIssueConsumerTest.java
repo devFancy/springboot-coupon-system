@@ -1,4 +1,4 @@
-package dev.be.coupon.kafka.consumer;
+package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import dev.be.coupon.kafka.consumer.dto.CouponIssueMessage;
