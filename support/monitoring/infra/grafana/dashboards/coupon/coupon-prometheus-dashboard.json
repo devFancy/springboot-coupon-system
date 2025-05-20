@@ -1,0 +1,55 @@
+{
+  "id": null,
+  "uid": "coupon-prometheus",
+  "title": "Coupon Issue - Prometheus Dashboard",
+  "editable": true,
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "type": "graph",
+      "title": "TPS (req/s)",
+      "id": 1,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])",
+          "refId": "A",
+          "legendFormat": "TPS"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Average Response Time (ms)",
+      "id": 2,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "(rate(http_server_requests_seconds_sum{uri=~\"/api/coupon/.*/issue/test\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])) * 1000",
+          "refId": "A",
+          "legendFormat": "Avg Response Time"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "5xx Error Rate (%)",
+      "id": 3,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "100 * rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\",status=~\"5..\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])",
+          "refId": "A",
+          "legendFormat": "Error Rate"
+        }
+      ]
+    }
+  ]
+}
