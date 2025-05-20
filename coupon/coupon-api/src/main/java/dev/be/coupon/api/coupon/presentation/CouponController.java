@@ -15,6 +15,7 @@ import dev.be.coupon.api.coupon.presentation.dto.CouponIssueResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
 import dev.be.coupon.common.support.response.CommonResponse;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,7 +60,9 @@ public class CouponController implements CouponControllerDocs {
 
         CouponIssueCommand command = new CouponIssueCommand(loginUser.id(), couponId);
         CouponIssueResult result = couponService.issue(command);
-        return ResponseEntity.created(URI.create("/api/coupon/" + result.couponId()))
+
+        HttpStatus status = resolveStatus(result);
+        return ResponseEntity.status(status)
                 .body(CommonResponse.success(CouponIssueResponse.from(result)));
     }
 
@@ -70,7 +73,9 @@ public class CouponController implements CouponControllerDocs {
 
         CouponIssueCommand command = new CouponIssueCommand(request.userId(), couponId);
         CouponIssueResult result = couponService.issue(command);
-        return ResponseEntity.created(URI.create("/api/coupon/" + result.couponId()))
+
+        HttpStatus status = resolveStatus(result);
+        return ResponseEntity.status(status)
                 .body(CommonResponse.success(CouponIssueResponse.from(result)));
     }
 
@@ -86,5 +91,16 @@ public class CouponController implements CouponControllerDocs {
         CouponUsageCommand command = new CouponUsageCommand(loginUser.id(), couponId);
         CouponUsageResult result = couponService.usage(command);
         return ResponseEntity.ok().body(CommonResponse.success(CouponUsageResponse.from(result)));
+    }
+
+    private HttpStatus resolveStatus(final CouponIssueResult result) {
+        if (result.alreadyIssued()) {
+            return HttpStatus.OK;
+        } else if (result.quantityExceeded()) {
+            return HttpStatus.CONFLICT;
+        } else if (result.used() == false && !result.alreadyIssued() && !result.quantityExceeded()) {
+            return HttpStatus.CREATED;
+        }
+        return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }
