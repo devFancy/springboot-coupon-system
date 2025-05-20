@@ -1,7 +1,5 @@
-package dev.be.coupon.kafka.consumer;
+package dev.be.coupon.kafka.consumer.application;
 
-import dev.be.coupon.domain.coupon.FailedIssuedCoupon;
-import dev.be.coupon.domain.coupon.FailedIssuedCouponRepository;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import dev.be.coupon.kafka.consumer.dto.CouponIssueMessage;
@@ -25,13 +23,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class CouponIssueConsumer {
 
     private final IssuedCouponRepository issuedCouponRepository;
-    private final FailedIssuedCouponRepository failedIssuedCouponRepository;
+    private final CouponIssueFailureRecorder couponIssueFailureRecorder;
     private final Logger log = LoggerFactory.getLogger(CouponIssueConsumer.class);
 
     public CouponIssueConsumer(final IssuedCouponRepository issuedCouponRepository,
-                               final FailedIssuedCouponRepository failedIssuedCouponRepository) {
+                               final CouponIssueFailureRecorder couponIssueFailureRecorder) {
         this.issuedCouponRepository = issuedCouponRepository;
-        this.failedIssuedCouponRepository = failedIssuedCouponRepository;
+        this.couponIssueFailureRecorder = couponIssueFailureRecorder;
     }
 
     /**
@@ -50,7 +48,7 @@ public class CouponIssueConsumer {
             ack.acknowledge();
         } catch (Exception e) {
             // 실패 이력 저장 (향후 스케줄러에서 재처리)
-            failedIssuedCouponRepository.save(new FailedIssuedCoupon(message.userId(), message.couponId()));
+            couponIssueFailureRecorder.record(message.userId(), message.couponId()); // 별도 트랜잭션 처리
             log.error("쿠폰 발급 실패 - userId: {}, couponId: {}, reason={}", message.userId(), message.couponId(), e.getMessage(), e);
             throw e;
         }
