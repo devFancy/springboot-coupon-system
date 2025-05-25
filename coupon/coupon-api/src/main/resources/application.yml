@@ -9,6 +9,10 @@ spring:
 #      - db-core.yml
   web.resources.add-mappings: false
 
+management:
+  server:
+    port: 8082
+
 server:
   tomcat:
     max-connections: 20000

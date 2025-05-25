@@ -8,7 +8,7 @@ export const options = {
         constant_requesters: {
             executor: 'constant-vus',
             vus: 1000,
-            duration: '100s',
+            duration: '300s',
         },
     },
     thresholds: {
