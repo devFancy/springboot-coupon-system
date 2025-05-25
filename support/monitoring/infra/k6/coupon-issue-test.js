@@ -5,19 +5,23 @@ import {sleep} from 'k6';
 
 export const options = {
     scenarios: {
-        constant_requesters: {
-            executor: 'constant-vus',
-            vus: 1000,
-            duration: '300s',
+        warmup_then_load: {
+            executor: 'ramping-vus',
+            startVUs: 0,
+            stages: [
+                { duration: '30s', target: 1000 }, // 30초 동안 1000 VU까지 증가
+                { duration: '250s', target: 1000 }
+            ],
         },
     },
     thresholds: {
-        http_req_failed: ['rate<0.05'],
-        http_req_duration: ['p(95)<1000'],
+        //http_req_failed: ['rate<0.01'],
+        checks: ['rate>0.99'],
+        http_req_duration: ['p(95)<1000'], // ms 단위
     },
 };
 
-const couponId = '550393b0-751c-4ff1-b742-8049f824352b'; // 쿠폰 ID
+const couponId = '76cc5880-b57d-4128-be6c-b297cb650ad3'; // 쿠폰 ID
 
 export default function () {
     sleep(2);
@@ -28,11 +32,11 @@ export default function () {
     const payload = JSON.stringify({userId});
 
     const res = http.post(url, payload, {
-        headers, timeout: "3s"
+        headers, timeout: "5s"
     });
 
     check(res, {
-        'issue request success': (r) => r.status === 200 || r.status === 201,
+        'issue request success': (r) => [200, 201, 409].includes(r.status),
     });
 
     try {

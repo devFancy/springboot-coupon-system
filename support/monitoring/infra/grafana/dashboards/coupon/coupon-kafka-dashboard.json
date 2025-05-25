@@ -1,0 +1,55 @@
+{
+  "id": null,
+  "uid": "coupon-kafka-prometheus",
+  "title": "Coupon Kafka - Prometheus Dashboard",
+  "editable": true,
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Kafka Listener Processed Count",
+      "id": 1,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "rate(spring_kafka_listener_seconds_count[1m])",
+          "refId": "A",
+          "legendFormat": "Processed Count"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Kafka Listener Processing Time (ms)",
+      "id": 2,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "(rate(spring_kafka_listener_seconds_sum[1m]) / rate(spring_kafka_listener_seconds_count[1m])) * 1000",
+          "refId": "A",
+          "legendFormat": "Avg Processing Time"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Kafka Listener Max Processing Time (ms)",
+      "id": 3,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "spring_kafka_listener_seconds_max * 1000",
+          "refId": "A",
+          "legendFormat": "Max Processing Time"
+        }
+      ]
+    }
+  ]
+}
