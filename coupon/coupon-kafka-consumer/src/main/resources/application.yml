@@ -12,6 +12,9 @@ spring:
 management:
   server:
     port: 8083
+  metrics:
+    enable:
+      kafka: true
 
 server:
   tomcat:
