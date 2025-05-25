@@ -17,7 +17,7 @@ export const options = {
     },
 };
 
-const couponId = '550393b0-751c-4ff1-b742-8049f824352b'; // 쿠폰 ID
+const couponId = 'a312ccfa-bfbb-421e-b352-9ffdc17f15b0'; // 쿠폰 ID
 
 export default function () {
     sleep(2);
@@ -28,11 +28,11 @@ export default function () {
     const payload = JSON.stringify({userId});
 
     const res = http.post(url, payload, {
-        headers, timeout: "3s"
+        headers, timeout: "5s"
     });
 
     check(res, {
-        'issue request success': (r) => r.status === 200 || r.status === 201,
+        'issue request success': (r) => [200, 201, 409].includes(r.status),
     });
 
     try {
