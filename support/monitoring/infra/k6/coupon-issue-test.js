@@ -15,12 +15,13 @@ export const options = {
         },
     },
     thresholds: {
-        http_req_failed: ['rate<0.01'],
-        http_req_duration: ['p(95)<1000'],
+        //http_req_failed: ['rate<0.01'],
+        checks: ['rate>0.99'],
+        http_req_duration: ['p(95)<1000'], // ms 단위
     },
 };
 
-const couponId = 'cf49def0-1a0f-4863-b212-c918ada13b0a'; // 쿠폰 ID
+const couponId = '76cc5880-b57d-4128-be6c-b297cb650ad3'; // 쿠폰 ID
 
 export default function () {
     sleep(2);
