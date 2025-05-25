@@ -5,19 +5,22 @@ import {sleep} from 'k6';
 
 export const options = {
     scenarios: {
-        constant_requesters: {
-            executor: 'constant-vus',
-            vus: 1000,
-            duration: '300s',
+        warmup_then_load: {
+            executor: 'ramping-vus',
+            startVUs: 0,
+            stages: [
+                { duration: '30s', target: 1000 }, // 30초 동안 1000 VU까지 증가
+                { duration: '250s', target: 1000 }
+            ],
         },
     },
     thresholds: {
-        http_req_failed: ['rate<0.05'],
+        http_req_failed: ['rate<0.01'],
         http_req_duration: ['p(95)<1000'],
     },
 };
 
-const couponId = 'a312ccfa-bfbb-421e-b352-9ffdc17f15b0'; // 쿠폰 ID
+const couponId = 'cf49def0-1a0f-4863-b212-c918ada13b0a'; // 쿠폰 ID
 
 export default function () {
     sleep(2);
