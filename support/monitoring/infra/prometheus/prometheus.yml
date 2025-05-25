@@ -3,14 +3,23 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'coupon-server'
+  - job_name: 'coupon-api'
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: [ 'host.docker.internal:8082' ]
+      - targets: ['host.docker.internal:8082']
 
-# Spring Boot 애플리케이션의 메트릭 엔드포인트(/actuator/prometheus)를 8082 포트에서 노출하도록 설정
-# monitoring.yml 내 management.server.port = 8082 설정 추가
-# prometheus.yml 에서 scrape 대상 포트를 host.docker.internal:8082로 수정
-# 애플리케이션 서비스 포트(8080)와 분리하여 운영 트래픽과 모니터링 트래픽을 분리하기 위함
-# 예시 URL: http://localhost:8082/actuator/prometheus
+  - job_name: 'coupon-kafka-consumer'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['host.docker.internal:8083']
+
+# Spring Boot 애플리케이션들의 메트릭 엔드포인트(/actuator/prometheus)를 모듈별로 다른 포트에서 노출하도록 설정
+# 각 모듈의 application.yml 또는 profile 설정에서 management.server.port 값을 개별 지정
+# prometheus.yml 에서는 모듈별 job_name을 나누고, 해당 포트에 맞게 scrape 대상을 추가해야 함
+# 운영 트래픽(8080 등)과 모니터링 트래픽(8082, 8083 등)을 포트 기준으로 분리하여 관리
+# 예시:
+# - coupon-api: http://host.docker.internal:8082/actuator/prometheus
+# - coupon-kafka-consumer: http://host.docker.internal:8083/actuator/prometheus
+

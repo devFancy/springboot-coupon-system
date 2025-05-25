@@ -9,6 +9,10 @@ spring:
       - logging.yml
   web.resources.add-mappings: false
 
+management:
+  server:
+    port: 8083
+
 server:
   tomcat:
     max-connections: 20000
