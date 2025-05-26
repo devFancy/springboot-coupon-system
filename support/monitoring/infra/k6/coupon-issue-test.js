@@ -9,19 +9,24 @@ export const options = {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '30s', target: 1000 }, // 30초 동안 1000 VU까지 증가
-                { duration: '250s', target: 1000 }
+                { duration: '60s', target: 1000 },
+                { duration: '60s', target: 2000 },
+                { duration: '60s', target: 4000 },
+                { duration: '60s', target: 6000 },
+                { duration: '5m', target: 6000 },
+                // { duration: '60s', target: 8000 },
+                // { duration: '60s', target: 10000 },
             ],
         },
     },
     thresholds: {
         //http_req_failed: ['rate<0.01'],
         checks: ['rate>0.99'],
-        http_req_duration: ['p(95)<1000'], // ms 단위
+        http_req_duration: ['p(95)<3000'], // ms 단위
     },
 };
 
-const couponId = '76cc5880-b57d-4128-be6c-b297cb650ad3'; // 쿠폰 ID
+const couponId = 'bde3e558-c52a-4534-b4f7-cbab80c6c879'; // 쿠폰 ID
 
 export default function () {
     sleep(2);

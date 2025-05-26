@@ -1,5 +1,9 @@
 management:
+  metrics:
+    enable:
+      tomcat: true
+      jvm: true
   endpoints:
     web:
       exposure:
-        include: prometheus
+        include: prometheus, metrics
