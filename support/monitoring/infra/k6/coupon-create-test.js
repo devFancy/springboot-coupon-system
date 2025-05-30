@@ -36,9 +36,9 @@ export default function (data) {
     const token = data.token;
 
     const createPayload = JSON.stringify({
-        name: "치킨 대용량 쿠폰",
+        name: "치킨 쿠폰",
         type: "CHICKEN",
-        totalQuantity: 1000000,
+        totalQuantity: 500,
         validFrom: new Date().toISOString(),
         validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7일 후
     });

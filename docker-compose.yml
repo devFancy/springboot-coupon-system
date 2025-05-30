@@ -1,8 +1,8 @@
 version: "3.8"
 services:
   mysql:
-    container_name: mysql-coupon
     image: mysql:8.0.34
+    container_name: mysql-coupon
     restart: always
     ports:
       - '3306:3306'
@@ -44,11 +44,23 @@ services:
       - INFLUXDB_ADMIN_PASSWORD=admin1234
 
   redis:
-    container_name: redis
     image: redis:7.0
+    container_name: redis
     restart: always
     ports:
       - "6379:6379"
+  redis-exporter: # Redis 인스턴스로부터 다양한 메트릭을 읽어와 Prometheus가 수집할 수 있는 형식으로 노출하는 역할
+    image: oliver006/redis_exporter:latest
+    container_name: redis-exporter
+    restart: always
+    # ports: # Prometheus가 Docker 내부 네트워크로 접근하므로, 호스트 포트 노출은 디버깅 시에만 필요 (선택 사항)
+    #   - "9121:9121"
+    environment:
+      # 중요: REDIS_ADDR 은 실제 연결할 Redis 서비스의 주소를 가리켜야 합니다.
+      # Docker Compose 네트워크 내에서는 Redis 서비스 이름('redis')을 사용합니다.
+      - REDIS_ADDR=redis://redis:6379
+    depends_on:
+      - redis # 'redis' 서비스가 시작된 후에 'redis-exporter' 가 시작되도록 합니다.
 
   zookeeper:
     image: wurstmeister/zookeeper

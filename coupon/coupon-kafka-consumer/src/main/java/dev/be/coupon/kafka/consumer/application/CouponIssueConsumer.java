@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -38,10 +39,17 @@ public class CouponIssueConsumer {
      * 저장된 실패 이력은 coupon-api 모듈의 스케줄러(FailedCouponIssueRetryScheduler)를 통해 재처리됩니다.
      */
     @KafkaListener(topics = "coupon_issue", groupId = "group_1")
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void listener(final CouponIssueMessage message, final Acknowledgment ack) {
         log.info("발급 처리 메시지 수신: {}", message);
         try {
+
+            if (issuedCouponRepository.existsByUserIdAndCouponId(message.userId(), message.couponId())) {
+                log.info("이미 발급된 쿠폰입니다 - userId: {}, couponId: {}", message.userId(), message.couponId());
+                ack.acknowledge();
+                return;
+            }
+
             IssuedCoupon issuedCoupon = new IssuedCoupon(message.userId(), message.couponId());
             issuedCouponRepository.save(issuedCoupon);
             log.info("쿠폰 발급 완료: {}", issuedCoupon);
