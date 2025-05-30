@@ -171,7 +171,7 @@ class CouponServiceTest {
         assertThat(result.issuedAt()).isNotNull();
     }
 
-    @DisplayName("동일한 사용자에게 쿠폰을 1000번 발급 요청해도 중복 발급은 1회만 된다. - 단일 스레드")
+    @DisplayName("사용자: 동일 쿠폰에 대해 여러 번 '쿠폰 받기'를 요청해도, 1회만 발급받는다. (단일 스레드)")
     @Test
     void should_only_issue_once_for_same_user() throws InterruptedException {
         // given
@@ -201,7 +201,7 @@ class CouponServiceTest {
         System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
     }
 
-    @DisplayName("동일한 사용자에게 쿠폰을 1,000,000번 동시 발급 요청해도 중복 발급은 1회만 된다. - 멀티 스레드")
+    @DisplayName("사용자: 동일 쿠폰에 대해 동시에 여러 번 '쿠폰 받기'를 요청해도, 1회만 발급받는다. (멀티 스레드)")
     @Test
     void should_only_issue_once_for_same_user_multi_thread() throws InterruptedException {
         // given
@@ -241,7 +241,7 @@ class CouponServiceTest {
         System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
     }
 
-    @DisplayName("1,000명의 사용자에게 수량 500개짜리 쿠폰을 발급하면 최대 500개만 발급된다. - 단일 스레드")
+    @DisplayName("선착순 쿠폰: 500개 한정 쿠폰에 1,000명이 '쿠폰 받기' 요청 시, 500명에게만 발급한다. (단일 스레드)")
     @Test
     void should_only_issue_up_to_total_quantity_limit() throws InterruptedException {
         // given
@@ -272,7 +272,7 @@ class CouponServiceTest {
         System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
     }
 
-    @DisplayName("1,000,000명의 사용자에게 동시 발급 요청 시 수량 500개가 초과 발급되지 않는다. - 멀티 스레드")
+    @DisplayName("선착순 쿠폰(동시 요청): 500개 한정 쿠폰에 100만 명이 동시에 '쿠폰 받기' 요청해도, 500개만 발급한다. (멀티 스레드)")
     @Test
     void should_only_issue_up_to_total_quantity_limit_multithreaded() throws InterruptedException {
         // given
@@ -313,7 +313,7 @@ class CouponServiceTest {
         System.out.println("최종 쿠폰 발급 수: " + issuedCouponRepository.countByCouponId(couponId));
     }
 
-    @DisplayName("쿠폰 수량 초과 시 쿠폰 발급 수량이 롤백된다.")
+    @DisplayName("쿠폰 소진 후 추가 '쿠폰 받기' 요청 시, 전체 발급 수량은 기존 소진 수량으로 정확히 유지된다. (롤백 확인)")
     @Test
     void should_decrement_count_when_quantity_exceeded() throws InterruptedException {
         // given
@@ -340,7 +340,7 @@ class CouponServiceTest {
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
     }
 
-    @DisplayName("Kafka 메시지가 전송된다.")
+    @DisplayName("[쿠폰 발급 후처리] 사용자가 쿠폰 발급 성공 시, 최종 등록을 위해 Kafka 에 발급 정보를 전달한다.")
     @Test
     void should_send_kafka_message_on_issue() {
         // given
@@ -361,18 +361,18 @@ class CouponServiceTest {
         System.out.println("Kafka 메시지 전송 완료 (터미널에서 확인)");
     }
 
-    @DisplayName("Kafka 메시지가 100명의 사용자에 대해 전송된다.")
+    @DisplayName("[쿠폰 대량 발급 후처리]: 1000명의 사용자에게 쿠폰 발급 시, 각 사용자의 발급 정보가 Kafka 로 전달된다.")
     @Test
     void should_send_kafka_message_for_100_users() {
         // given
         final UUID adminId = UUID.randomUUID();
         final CouponCreateCommand createCommand = new CouponCreateCommand(
-                adminId, "100명 대상 테스트 쿠폰", "CHICKEN", 100, LocalDateTime.now(), LocalDateTime.now().plusDays(1)
+                adminId, "1000명 대상 테스트 쿠폰", "CHICKEN", 100, LocalDateTime.now(), LocalDateTime.now().plusDays(1)
         );
         final UUID couponId = couponService.create(createCommand).id();
 
         // when
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             final UUID userId = UUID.randomUUID(); // 100명의 서로 다른 사용자
             try {
                 final CouponIssueResult result = couponService.issue(new CouponIssueCommand(userId, couponId));
