@@ -82,9 +82,23 @@ public enum ErrorType {
 
     UNAUTHORIZED_ACCESS(
             HttpStatus.UNAUTHORIZED,
-            ErrorCode.E403,
+            ErrorCode.E401,
             "권한이 없습니다.",
-            LogLevel.WARN);
+            LogLevel.WARN),
+
+    DISTRIBUTED_LOCK_NOT_ACQUIRED(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            ErrorCode.E503,
+            "일시적으로 요청이 많아 락을 획득할 수 없습니다. 잠시 후 다시 시도해주세요.",
+            LogLevel.WARN
+    ),
+
+    COUPON_ISSUE_PROCESSING_ERROR(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            ErrorCode.E500,
+            "쿠폰 발급 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+            LogLevel.ERROR
+    );
 
     private final HttpStatus status;
     private final ErrorCode code;
