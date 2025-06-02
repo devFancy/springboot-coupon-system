@@ -50,8 +50,8 @@ public class DistributedLockAop {
             }
         } catch (Exception e) {
             dynamicKeyPart = method.getName();
-            log.warn("Failed to evaluate SpEL for lock key, using method name as fallback. SpEL: '{}', Method: '{}', Error: {}",
-                    spELKeyExpression, dynamicKeyPart, e.getMessage());
+            log.warn("락 키 SpEL 평가 실패, 메서드 이름을 대체 키로 사용합니다. SpEL: '{}', 메서드: '{}', 오류: {}",
+                    spELKeyExpression, dynamicKeyPart, e.getMessage(), e);
         }
 
         String lockName = REDISSON_LOCK_PREFIX + dynamicKeyPart;
@@ -61,7 +61,7 @@ public class DistributedLockAop {
         long waitTime = distributedLockAnnotation.waitTime();
         long leaseTime = distributedLockAnnotation.leaseTime();
 
-        log.debug("Attempting to acquire lock: Key='{}', WaitTime={}s, LeaseTime={}s", lockName, waitTime, leaseTime);
+        log.debug("락 획득 시도: 키='{}', 대기시간={}s, 임대시간={}s", lockName, waitTime, leaseTime);
 
         boolean acquired = false;
         try {
@@ -69,16 +69,16 @@ public class DistributedLockAop {
             acquired = rLock.tryLock(waitTime, leaseTime, distributedLockAnnotation.timeUnit());
 
             if (!acquired) {
-                log.warn("Failed to acquire lock: Key='{}'", lockName);
+                log.warn("락 획득 실패: 키='{}'", lockName);
                 throw new DistributedLockNotAcquiredException(lockName);
             }
 
-            log.info("Lock acquired: Key='{}'", lockName);
+            log.info("락 획득 성공: 키='{}'", lockName);
             // (3) DistributedLock 어노테이션이 선언된 메서드를 별도의 트랜잭션으로 실행한다.
             return aopMethodExecutor.proceed(joinPoint);
 
         } catch (InterruptedException e) {
-            log.error("Interrupted while waiting for lock: Key='{}'", lockName, e);
+            log.error("락 대기 중 인터럽트 발생: 키='{}'", lockName, e);
             Thread.currentThread().interrupt();
             throw new DistributedLockNotAcquiredException(lockName);
         } finally {
@@ -86,9 +86,9 @@ public class DistributedLockAop {
                 try {
                     // (4) 종료 시 무조건 락을 해제한다.
                     rLock.unlock();
-                    log.info("Lock released: Key='{}'", lockName);
+                    log.info("락 해제 성공: 키='{}'", lockName);
                 } catch (Exception e) {
-                    log.warn("Exception during lock release (might be normal if lease expired). Key='{}', Method: '{}', ErrorMessage='{}'",
+                    log.warn("락 해제 중 예외 발생. 키='{}', 메서드: '{}', 오류 메시지='{}'",
                             lockName, method.getName(), e.getMessage());
                 }
             }
