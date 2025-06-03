@@ -40,6 +40,9 @@ dependencies {
     // jackson
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    // awaitility - 비동기 처리
+    testImplementation ("org.awaitility:awaitility:${awaitilityVersion}")
+
 }
 
 tasks.withType(Test).configureEach {
