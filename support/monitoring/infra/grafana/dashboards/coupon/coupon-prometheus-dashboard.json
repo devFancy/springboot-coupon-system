@@ -1,11 +1,11 @@
 {
   "id": null,
   "uid": "coupon-prometheus",
-  "title": "Coupon Issue - Prometheus Dashboard",
+  "title": "Coupon Issue API & Redis Monitoring Dashboard",
   "editable": true,
   "timezone": "browser",
   "schemaVersion": 36,
-  "version": 1,
+  "version": 2,
   "refresh": "5s",
   "time": {
     "from": "now-5m",
@@ -21,9 +21,25 @@
         {
           "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])",
           "refId": "A",
-          "legendFormat": "TPS"
+          "legendFormat": "{{uri}} {{instance}} - TPS"
         }
-      ]
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "req/s",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      }
     },
     {
       "type": "graph",
@@ -34,9 +50,25 @@
         {
           "expr": "(rate(http_server_requests_seconds_sum{uri=~\"/api/coupon/.*/issue/test\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])) * 1000",
           "refId": "A",
-          "legendFormat": "Avg Response Time"
+          "legendFormat": "{{uri}} {{instance}} - Avg Response Time"
         }
-      ]
+      ],
+      "yaxes": [
+        {
+          "format": "ms",
+          "label": "Time (ms)",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      }
     },
     {
       "type": "graph",
@@ -45,11 +77,187 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "100 * rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\",status=~\"5..\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])",
+          "expr": "100 * sum(rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\", status=~\"5..\"}[1m])) by (job, instance, uri) / sum(rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])) by (job, instance, uri)",
           "refId": "A",
-          "legendFormat": "Error Rate"
+          "legendFormat": "{{uri}} {{instance}} - 5xx Error Rate"
         }
-      ]
+      ],
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "Error Rate (%)",
+          "min": 0,
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Request Count (Total)",
+      "id": 4,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "sum(http_server_requests_seconds_count{instance=\"host.docker.internal:8082\"})",
+          "refId": "A",
+          "legendFormat": "{{uri}} {{instance}} - Request Count"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Count",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+    },
+    {
+      "type": "graph",
+      "title": "App Server Process CPU Usage (%) - PORT: 8082",
+      "id": 5,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "process_cpu_usage{instance=\"host.docker.internal:8082\"} * 100",
+          "refId": "A",
+          "legendFormat": "{{instance}} - App CPU Usage"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "CPU Usage (%)",
+          "min": 0,
+          "max": 100,
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "type": "graph",
+      "title": "App Server JVM Heap Memory (MB) - PORT: 8082",
+      "id": 6,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=\"host.docker.internal:8082\"}) / (1024*1024)",
+          "refId": "A",
+          "legendFormat": "{{instance}} App Heap Used (MB)"
+        },
+        {
+          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=\"host.docker.internal:8082\"}) / (1024*1024)",
+          "refId": "B",
+          "legendFormat": "{{instance}} App Heap Max (MB)"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "mbytes",
+          "label": "Memory (MB)",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Redis Memory Usage (MB)",
+      "id": 7,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "redis_memory_used_bytes / (1024*1024)",
+          "refId": "A",
+          "legendFormat": "{{instance}} - Used Memory (MB)"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "mbytes",
+          "label": "Memory (MB)",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Redis CPU Usage (%)",
+      "id": 8,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "rate(redis_cpu_user_seconds_total[1m]) * 100",
+          "refId": "A",
+          "legendFormat": "{{instance}} - CPU User (%)"
+        },
+        {
+          "expr": "rate(redis_cpu_system_seconds_total[1m]) * 100",
+          "refId": "B",
+          "legendFormat": "{{instance}} - CPU System (%)"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "CPU Utilization (%)",
+          "min": 0,
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "stack": true,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      }
     }
+  ],
+  "tags": [
+    "coupon-api-server",
+    "redis",
+    "performance"
   ]
 }

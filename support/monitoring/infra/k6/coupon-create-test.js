@@ -15,6 +15,7 @@ export function setup() {
 
     const loginHeaders = { 'Content-Type': 'application/json' };
 
+    // API Server url (e.g. localhost -> 192.168.x.x)
     const loginRes = http.post('http://localhost:8080/api/auth/login', loginPayload, {
         headers: loginHeaders,
     });
@@ -36,9 +37,9 @@ export default function (data) {
     const token = data.token;
 
     const createPayload = JSON.stringify({
-        name: "치킨 대용량 쿠폰",
+        name: "치킨 쿠폰",
         type: "CHICKEN",
-        totalQuantity: 1000000,
+        totalQuantity: 500,
         validFrom: new Date().toISOString(),
         validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7일 후
     });
@@ -48,6 +49,7 @@ export default function (data) {
         Authorization: `Bearer ${token}`,
     };
 
+    // API Server url (e.g. localhost -> 192.168.x.x)
     const createRes = http.post('http://localhost:8080/api/coupon/', createPayload, {
         headers: createHeaders,
     });

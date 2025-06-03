@@ -5,7 +5,7 @@
   "editable": true,
   "timezone": "browser",
   "schemaVersion": 36,
-  "version": 1,
+  "version": 2,
   "refresh": "5s",
   "time": {
     "from": "now-5m",
@@ -14,16 +14,32 @@
   "panels": [
     {
       "type": "graph",
-      "title": "Kafka Listener Processed Count",
+      "title": "Kafka Listener Processed Count (operations per second)",
       "id": 1,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "rate(spring_kafka_listener_seconds_count[1m])",
+          "expr": "sum(rate(spring_kafka_listener_seconds_count{instance=\"host.docker.internal:8083\"}[1m])) by (listener_id)",
           "refId": "A",
-          "legendFormat": "Processed Count"
+          "legendFormat": "{{listener_id}} Processed Count"
         }
-      ]
+      ],
+      "yaxes": [
+        {
+          "format": "ops",
+          "label": "Messages / sec",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      }
     },
     {
       "type": "graph",
@@ -32,11 +48,27 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "(rate(spring_kafka_listener_seconds_sum[1m]) / rate(spring_kafka_listener_seconds_count[1m])) * 1000",
+          "expr": "(sum(rate(spring_kafka_listener_seconds_sum{instance=\"host.docker.internal:8083\"}[1m])) by (listener_id) / sum(rate(spring_kafka_listener_seconds_count{instance=\"host.docker.internal:8083\"}[1m])) by (listener_id)) * 1000",
           "refId": "A",
-          "legendFormat": "Avg Processing Time"
+          "legendFormat": "{{listener_id}} Avg Processing Time"
         }
-      ]
+      ],
+      "yaxes": [
+        {
+          "format": "ms",
+          "label": "Time (ms)",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      }
     },
     {
       "type": "graph",
@@ -45,11 +77,127 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "spring_kafka_listener_seconds_max * 1000",
+          "expr": "spring_kafka_listener_seconds_max{instance=\"host.docker.internal:8083\"} * 1000",
           "refId": "A",
-          "legendFormat": "Max Processing Time"
+          "legendFormat": "{{listener_id}} Max Processing Time"
         }
-      ]
+      ],
+      "yaxes": [
+        {
+          "format": "ms",
+          "label": "Time (ms)",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Kafka Consumer Process CPU Usage (%) - PORT: 8083",
+      "id": 4,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "process_cpu_usage{instance=\"host.docker.internal:8083\"} * 100",
+          "refId": "A",
+          "legendFormat": "{{instance}} - CPU Usage"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "CPU Usage (%)",
+          "min": 0,
+          "max": 100,
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Kafka Consumer JVM Heap Memory (MB) - PORT: 8083",
+      "id": 5,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=\"host.docker.internal:8083\"}) / (1024*1024)",
+          "refId": "A",
+          "legendFormat": "{{instance}} Heap Used (MB)"
+        },
+        {
+          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=\"host.docker.internal:8083\"}) / (1024*1024)",
+          "refId": "B",
+          "legendFormat": "{{instance}} Heap Max (MB)"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "mbytes",
+          "label": "Memory (MB)",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Kafka Listener Error Rate (%) - PORT: 8083",
+      "id": 6,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "100 * sum(rate(spring_kafka_listener_seconds_count{instance=\"host.docker.internal:8083\", result=\"failure\"}[1m])) by (listener_id) / sum(rate(spring_kafka_listener_seconds_count{instance=\"host.docker.internal:8083\"}[1m])) by (listener_id)",
+          "refId": "A",
+          "legendFormat": "{{listener_id}} - Error Rate"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "Error Rate (%)",
+          "min": 0,
+          "max": 100,
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      }
     }
+  ],
+  "tags": [
+    "coupon-kafka-consumer-server",
+    "performance"
   ]
 }

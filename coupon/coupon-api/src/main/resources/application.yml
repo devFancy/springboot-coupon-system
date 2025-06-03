@@ -19,8 +19,8 @@ server:
     accept-count: 2000
     connection-timeout: 10000
     threads:
-      max: 500
-      min-spare: 100
+      max: 100 # 500
+      min-spare: 20 # 100
 
 ---
 spring.config.activate.on-profile: local
