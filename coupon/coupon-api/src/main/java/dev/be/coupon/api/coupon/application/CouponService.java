@@ -6,13 +6,14 @@ import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueResult;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
+import dev.be.coupon.api.coupon.application.exception.CouponIssueException;
 import dev.be.coupon.api.coupon.application.exception.CouponNotFoundException;
-import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
 import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.api.coupon.infrastructure.redis.AppliedUserRepository;
 import dev.be.coupon.api.coupon.infrastructure.redis.CouponCacheRepository;
 import dev.be.coupon.api.coupon.infrastructure.redis.CouponCountRedisRepository;
+import dev.be.coupon.api.coupon.infrastructure.redis.aop.DistributedLock;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
@@ -21,6 +22,7 @@ import dev.be.coupon.domain.coupon.UserRoleChecker;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.KafkaException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,7 +72,8 @@ public class CouponService {
     /**
      * 쿠폰 발급 요청 처리 흐름(주요 내용)
      * <p>
-     * 1. 분산 락: Redis SETNX 기반 사용자 단위 락 (lock:coupon:{couponId}:user:{userId})
+     * 1. 분산 락: AOP를 통해 메서드 진입 전에 획득 (키는 SpEL로 command 객체의 필드 참조)
+     * - SpEL 형식 예시. Key='LOCK:coupon:{couponId}:user:{userId}'
      * - 동일 사용자의 중복 요청을 직렬화하여 race condition 방지
      * <p>
      * 2. 중복 발급 방지: Redis Set(applied_user:{couponId})
@@ -86,48 +89,41 @@ public class CouponService {
      * - RDB 부하 감소
      * <p>
      */
-    @Transactional
+    @DistributedLock(key = "'coupon:' + #command.couponId() + ':user:' + #command.userId()", waitTime = 5, leaseTime = 30)
     public CouponIssueResult issue(final CouponIssueCommand command) {
         final UUID couponId = command.couponId();
         final UUID userId = command.userId();
-        final String lockKey = generateLockKey(couponId, userId);
 
-        // SET NX EX -> search after ...
-        // Redis 기반 분산 락 (SET NX) - 사용자 단위 중복 발급 방지 목적
-        boolean locked = couponCountRedisRepository.tryLock(lockKey, 5);
-        if (!locked) {
-            throw new InvalidIssuedCouponException("현재 쿠폰 발급 처리 중입니다. 잠시 후 다시 시도해주세요.");
+        final Coupon coupon = loadCouponWithCaching(couponId);
+        coupon.validateIssuableStatus(LocalDateTime.now());
+
+        CouponIssueResult duplicateResult = validateDuplicateIssue(couponId, userId);
+        if (duplicateResult != null) {
+            return duplicateResult;
         }
 
+        CouponIssueResult quantityLimitResult = validateQuantityLimit(couponId, userId, coupon.getTotalQuantity());
+        if (quantityLimitResult != null) {
+            appliedUserRepository.remove(couponId, userId);
+            log.info("수량 초과로 인한 중복 발급 방지 Set 롤백 - userId: {}, couponId: {}", userId, couponId);
+            return quantityLimitResult;
+        }
+
+        // Kafka 메시지 발행 및 실패 시 보상 트랜잭션
+        String redisCountKey = "coupon_count:" + couponId;
         try {
-            final Coupon coupon = loadCouponWithCaching(couponId);
-            coupon.validateIssuableStatus(LocalDateTime.now());
-
-            CouponIssueResult duplicateResult = validateDuplicateIssue(couponId, userId);
-            if (duplicateResult != null) {
-                return duplicateResult;
-            }
-
-            CouponIssueResult quantityLimitResult = validateQuantityLimit(couponId, userId, coupon.getTotalQuantity());
-            if (quantityLimitResult != null) {
-                return quantityLimitResult;
-            }
-
-            // [이전 - 동기식 처리] Kafka 도입 전에는 아래 로직으로 발급 즉시 DB에 저장했습니다.
-//            final IssuedCoupon issuedCoupon = new IssuedCoupon(userId, couponId);
-//            issuedCouponRepository.save(issuedCoupon);
-//            return CouponIssueResult.from(issuedCoupon);
-            // [현재 - 비동기 처리]
             couponIssueProducer.issue(userId, couponId);
+            log.info("쿠폰 발급 요청 Kafka 전송 성공 - userId: {}, couponId: {}", userId, couponId);
             return CouponIssueResult.success(userId, couponId);
-
-        } finally {
-            couponCountRedisRepository.releaseLock(lockKey);
+        } catch (KafkaException ke) {
+            log.error("Kafka 메시지 발행 실패 - userId: {}, couponId: {}. Redis 변경사항 롤백 시도.", userId, couponId, ke);
+            rollbackRedisOperations(couponId, userId, redisCountKey);
+            throw new CouponIssueException("쿠폰 발급 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        } catch (Exception e) {
+            log.error("쿠폰 발급 중 예기치 않은 오류가 발생 - userId: {}, couponId: {}. Redis 변경사항 롤백 시도.", userId, couponId, e);
+            rollbackRedisOperations(couponId, userId, redisCountKey);
+            throw new CouponIssueException("쿠폰 발급 처리 중 예기치 않은 내부 오류가 발생했습니다.");
         }
-    }
-
-    private String generateLockKey(final UUID couponId, final UUID userId) {
-        return "lock:coupon:" + couponId + ":user:" + userId;
     }
 
     private Coupon loadCouponWithCaching(final UUID couponId) {
@@ -144,9 +140,6 @@ public class CouponService {
      * Redis 기반 사용자 중복 발급 방지 (최초 요청만 true 반환)
      */
     private CouponIssueResult validateDuplicateIssue(final UUID couponId, final UUID userId) {
-//        if (issuedCouponRepository.existsByUserIdAndCouponId(userId, couponId)) {
-//            return CouponIssueResult.alreadyIssued(userId, couponId);
-//        }
         boolean isFirstIssue = appliedUserRepository.add(couponId, userId);
         if (!isFirstIssue) {
             log.info("중복 발급 요청 감지 - userId: {}, couponId: {}", userId, couponId);
@@ -160,7 +153,6 @@ public class CouponService {
      * Redis 기반 발급 수량 제어 (key: coupon_count:{couponId})
      */
     private CouponIssueResult validateQuantityLimit(final UUID couponId, final UUID userId, final int totalQuantity) {
-//        int issuedCount = issuedCouponRepository.countByCouponId(couponId);
         String countKey = "coupon_count:" + couponId;
         Long issuedCount = couponCountRedisRepository.increment(countKey);
         if (issuedCount > totalQuantity) {
@@ -169,6 +161,16 @@ public class CouponService {
             return CouponIssueResult.quantityExceeded(userId, couponId);
         }
         return null;
+    }
+
+    private void rollbackRedisOperations(final UUID couponId, final UUID userId, final String countKey) {
+        try {
+            appliedUserRepository.remove(couponId, userId);
+            couponCountRedisRepository.decrement(countKey);    // 카운트 감소 (DECR)
+            log.info("Kafka 발행 실패로 인한 Redis 변경사항 롤백 완료 - userId: {}, couponId: {}", userId, couponId);
+        } catch (Exception redisEx) {
+            log.error("Redis 롤백 작업 중 오류 발생 - userId: {}, couponId: {}. 데이터 불일치 가능성 있음.", userId, couponId, redisEx);
+        }
     }
 
     @Transactional
