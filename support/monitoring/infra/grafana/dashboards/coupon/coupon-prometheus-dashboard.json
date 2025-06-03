@@ -102,32 +102,27 @@
     },
     {
       "type": "graph",
-      "title": "P99 Response Time (ms)",
+      "title": "Request Count (Total)",
       "id": 4,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{uri=~\"/api/coupon/.*/issue/test\"}[1m])) by (le, job, instance, uri)) * 1000",
+          "expr": "sum(http_server_requests_seconds_count{instance=\"host.docker.internal:8082\"})",
           "refId": "A",
-          "legendFormat": "{{uri}} {{instance}} - P99 Response Time"
+          "legendFormat": "{{uri}} {{instance}} - Request Count"
         }
       ],
       "yaxes": [
         {
-          "format": "ms",
-          "label": "Time (ms)",
+          "format": "short",
+          "label": "Count",
           "show": true
         },
         {
           "show": false
         }
       ],
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
-      }
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
     },
     {
       "type": "graph",
@@ -167,12 +162,12 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "jvm_memory_used_bytes{area=\"heap\", instance=\"host.docker.internal:8082\"} / (1024*1024)",
+          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=\"host.docker.internal:8082\"}) / (1024*1024)",
           "refId": "A",
           "legendFormat": "{{instance}} App Heap Used (MB)"
         },
         {
-          "expr": "jvm_memory_max_bytes{area=\"heap\", instance=\"host.docker.internal:8082\"} / (1024*1024)",
+          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=\"host.docker.internal:8082\"}) / (1024*1024)",
           "refId": "B",
           "legendFormat": "{{instance}} App Heap Max (MB)"
         }

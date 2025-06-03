@@ -15,6 +15,7 @@ export function setup() {
 
     const loginHeaders = { 'Content-Type': 'application/json' };
 
+    // API Server url (e.g. localhost -> 192.168.x.x)
     const loginRes = http.post('http://localhost:8080/api/auth/login', loginPayload, {
         headers: loginHeaders,
     });
@@ -48,6 +49,7 @@ export default function (data) {
         Authorization: `Bearer ${token}`,
     };
 
+    // API Server url (e.g. localhost -> 192.168.x.x)
     const createRes = http.post('http://localhost:8080/api/coupon/', createPayload, {
         headers: createHeaders,
     });

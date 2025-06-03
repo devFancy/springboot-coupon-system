@@ -27,7 +27,7 @@
       "yaxes": [
         {
           "format": "ops",
-          "label": "Messages / min",
+          "label": "Messages / sec",
           "show": true
         },
         {
@@ -137,12 +137,12 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "jvm_memory_used_bytes{area=\"heap\", instance=\"host.docker.internal:8083\"} / (1024*1024)",
+          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=\"host.docker.internal:8083\"}) / (1024*1024)",
           "refId": "A",
           "legendFormat": "{{instance}} Heap Used (MB)"
         },
         {
-          "expr": "jvm_memory_max_bytes{area=\"heap\", instance=\"host.docker.internal:8083\"} / (1024*1024)",
+          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=\"host.docker.internal:8083\"}) / (1024*1024)",
           "refId": "B",
           "legendFormat": "{{instance}} Heap Max (MB)"
         }

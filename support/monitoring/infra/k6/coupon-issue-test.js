@@ -14,11 +14,13 @@ export const options = {
             executor: 'ramping-vus',
             startVUs: 0,
             stages: [
-                { duration: '1m', target: 1000 },
-                { duration: '10m', target: 1000 },
-                // { duration: '1m', target: 4000 },
-                // { duration: '1m', target: 5000 },
-                // { duration: '10m', target: 5000 },
+                {duration: '1m', target: 1000},
+                {duration: '9m', target: 1000},
+                // {duration: '1m', target: 2000},
+                // {duration: '1m', target: 3000},
+                // {duration: '1m', target: 4000},
+                // {duration: '1m', target: 5000},
+                // {duration: '5m', target: 5000},
                 // { duration: '1m', target: 8000 },
                 // { duration: '1m', target: 10000 },
             ],
@@ -31,12 +33,14 @@ export const options = {
     },
 };
 
-const couponId = 'aaf8245f-9d11-4142-8501-c11a20105a16'; // 쿠폰 ID
+const couponId = 'a99c8712-3928-4d2a-963e-2b73d48ae443'; // 쿠폰 ID
 
 export default function () {
     sleep(1);
 
     const userId = uuidv4();
+
+    // API Server url (e.g. localhost -> 192.168.x.x)
     const url = `http://localhost:8080/api/coupon/${couponId}/issue/test`;
     const headers = {'Content-Type': 'application/json'};
     const payload = JSON.stringify({userId});
