@@ -24,11 +24,9 @@ public class DistributedLockAop {
     private static final String REDISSON_LOCK_PREFIX = "LOCK:";
 
     private final RedissonClient redissonClient;
-    private final AopMethodExecutor aopMethodExecutor;
 
-    public DistributedLockAop(final RedissonClient redissonClient, final AopMethodExecutor aopMethodExecutor) {
+    public DistributedLockAop(final RedissonClient redissonClient) {
         this.redissonClient = redissonClient;
-        this.aopMethodExecutor = aopMethodExecutor;
     }
 
     @Around("@annotation(distributedLockAnnotation)")
@@ -74,19 +72,22 @@ public class DistributedLockAop {
             }
 
             log.info("락 획득 성공: 키='{}'", lockName);
-            // (3) DistributedLock 어노테이션이 선언된 메서드를 별도의 트랜잭션으로 실행한다.
-            return aopMethodExecutor.proceed(joinPoint);
+            // (3) @DistributedLock 어노테이션이 선언된 원본 메서드(예: CouponIssueService#issue) 실행.
+            return joinPoint.proceed();
 
         } catch (InterruptedException e) {
             log.error("락 대기 중 인터럽트 발생: 키='{}'", lockName, e);
             Thread.currentThread().interrupt();
             throw new DistributedLockNotAcquiredException(lockName);
         } finally {
-            if (acquired) {
+            if (acquired && rLock.isHeldByCurrentThread()) {
                 try {
                     // (4) 종료 시 무조건 락을 해제한다.
                     rLock.unlock();
                     log.info("락 해제 성공: 키='{}'", lockName);
+                } catch (IllegalMonitorStateException imse) {
+                    log.warn("락 해제 시도 시 이미 해제되었거나 현재 스레드가 락을 보유하고 있지 않음 (IllegalMonitorStateException). 키='{}', 메서드: '{}', 오류 메시지='{}'",
+                            lockName, method.getName(), imse.getMessage());
                 } catch (Exception e) {
                     log.warn("락 해제 중 예외 발생. 키='{}', 메서드: '{}', 오류 메시지='{}'",
                             lockName, method.getName(), e.getMessage());
