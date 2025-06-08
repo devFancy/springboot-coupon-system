@@ -90,32 +90,32 @@ vUser 1,000명 동시 요청 환경에서 K6 부하 테스트를 수행한 결�
 
 위 전략을 바탕으로, 사용자 요청부터 최종 저장 및 실패 복구까지의 전체 흐름은 다음과 같습니다.
 
-#### Acquire Distributed Lock (사용자 요청 직렬화)
+#### 1. Acquire Distributed Lock (사용자 요청 직렬화)
 
 * 요청 접수 즉시, AOP(`@DistributedLock`)를 통해 사용자 ID 기반의 Redisson 분산 락을 획득합니다.
 * 다중 서버 환경에서도 동일 사용자의 동시 요청을 효과적으로 차단합니다.
 
-#### Pre-validation with Redis (중복 및 수량 제어)
+#### 2. Pre-validation with Redis (중복 및 수량 제어)
 
 * 락 획득 후, Redis의 Atomic 연산을 통해 2차 검증을 수행합니다. 
 * 중복 발급 방지: `SADD` 명령으로 사용자의 요청 이력을 확인하여 중복 요청을 걸러냅니다. 
 * 수량 제어: `INCR` 명령으로 발급 수량을 증가시키며, 전체 수량 초과 시 `DECR`로 롤백하고 요청을 거부합니다.
 
-#### Asynchronous Handoff (비동기 처리)
+#### 3. Asynchronous Handoff (비동기 처리)
 
 * 모든 검증을 통과한 요청만 Apache Kafka `coupon.issue` 토픽으로 메시지를 발행합니다. 
 * API 서버는 즉시 사용자에게 응답을 반환하여, 대기 시간을 최소화합니다.
 
-#### Database Persistence (최종 저장)
+#### 4. Database Persistence (최종 저장)
 
 * 별도의 Kafka Consumer 애플리케이션이 메시지를 구독하여 쿠폰 발급 내역을 MySQL에 저장합니다.
 * `userId`와 `couponId`에 설정된 복합 유니크 키가 최후의 데이터 정합성을 보장합니다.
 
-#### Handle & Log Failures (실패 이력 관리)
+#### 5. Handle & Log Failures (실패 이력 관리)
 
 * DB 장애 등으로 저장에 실패할 경우, 해당 메시지 정보를 `FailedIssuedCoupon` 테이블에 기록하여 데이터 유실을 방지합니다.
 
-#### Scheduled Retry (스케줄러 기반 재처리)
+#### 6-7. Scheduled Retry (스케줄러 기반 재처리)
 
 * Spring `@Scheduled`가 주기적으로 `FailedIssuedCoupon` 테이블에서 미처리 건을 조회합니다.
 *조회된 건은 다시 Kafka 토픽으로 발행되어 발급을 재시도하고, 성공 시 `isResolved` 플래그를 업데이트합니다.
