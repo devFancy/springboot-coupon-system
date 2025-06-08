@@ -3,6 +3,7 @@ import {check} from 'k6';
 import {uuidv4} from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import {sleep} from 'k6';
 
+// 아래 options 두개 중 하나만 설정하고 나머지 하나는 주석 처리해줘야 함.
 // export const options = {
 //     vus: 1,
 //     iterations: 1,
