@@ -7,11 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -22,8 +19,6 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE) // 모든 필터 중 가장 먼저 실행되도록 설정 (요청/응답 전체를 로깅하기 위함)
 public class HttpRequestAndResponseLoggingFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(HttpRequestAndResponseLoggingFilter.class);
