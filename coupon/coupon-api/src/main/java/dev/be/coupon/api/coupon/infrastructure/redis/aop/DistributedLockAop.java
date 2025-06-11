@@ -10,6 +10,7 @@ import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
@@ -71,10 +72,18 @@ public class DistributedLockAop {
                 throw new DistributedLockNotAcquiredException(lockName);
             }
 
-            log.info("락 획득 성공: 키='{}'", lockName);
-            // (3) @DistributedLock 어노테이션이 선언된 원본 메서드(예: CouponIssueService#issue) 실행.
-            return joinPoint.proceed();
-
+            StopWatch stopWatch = new StopWatch();
+            try {
+                stopWatch.start();
+                log.info("락 획득 성공 및 비즈니스 로직 시작: 키='{}'", lockName);
+                // (3) @DistributedLock 어노테이션이 선언된 원본 메서드(예: CouponIssueService#issue) 실행.
+                return joinPoint.proceed();
+            } finally {
+                stopWatch.stop();
+                log.info("비즈니스 로직 종료: 키='{}', 실행시간={}ms",
+                        lockName,
+                        stopWatch.getTotalTimeMillis());
+            }
         } catch (InterruptedException e) {
             log.error("락 대기 중 인터럽트 발생: 키='{}'", lockName, e);
             Thread.currentThread().interrupt();

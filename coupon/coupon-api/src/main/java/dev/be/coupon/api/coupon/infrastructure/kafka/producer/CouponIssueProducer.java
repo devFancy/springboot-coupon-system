@@ -1,7 +1,11 @@
 package dev.be.coupon.api.coupon.infrastructure.kafka.producer;
 
 import dev.be.coupon.api.coupon.infrastructure.kafka.dto.CouponIssueMessage;
+import org.slf4j.MDC;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -15,14 +19,23 @@ import java.util.UUID;
 @Component
 public class CouponIssueProducer {
 
-    private final KafkaTemplate<String, CouponIssueMessage> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private static final String GLOBAL_TRACE_ID_HEADER = "globalTraceId";
 
-    public CouponIssueProducer(final KafkaTemplate<String, CouponIssueMessage> kafkaTemplate) {
+    public CouponIssueProducer(final KafkaTemplate<String, Object> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
     public void issue(final UUID userId, final UUID couponId) {
-        CouponIssueMessage message = new CouponIssueMessage(userId, couponId);
-        kafkaTemplate.send("coupon_issue", message);
+        CouponIssueMessage payload = new CouponIssueMessage(userId, couponId);
+        String globalTraceId = MDC.get("globalTraceId");
+
+        Message<CouponIssueMessage> message = MessageBuilder
+                .withPayload(payload)
+                .setHeader(KafkaHeaders.TOPIC, "coupon_issue")
+                .setHeader(GLOBAL_TRACE_ID_HEADER, globalTraceId)
+                .build();
+
+        kafkaTemplate.send(message);
     }
 }
