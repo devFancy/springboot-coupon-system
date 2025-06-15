@@ -1,4 +1,4 @@
-spring.application.name: core-api
+spring.application.name: coupon-api
 spring.profiles.active: local
 server.port: 8080
 

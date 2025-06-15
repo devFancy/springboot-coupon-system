@@ -16,6 +16,7 @@ build/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+pinpoint-agent-2.5.4
 
 ### Eclipse ###
 .apt_generated

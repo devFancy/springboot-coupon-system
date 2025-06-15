@@ -114,6 +114,7 @@ public class CouponService {
         try {
             couponIssueProducer.issue(userId, couponId);
             log.info("쿠폰 발급 요청 Kafka 전송 성공 - userId: {}, couponId: {}", userId, couponId);
+            log.info("쿠폰 발급 요청이 성공적으로 접수되었습니다. 잠시 후 '내 쿠폰함'에서 확인해 주세요");
             return CouponIssueResult.success(userId, couponId);
         } catch (KafkaException ke) {
             log.error("Kafka 메시지 발행 실패 - userId: {}, couponId: {}. Redis 변경사항 롤백 시도.", userId, couponId, ke);

@@ -78,7 +78,7 @@ class CouponServiceTest {
     private RedisTemplate<String, String> redisTemplate;
 
     @Autowired
-    private KafkaTemplate<String, CouponIssueMessage> kafkaTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @Autowired
     private AppliedUserRepository appliedUserRepository;
