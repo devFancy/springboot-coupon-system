@@ -118,7 +118,7 @@ vUser 1,000명 동시 요청 환경에서 K6 부하 테스트를 수행한 결�
 #### 6-7. Scheduled Retry (스케줄러 기반 재처리)
 
 * Spring `@Scheduled`가 주기적으로 `FailedIssuedCoupon` 테이블에서 미처리 건을 조회합니다.
-*조회된 건은 다시 Kafka 토픽으로 발행되어 발급을 재시도하고, 성공 시 `isResolved` 플래그를 업데이트합니다.
+* 조회된 건은 다시 Kafka 토픽으로 발행되어 발급을 재시도하고, 성공 시 `isResolved` 플래그를 업데이트합니다.
 
 #### Future Improvement: Move to Dead Letter Queue (최종 실패 처리)
 
@@ -163,7 +163,7 @@ support/
 
 * JPA: 객체지향적인 도메인 모델링과 동적 쿼리 생성을 통해 생산성과 유지보수성을 높였습니다.
 
-* K6 & InfluxDB & Grafana: 실제 트래픽과 유사한 부하 테스트 시나리오를 코드로 작성하고, 성능 지표를 시각적으로 분석하여 병목 지점을 파악하고 개선하기 위해 활용했습니다.
+* K6 & InfluxDB, Prometheus & Grafana: 실제 트래픽과 유사한 부하 테스트 시나리오를 코드로 작성하고, 성능 지표를 시각적으로 분석하여 병목 지점을 파악하고 개선하기 위해 활용했습니다.
 
 
 ---

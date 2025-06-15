@@ -5,11 +5,15 @@ import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import dev.be.coupon.kafka.consumer.dto.CouponIssueMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 /**
  * CouponIssueConsumer
@@ -26,9 +30,9 @@ public class CouponIssueConsumer {
     private final IssuedCouponRepository issuedCouponRepository;
     private final CouponIssueFailureRecorder couponIssueFailureRecorder;
     private final Logger log = LoggerFactory.getLogger(CouponIssueConsumer.class);
+    private static final String GLOBAL_TRACE_ID_KEY = "globalTraceId";
 
-    public CouponIssueConsumer(final IssuedCouponRepository issuedCouponRepository,
-                               final CouponIssueFailureRecorder couponIssueFailureRecorder) {
+    public CouponIssueConsumer(final IssuedCouponRepository issuedCouponRepository, final CouponIssueFailureRecorder couponIssueFailureRecorder) {
         this.issuedCouponRepository = issuedCouponRepository;
         this.couponIssueFailureRecorder = couponIssueFailureRecorder;
     }
@@ -40,9 +44,14 @@ public class CouponIssueConsumer {
      */
     @KafkaListener(topics = "coupon_issue", groupId = "group_1")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void listener(final CouponIssueMessage message, final Acknowledgment ack) {
-        log.info("발급 처리 메시지 수신: {}", message);
+    public void listener(final CouponIssueMessage message, @Header(name = GLOBAL_TRACE_ID_KEY, required = false) String globalTraceId, final Acknowledgment ack) {
+
         try {
+            // Kafka Producer 로부터 전달받은 globalTraceId를 MDC 에 설정
+            if(!Objects.isNull(globalTraceId)) {
+                MDC.put("globalTraceId", globalTraceId);
+            }
+            log.info("발급 처리 메시지 수신: {}", message);
 
             if (issuedCouponRepository.existsByUserIdAndCouponId(message.userId(), message.couponId())) {
                 log.info("이미 발급된 쿠폰입니다 - userId: {}, couponId: {}", message.userId(), message.couponId());
@@ -59,6 +68,8 @@ public class CouponIssueConsumer {
             couponIssueFailureRecorder.record(message.userId(), message.couponId()); // 별도 트랜잭션 처리
             log.error("쿠폰 발급 실패 - userId: {}, couponId: {}, reason={}", message.userId(), message.couponId(), e.getMessage(), e);
             throw e;
+        } finally {
+            MDC.remove(GLOBAL_TRACE_ID_KEY);
         }
     }
 }

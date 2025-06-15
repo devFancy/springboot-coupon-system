@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -22,7 +23,10 @@ import java.util.stream.Collectors;
 public class HttpRequestAndResponseLoggingFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(HttpRequestAndResponseLoggingFilter.class);
+    private static final String GLOBAL_TRACE_ID_HEADER = "X-Global-Trace-Id";
+    private static final String GLOBAL_TRACE_ID_KEY = "globalTraceId";
     private static final String TRACE_ID = "traceId";
+
 
     @Override
     protected void doFilterInternal(@NonNull final HttpServletRequest request,
@@ -32,8 +36,13 @@ public class HttpRequestAndResponseLoggingFilter extends OncePerRequestFilter {
         final ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
         final ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
 
-        final String traceId = UUID.randomUUID().toString().substring(0, 32);
+        String globalTraceId = requestWrapper.getHeader(GLOBAL_TRACE_ID_HEADER);
+        if (!StringUtils.hasText(globalTraceId)) {
+            globalTraceId = UUID.randomUUID().toString().substring(0, 32);
+        }
+        MDC.put(GLOBAL_TRACE_ID_KEY, globalTraceId);
 
+        final String traceId = UUID.randomUUID().toString().substring(0, 32);
         MDC.put(TRACE_ID, traceId);
 
         try {
@@ -60,6 +69,7 @@ public class HttpRequestAndResponseLoggingFilter extends OncePerRequestFilter {
                 log.error("[HttpRequestAndResponseLoggingFilter] I/O exception occurred while copying response body", copyException);
             }
             MDC.remove(TRACE_ID);
+            MDC.remove(GLOBAL_TRACE_ID_KEY);
         }
     }
 
