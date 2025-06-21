@@ -1,6 +1,6 @@
 package dev.be.coupon.kafka.consumer.config;
 
-import dev.be.coupon.kafka.consumer.dto.CouponIssueMessage;
+import dev.be.coupon.domain.coupon.kafka.dto.CouponIssueMessage;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
@@ -41,7 +41,7 @@ public class KafkaConsumerConfig {
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         factory.getContainerProperties().setObservationEnabled(true); // Micrometer 연동 활성화
-        factory.setConcurrency(3); // Kafka 파티션 수와 동일하게 설정
+        factory.setConcurrency(1); // Kafka 파티션 수와 동일하게 설정
         return factory;
     }
 }
