@@ -9,7 +9,6 @@ import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.CouponIssueException;
 import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
-import dev.be.coupon.api.coupon.infrastructure.kafka.dto.CouponIssueMessage;
 import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.api.coupon.infrastructure.redis.AppliedUserRepository;
 import dev.be.coupon.api.coupon.infrastructure.redis.CouponCacheRepository;
