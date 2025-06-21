@@ -1,4 +1,4 @@
-package dev.be.coupon.api.coupon.infrastructure.kafka.dto;
+package dev.be.coupon.domain.coupon.kafka.dto;
 
 import java.util.UUID;
 

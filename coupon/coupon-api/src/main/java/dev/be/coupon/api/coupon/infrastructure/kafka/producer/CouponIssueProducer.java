@@ -1,6 +1,6 @@
 package dev.be.coupon.api.coupon.infrastructure.kafka.producer;
 
-import dev.be.coupon.api.coupon.infrastructure.kafka.dto.CouponIssueMessage;
+import dev.be.coupon.domain.coupon.kafka.dto.CouponIssueMessage;
 import org.slf4j.MDC;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
