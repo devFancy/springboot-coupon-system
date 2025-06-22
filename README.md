@@ -64,9 +64,9 @@ vUser 1,000명 동시 요청 환경에서 K6 부하 테스트를 수행한 결�
 
 > Coupon issuance processing flow
 
-아래는 쿠폰 발급 요청 시 Redis, Kafka, MySQL 등을 거쳐 발급 완료까지의 처리 흐름과 실패 재처리까지 포함한 전체 프로세스를 요약한 도식입니다.
+아래는 쿠폰 발급 요청 시 Redis, Kafka, MySQL 등을 거쳐 발급 완료까지의 정상 처리 흐름에 대한 전체 프로세스를 요약한 도식입니다.
 
-![](/docs/image/coupon-issuance-processing-flow.png)
+![](/docs/image/coupon-success-flow.png)
 
 
 ---
