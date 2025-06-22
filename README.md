@@ -113,14 +113,15 @@ vUser 1,000명 동시 요청 환경에서 K6 부하 테스트를 수행한 결�
 * 별도의 Kafka Consumer 애플리케이션이 메시지를 구독하여 쿠폰 발급 내역을 MySQL에 저장합니다.
 * `userId`와 `couponId`에 설정된 복합 유니크 키가 최후의 데이터 정합성을 보장합니다.
 
-#### 5. Handle & Log Failures (실패 이력 관리)
+#### 5. Failure Handling & Scheduled Retry (실패 처리 및 스케줄러 기반 재시도)
 
-* DB 장애 등으로 저장에 실패할 경우, 해당 메시지 정보를 `FailedIssuedCoupon` 테이블에 기록하여 데이터 유실을 방지합니다.
+* 이전 단계에서 DB 저장 과정에서 장애가 발생하면, 데이터 유실을 방지하는 내결함성 로직이 동작합니다. 먼저 실패한 메시지 정보를 `FailedIssuedCoupon` 테이블에 기록합니다.
 
-#### 6-7. Scheduled Retry (스케줄러 기반 재처리)
+* 그 후, Spring `@Scheduled`로 동작하는 스케줄러가 주기적으로 이 테이블의 미처리 건을 조회하여 Kafka 토픽으로 재발행, 발급을 재시도합니다.
 
-* Spring `@Scheduled`가 주기적으로 `FailedIssuedCoupon` 테이블에서 미처리 건을 조회합니다.
-* 조회된 건은 다시 Kafka 토픽으로 발행되어 발급을 재시도하고, 성공 시 `isResolved` 플래그를 업데이트합니다.
+* 성공적으로 재처리된 쿠폰은 `isResolved` 상태로 변경하여 중복 발급을 막고 데이터의 최종 정합성을 확보합니다.
+
+![](/docs/image/coupon-failure-handling-flow.png)
 
 #### Future Improvement: Move to Dead Letter Queue (최종 실패 처리)
 
