@@ -50,7 +50,7 @@ export default function (data) {
     };
 
     // API Server url (e.g. localhost -> 192.168.x.x)
-    const createRes = http.post('http://localhost:8080/api/coupon/', createPayload, {
+    const createRes = http.post('http://localhost:8080/api/v1/coupon/', createPayload, {
         headers: createHeaders,
     });
 

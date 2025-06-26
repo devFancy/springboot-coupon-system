@@ -42,7 +42,7 @@ export default function () {
     const userId = uuidv4();
 
     // API Server url (e.g. localhost -> 192.168.x.x)
-    const url = `http://localhost:8080/api/coupon/${couponId}/issue/test`;
+    const url = `http://localhost:8080/api/v1/coupon/${couponId}/issue/test`;
     const headers = {'Content-Type': 'application/json'};
     const payload = JSON.stringify({userId});
 

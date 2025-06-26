@@ -10,6 +10,11 @@ spring:
       hibernate:
         format_sql: true
         show_sql: true
+  # sprig boot 3.x
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
   kafka:
     listener:

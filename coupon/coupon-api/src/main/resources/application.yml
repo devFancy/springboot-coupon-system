@@ -7,7 +7,6 @@ spring:
     import:
       - monitoring.yml
       - logging.yml
-#      - db-core.yml
   web.resources.add-mappings: false
 
 management:
@@ -22,6 +21,10 @@ server:
     threads:
       max: 100 # 500
       min-spare: 20 # 100
+
+app:
+  scheduler:
+    batch-size: 150
 
 ---
 spring.config.activate.on-profile: local

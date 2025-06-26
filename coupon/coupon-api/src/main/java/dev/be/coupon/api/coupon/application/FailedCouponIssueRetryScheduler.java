@@ -1,6 +1,6 @@
 package dev.be.coupon.api.coupon.application;
 
-import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
+import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.domain.coupon.FailedIssuedCoupon;
 import dev.be.coupon.domain.coupon.FailedIssuedCouponRepository;
 import org.slf4j.Logger;

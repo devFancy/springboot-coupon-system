@@ -2,8 +2,8 @@ package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.FailedIssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
-import dev.be.coupon.domain.coupon.infrastructure.FailedIssuedCouponJpaRepository;
-import dev.be.coupon.domain.coupon.kafka.dto.CouponIssueMessage;
+import dev.be.coupon.infra.jpa.FailedIssuedCouponJpaRepository;
+import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;

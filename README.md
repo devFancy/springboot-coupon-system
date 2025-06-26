@@ -48,7 +48,7 @@ vUser 1,000명 동시 요청 환경에서 K6 부하 테스트를 수행한 결�
 
 ![](/docs/image/technology-grafana-coupon-kafka-consumer-dashboard.png)
 
-* Kafka Listener Processed Count: avg 200 ops/s
+* Kafka Listener Processed Count: avg 150 ops/s
 
 * Kafka Listener Processing Time (ms): avg 6ms
 

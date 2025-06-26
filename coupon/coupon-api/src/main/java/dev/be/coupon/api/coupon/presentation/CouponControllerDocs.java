@@ -7,17 +7,20 @@ import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
 import dev.be.coupon.common.support.response.CommonResponse;
+import dev.be.coupon.domain.coupon.CouponIssueStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Tag(
@@ -62,13 +65,22 @@ public interface CouponControllerDocs {
             description = "사용자는 1번만 쿠폰을 발급할 수 있다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "쿠폰 발급 성공"),
+            @ApiResponse(responseCode = "202", description = "요청 성공적으로 접수됨"),
     })
-    ResponseEntity<CommonResponse<CouponIssueResponse>> issue(
+    ResponseEntity<CommonResponse<CouponIssueResponse>> issueRequest(
             @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable final UUID couponId
     );
 
+    @Operation(
+            summary = "쿠폰 발급 상태 조회 (폴링)",
+            description = "발급 요청 후, 이 API를 주기적으로 호출하여 최종 결과를 확인합니다."
+    )
+    @Parameter(in = ParameterIn.PATH, name = "couponId", description = "상태를 조회할 쿠폰의 ID")
+    ResponseEntity<CommonResponse<Map<String, CouponIssueStatus>>> getIssueStatus(
+            @Parameter(hidden = true) LoginUser loginUser,
+            UUID couponId
+    );
 
     @Operation(
             summary = "쿠폰 사용",

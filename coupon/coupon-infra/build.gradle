@@ -1,0 +1,29 @@
+jar.enabled = true
+
+dependencies {
+    implementation project(":coupon:coupon-domain")
+    implementation project(":support:common")
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // redis - redisson
+    implementation ("org.redisson:redisson-spring-boot-starter:${redissonVersion}")
+
+    // kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // jackson
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // awaitility
+    testImplementation ("org.awaitility:awaitility:${awaitilityVersion}")
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}

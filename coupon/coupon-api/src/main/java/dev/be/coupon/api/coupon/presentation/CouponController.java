@@ -36,7 +36,7 @@ public class CouponController implements CouponControllerDocs {
         this.couponService = couponService;
     }
 
-    @PostMapping(value = "/coupon/")
+    @PostMapping(value = "/v1/coupon/")
     public ResponseEntity<CommonResponse<CouponCreateResponse>> create(
             @AuthenticationPrincipal final LoginUser loginUser,
             @RequestBody final CouponCreateRequest request) {
@@ -49,8 +49,8 @@ public class CouponController implements CouponControllerDocs {
                 .body(CommonResponse.success(CouponCreateResponse.from(result)));
     }
 
-    @PostMapping(value = "/coupon/{couponId}/issue")
-    public ResponseEntity<CommonResponse<CouponIssueResponse>> issue(
+    @PostMapping(value = "/v2/coupon/{couponId}/issue-request")
+    public ResponseEntity<CommonResponse<String>> issueRequest(
             @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable final UUID couponId) {
 
@@ -59,27 +59,25 @@ public class CouponController implements CouponControllerDocs {
         }
 
         CouponIssueCommand command = new CouponIssueCommand(loginUser.id(), couponId);
-        CouponIssueResult result = couponService.issue(command);
+        couponService.requestIssue(command); // 대기열에 등록하는 서비스 호출
 
-        HttpStatus status = resolveStatus(result);
-        return ResponseEntity.status(status)
-                .body(CommonResponse.success(CouponIssueResponse.from(result)));
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(CommonResponse.success("쿠폰 발급 요청이 성공적으로 접수되었습니다."));
     }
 
-    @PostMapping(value = "/coupon/{couponId}/issue/test")
-    public ResponseEntity<CommonResponse<CouponIssueResponse>> issue(
+    @PostMapping(value = "/v2/coupon/{couponId}/issue/test")
+    public ResponseEntity<CommonResponse<String>> issue(
             @RequestBody final CouponIssueRequest request,
             @PathVariable final UUID couponId) {
 
         CouponIssueCommand command = new CouponIssueCommand(request.userId(), couponId);
-        CouponIssueResult result = couponService.issue(command);
+        couponService.issue(command);
 
-        HttpStatus status = resolveStatus(result);
-        return ResponseEntity.status(status)
-                .body(CommonResponse.success(CouponIssueResponse.from(result)));
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(CommonResponse.success("쿠폰 발급 요청이 성공적으로 접수되었습니다. (테스트)"));
     }
 
-    @PostMapping(value = "/coupon/{couponId}/usage")
+    @PostMapping(value = "/v1/coupon/{couponId}/usage")
     public ResponseEntity<CommonResponse<CouponUsageResponse>> usage(
             @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable final UUID couponId) {
