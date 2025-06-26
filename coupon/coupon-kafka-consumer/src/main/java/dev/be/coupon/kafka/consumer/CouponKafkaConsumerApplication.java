@@ -8,13 +8,14 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(scanBasePackages = {
 		"dev.be.coupon.kafka.consumer",
 		"dev.be.coupon.domain.coupon",
-		"dev.be.coupon.common"
+		"dev.be.coupon.common",
+		"dev.be.coupon.infra"
 })
 @EnableJpaRepositories(basePackages = {
-		"dev.be.coupon.domain.coupon.infrastructure"
+		"dev.be.coupon.infra.jpa"
 })
 @EntityScan(basePackages = {
-		"dev.be.coupon.domain.coupon"
+		"dev.be.coupon.domain"
 })
 public class CouponKafkaConsumerApplication {
 

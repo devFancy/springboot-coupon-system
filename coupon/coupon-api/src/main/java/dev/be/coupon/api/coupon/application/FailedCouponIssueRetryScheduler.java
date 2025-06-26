@@ -1,8 +1,8 @@
 package dev.be.coupon.api.coupon.application;
 
-import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.domain.coupon.FailedIssuedCoupon;
 import dev.be.coupon.domain.coupon.FailedIssuedCouponRepository;
+import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;

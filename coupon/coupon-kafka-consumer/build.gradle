@@ -3,6 +3,7 @@ jar.enabled = true
 
 dependencies {
 	implementation project(":coupon:coupon-domain")
+	implementation project(":coupon:coupon-infra")
 	implementation project(":support:logging")
 	implementation project(":support:monitoring")
 
