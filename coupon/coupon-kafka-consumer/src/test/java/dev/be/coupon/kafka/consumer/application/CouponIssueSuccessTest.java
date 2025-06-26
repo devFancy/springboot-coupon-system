@@ -1,7 +1,7 @@
 package dev.be.coupon.kafka.consumer.application;
 
-import dev.be.coupon.domain.coupon.infrastructure.IssuedCouponJpaRepository;
 import dev.be.coupon.domain.coupon.kafka.dto.CouponIssueMessage;
+import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;

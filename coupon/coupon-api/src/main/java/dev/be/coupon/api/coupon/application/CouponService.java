@@ -9,17 +9,17 @@ import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.CouponIssueException;
 import dev.be.coupon.api.coupon.application.exception.CouponNotFoundException;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
-import dev.be.coupon.api.coupon.infrastructure.kafka.producer.CouponIssueProducer;
-import dev.be.coupon.api.coupon.infrastructure.redis.AppliedUserRepository;
-import dev.be.coupon.api.coupon.infrastructure.redis.CouponCacheRepository;
-import dev.be.coupon.api.coupon.infrastructure.redis.CouponCountRedisRepository;
-import dev.be.coupon.api.coupon.infrastructure.redis.aop.DistributedLock;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import dev.be.coupon.domain.coupon.UserRoleChecker;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
+import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
+import dev.be.coupon.infra.redis.AppliedUserRepository;
+import dev.be.coupon.infra.redis.CouponCacheRepository;
+import dev.be.coupon.infra.redis.CouponCountRedisRepository;
+import dev.be.coupon.infra.redis.aop.DistributedLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.KafkaException;
@@ -33,29 +33,29 @@ import java.util.UUID;
 public class CouponService {
 
     private final CouponRepository couponRepository;
+    private final IssuedCouponRepository issuedCouponRepository;
+    private final UserRoleChecker userRoleChecker;
     private final CouponCacheRepository couponCacheRepository;
     private final CouponCountRedisRepository couponCountRedisRepository;
     private final CouponIssueProducer couponIssueProducer;
-    private final IssuedCouponRepository issuedCouponRepository;
     private final AppliedUserRepository appliedUserRepository;
-    private final UserRoleChecker userRoleChecker;
 
     private final Logger log = LoggerFactory.getLogger(CouponService.class);
 
     public CouponService(final CouponRepository couponRepository,
+                         final IssuedCouponRepository issuedCouponRepository,
+                         final UserRoleChecker userRoleChecker,
                          final CouponCacheRepository couponCacheRepository,
                          final CouponCountRedisRepository couponCountRedisRepository,
                          final CouponIssueProducer couponIssueProducer,
-                         final IssuedCouponRepository issuedCouponRepository,
-                         final AppliedUserRepository appliedUserRepository,
-                         final UserRoleChecker userRoleChecker) {
+                         final AppliedUserRepository appliedUserRepository) {
         this.couponRepository = couponRepository;
+        this.issuedCouponRepository = issuedCouponRepository;
+        this.userRoleChecker = userRoleChecker;
         this.couponCacheRepository = couponCacheRepository;
         this.couponCountRedisRepository = couponCountRedisRepository;
         this.couponIssueProducer = couponIssueProducer;
-        this.issuedCouponRepository = issuedCouponRepository;
         this.appliedUserRepository = appliedUserRepository;
-        this.userRoleChecker = userRoleChecker;
     }
 
     public CouponCreateResult create(
