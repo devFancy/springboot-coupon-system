@@ -2,8 +2,9 @@
 
 # --- 개발 환경 설정 ---
 APP_NAME="Coupon Kafka Consumer (Dev)"
-JAR_PATH=$(find ./coupon/coupon-kafka-consumer/build/libs/ -name "*.jar" ! -name "*-plain.jar")
+JAR_PATH=$(find ./coupon/coupon-consumer/build/libs/ -name "*.jar" ! -name "*-plain.jar")
 PID_FILE="./coupon-consumer-dev.pid"
+LOG_FILE_PATH="logs/coupon-consumer-dev.log"
 
 # 프로세스 종료 함수
 stop_process() {
@@ -35,13 +36,11 @@ start)
     echo "[INFO] Starting $APP_NAME..."
     nohup java -jar \
     -Dspring.profiles.active=dev \
-    -Dspring.application.name=coupon-kafka-consumer-dev \
+    -Dspring.application.name=coupon-consumer-dev \
     $JAR_PATH 1>/dev/null 2>&1 &
 
     echo $! > "$PID_FILE"
     echo "[SUCCESS] $APP_NAME started. (PID: $(cat "$PID_FILE"))"
-
-    LOG_FILE_PATH="logs/coupon-kafka-consumer.log"
 
     echo "[INFO] Waiting for log file to be created at: $LOG_FILE_PATH"
     sleep 2
