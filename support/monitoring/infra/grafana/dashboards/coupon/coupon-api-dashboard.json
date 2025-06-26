@@ -1,6 +1,6 @@
 {
   "id": null,
-  "uid": "coupon-prometheus",
+  "uid": "coupon-api-prometheus",
   "title": "Coupon Issue API & Redis Monitoring Dashboard",
   "editable": true,
   "timezone": "browser",

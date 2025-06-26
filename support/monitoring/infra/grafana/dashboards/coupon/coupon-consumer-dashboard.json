@@ -1,7 +1,7 @@
 {
   "id": null,
-  "uid": "coupon-kafka-prometheus",
-  "title": "Coupon Kafka - Prometheus Dashboard",
+  "uid": "coupon-consumer-prometheus",
+  "title": "Coupon Consumer - Prometheus Dashboard",
   "editable": true,
   "timezone": "browser",
   "schemaVersion": 36,
@@ -197,7 +197,7 @@
     }
   ],
   "tags": [
-    "coupon-kafka-consumer-server",
+    "coupon-consumer-server",
     "performance"
   ]
 }

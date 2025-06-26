@@ -9,7 +9,7 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:8082']
 
-  - job_name: 'coupon-kafka-consumer'
+  - job_name: 'coupon-consumer'
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
     static_configs:
@@ -25,4 +25,4 @@ scrape_configs:
 # 운영 트래픽(8080 등)과 모니터링 트래픽(8082, 8083 등)을 포트 기준으로 분리하여 관리
 # 예시:
 # - coupon-api: http://localhost:8082/actuator/prometheus
-# - coupon-kafka-consumer: http://localhost:8083/actuator/prometheus
+# - coupon-consumer: http://localhost:8083/actuator/prometheus
