@@ -143,9 +143,9 @@ vUser 1,000명 동시 요청 환경에서 K6 부하 테스트를 수행한 결�
 ```markdown
 coupon/
 ├── coupon-api              # REST API + 인증 + 비즈니스 로직
-├── coupon-domain           # 도메인 모델 (JPA Entity)
+├── coupon-consumer   # Kafka 비동기 발급 처리
 ├── coupon-infra            # 인프라 모듈 (JPA, Redis, Kafka)
-├── coupon-kafka-consumer   # Kafka 비동기 발급 처리
+├── coupon-domain           # 도메인 모델 (JPA Entity)
 
 support/
 ├── logging                 # 공통 로그 필터 및 설정
@@ -281,7 +281,7 @@ docker-compose를 사용하여 Redis, Kafka, MySQL 등 외부 인프라를 실�
 IntelliJ IDE에서 아래 두 개의 Spring Boot 애플리케이션을 각각 실행합니다.
 
 * `coupon-api` 모듈의 CouponApiApplication.java
-* `coupon-kafka-consumer` 모듈의 CouponKafkaConsumerApplication.java
+* `coupon-consumer` 모듈의 CouponKafkaConsumerApplication.java
 
 [4] 모니터링 대시보드 확인 (Optional)
 

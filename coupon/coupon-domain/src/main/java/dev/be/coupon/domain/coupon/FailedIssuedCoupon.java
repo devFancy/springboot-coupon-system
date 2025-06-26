@@ -23,7 +23,7 @@ import java.util.UUID;
  * | 해결 여부    | isResolved | 실패 건이 정상적으로 재처리되어 해결되었는지 여부 (`true` = 해결됨) |
  * <p>
  * 도메인 모듈(coupon-domain)에 위치하며,
- * coupon-api, coupon-kafka-consumer 모듈에서 함께 사용됩니다.
+ * coupon-api, coupon-consumer 모듈에서 함께 사용됩니다.
  */
 @Table(name = "failed_issued_coupons")
 @Entity
