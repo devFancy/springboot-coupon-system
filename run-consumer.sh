@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP_NAME="Coupon Kafka Consumer"
-JAR_PATH=$(find ./coupon/coupon-kafka-consumer/build/libs/ -name "*.jar" ! -name "*-plain.jar")
+JAR_PATH=$(find ./coupon/coupon-consumer/build/libs/ -name "*.jar" ! -name "*-plain.jar")
 
 PID_FILE="./coupon-consumer.pid"
 LOG_FILE="./nohup-consumer.out"
@@ -36,7 +36,7 @@ start)
     echo "[INFO] Starting $APP_NAME..."
     nohup java -jar \
     -Dspring.profiles.active=local \
-    -Dspring.application.name=coupon-kafka-consumer \
+    -Dspring.application.name=coupon-consumer \
     $JAR_PATH 1>$LOG_FILE 2>&1 &
 
     echo $! > $PID_FILE

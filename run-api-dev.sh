@@ -4,7 +4,7 @@
 APP_NAME="Coupon API (Dev)"
 JAR_PATH=$(find ./coupon/coupon-api/build/libs/ -name "*.jar" ! -name "*-plain.jar")
 PID_FILE="./coupon-api-dev.pid"
-LOG_FILE_PATH="logs/coupon-api.log"
+LOG_FILE_PATH="logs/coupon-api-dev.log"
 
 stop_process() {
     local pid=$1
