@@ -2,7 +2,7 @@ package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
-import dev.be.coupon.domain.coupon.kafka.dto.CouponIssueMessage;
+import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

@@ -16,8 +16,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 })
 @EnableJpaRepositories(basePackages = {
         "dev.be.coupon.infra.jpa",
-        "dev.be.coupon.domain.user",
-        "dev.be.coupon.domain.auth"
 })
 @EntityScan(basePackages = {
         "dev.be.coupon.domain"
