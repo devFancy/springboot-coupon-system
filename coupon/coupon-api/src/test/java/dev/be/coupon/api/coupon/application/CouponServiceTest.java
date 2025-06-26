@@ -92,12 +92,12 @@ class CouponServiceTest {
 
         couponService = new CouponService(
                 couponRepository,
+                issuedCouponRepository,
+                userRoleChecker,
                 couponCacheRepository,
                 couponCountRedisRepository,
                 couponIssueProducer,
-                issuedCouponRepository,
-                appliedUserRepository,
-                userRoleChecker
+                appliedUserRepository
         );
     }
 

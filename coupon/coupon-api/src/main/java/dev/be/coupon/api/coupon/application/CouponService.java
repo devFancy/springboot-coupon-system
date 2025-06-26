@@ -33,29 +33,29 @@ import java.util.UUID;
 public class CouponService {
 
     private final CouponRepository couponRepository;
+    private final IssuedCouponRepository issuedCouponRepository;
+    private final UserRoleChecker userRoleChecker;
     private final CouponCacheRepository couponCacheRepository;
     private final CouponCountRedisRepository couponCountRedisRepository;
     private final CouponIssueProducer couponIssueProducer;
-    private final IssuedCouponRepository issuedCouponRepository;
     private final AppliedUserRepository appliedUserRepository;
-    private final UserRoleChecker userRoleChecker;
 
     private final Logger log = LoggerFactory.getLogger(CouponService.class);
 
     public CouponService(final CouponRepository couponRepository,
+                         final IssuedCouponRepository issuedCouponRepository,
+                         final UserRoleChecker userRoleChecker,
                          final CouponCacheRepository couponCacheRepository,
                          final CouponCountRedisRepository couponCountRedisRepository,
                          final CouponIssueProducer couponIssueProducer,
-                         final IssuedCouponRepository issuedCouponRepository,
-                         final AppliedUserRepository appliedUserRepository,
-                         final UserRoleChecker userRoleChecker) {
+                         final AppliedUserRepository appliedUserRepository) {
         this.couponRepository = couponRepository;
+        this.issuedCouponRepository = issuedCouponRepository;
+        this.userRoleChecker = userRoleChecker;
         this.couponCacheRepository = couponCacheRepository;
         this.couponCountRedisRepository = couponCountRedisRepository;
         this.couponIssueProducer = couponIssueProducer;
-        this.issuedCouponRepository = issuedCouponRepository;
         this.appliedUserRepository = appliedUserRepository;
-        this.userRoleChecker = userRoleChecker;
     }
 
     public CouponCreateResult create(
