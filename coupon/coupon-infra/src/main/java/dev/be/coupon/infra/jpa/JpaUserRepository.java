@@ -1,4 +1,4 @@
-package dev.be.coupon.domain.user.infrastructure;
+package dev.be.coupon.infra.jpa;
 
 import dev.be.coupon.domain.user.UserRole;
 import dev.be.coupon.domain.user.User;
