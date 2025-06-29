@@ -49,7 +49,7 @@
 
 ![](/docs/image/influxdb-dashboard-2.png)
 
-- 명령어: k6 run --out influxdb=http://localhost:8086/k6 coupon-issue-test.js
+- 명령어: k6 run --out influxdb=http://localhost:8086/k6 coupon-issue-test-v1.js
     - 해당 명령어를 입력하면 아래와 같이 dashboard 에 잘 반영된 것을 확인할 수 있다.
 
 ![](/docs/image/influxdb-dashboard-3.png)
