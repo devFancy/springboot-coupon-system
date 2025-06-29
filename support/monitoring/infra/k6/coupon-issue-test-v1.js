@@ -16,7 +16,7 @@ export const options = {
             startVUs: 0,
             stages: [
                 {duration: '1m', target: 1000},
-                {duration: '9m', target: 1000},
+                // {duration: '9m', target: 1000},
                 // {duration: '1m', target: 2000},
                 // {duration: '1m', target: 3000},
                 // {duration: '1m', target: 4000},
@@ -34,7 +34,7 @@ export const options = {
     },
 };
 
-const couponId = 'a99c8712-3928-4d2a-963e-2b73d48ae443'; // 쿠폰 ID
+const couponId = 'ae17c1cd-a7a4-4302-8e18-6c07693ca179'; // 쿠폰 ID
 
 export default function () {
     sleep(1);
@@ -42,7 +42,7 @@ export default function () {
     const userId = uuidv4();
 
     // API Server url (e.g. localhost -> 192.168.x.x)
-    const url = `http://localhost:8080/api/coupon/${couponId}/issue/test`;
+    const url = `http://localhost:8080/api/v1/coupon/${couponId}/issue/test`;
     const headers = {'Content-Type': 'application/json'};
     const payload = JSON.stringify({userId});
 

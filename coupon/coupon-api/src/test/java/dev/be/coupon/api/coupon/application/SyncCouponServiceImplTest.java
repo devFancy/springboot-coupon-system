@@ -9,6 +9,7 @@ import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.CouponIssueException;
 import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
+import dev.be.coupon.api.coupon.application.v1.SyncCouponServiceImpl;
 import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
@@ -16,9 +17,9 @@ import dev.be.coupon.domain.coupon.exception.CouponAlreadyUsedException;
 import dev.be.coupon.domain.coupon.exception.InvalidCouponTypeException;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
-import dev.be.coupon.infra.redis.AppliedUserRepository;
-import dev.be.coupon.infra.redis.CouponCacheRepository;
-import dev.be.coupon.infra.redis.CouponCountRedisRepository;
+import dev.be.coupon.infra.redis.v1.AppliedUserRepository;
+import dev.be.coupon.infra.redis.v1.CouponV1CacheRepository;
+import dev.be.coupon.infra.redis.v1.CouponCountRedisRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -43,7 +44,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * CouponServiceTest 주의사항:
+ * SyncCouponServiceImplTest 주의사항:
  * <p>
  * 이 테스트는 Kafka Consumer 가 실제 DB(JPA Repository)에 접근해 데이터를 저장하는 구조이므로,
  * 테스트에서도 Spring Context 에서 관리하는 실제 JPA 기반 Repository 를 사용해야 합니다.
@@ -59,16 +60,16 @@ import java.util.concurrent.TimeUnit;
  * - Kafka Application 실행
  */
 @SpringBootTest
-class CouponServiceTest {
+class SyncCouponServiceImplTest {
 
-    private CouponService couponService;
+    private SyncCouponServiceImpl couponServiceImpl;
     private FakeUserRoleChecker userRoleChecker;
 
     @Autowired
     private CouponRepository couponRepository;
 
     @Autowired
-    private CouponCacheRepository couponCacheRepository;
+    private CouponV1CacheRepository couponV1CacheRepository;
 
     @Autowired
     private IssuedCouponRepository issuedCouponRepository;
@@ -85,16 +86,16 @@ class CouponServiceTest {
     @BeforeEach
     void setUp() {
         userRoleChecker = new FakeUserRoleChecker();
-        userRoleChecker.updateIsAdmin(true); // 기본값으로 관리자 권한을 부여함
+        userRoleChecker.updateIsAdmin(true);
 
         CouponCountRedisRepository couponCountRedisRepository = new CouponCountRedisRepository(redisTemplate);
         CouponIssueProducer couponIssueProducer = new CouponIssueProducer(kafkaTemplate);
 
-        couponService = new CouponService(
+        couponServiceImpl = new SyncCouponServiceImpl(
                 couponRepository,
                 issuedCouponRepository,
                 userRoleChecker,
-                couponCacheRepository,
+                couponV1CacheRepository,
                 couponCountRedisRepository,
                 couponIssueProducer,
                 appliedUserRepository
@@ -124,7 +125,7 @@ class CouponServiceTest {
         final CouponCreateCommand expected = new CouponCreateCommand(adminId, "치킨", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
 
         // when
-        final CouponCreateResult actual = couponService.create(expected);
+        final CouponCreateResult actual = couponServiceImpl.create(expected);
 
         // then
         assertThat(actual.id()).isNotNull();
@@ -140,7 +141,7 @@ class CouponServiceTest {
         final CouponCreateCommand expected = new CouponCreateCommand(adminId, "치킨", type, 1, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
 
         // when & then
-        assertThatThrownBy(() -> couponService.create(expected)).isInstanceOf(InvalidCouponTypeException.class).hasMessage("쿠폰 타입이 지정되지 않았습니다.");
+        assertThatThrownBy(() -> couponServiceImpl.create(expected)).isInstanceOf(InvalidCouponTypeException.class).hasMessage("쿠폰 타입이 지정되지 않았습니다.");
     }
 
     @DisplayName("쿠폰을 생성할 때 관리자 권한이 아니라면 예외가 발생한다.")
@@ -152,7 +153,7 @@ class CouponServiceTest {
         userRoleChecker.updateIsAdmin(false); // 관리자 권한이 아닌 경우: false
 
         // when & then
-        assertThatThrownBy(() -> couponService.create(expected)).isInstanceOf(UnauthorizedAccessException.class).hasMessage("권한이 없습니다.");
+        assertThatThrownBy(() -> couponServiceImpl.create(expected)).isInstanceOf(UnauthorizedAccessException.class).hasMessage("권한이 없습니다.");
     }
 
     @DisplayName("사용자가 쿠폰 발급 요청을 하면 쿠폰 발급이 처리된다.")
@@ -161,13 +162,13 @@ class CouponServiceTest {
         // given
         final UUID userId = UUID.randomUUID();
         final CouponCreateCommand createCommand = new CouponCreateCommand(userId, "피자 할인 쿠폰", "PIZZA", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
-        final CouponCreateResult created = couponService.create(createCommand);
+        final CouponCreateResult created = couponServiceImpl.create(createCommand);
         final UUID couponId = created.id();
 
         final CouponIssueCommand issueCommand = new CouponIssueCommand(userId, couponId);
 
         // when
-        final CouponIssueResult result = couponService.issue(issueCommand);
+        final CouponIssueResult result = couponServiceImpl.issue(issueCommand);
 
         // then
         assertThat(result).isNotNull();
@@ -183,13 +184,13 @@ class CouponServiceTest {
         // given
         final UUID userId = UUID.randomUUID();
         final CouponCreateCommand command = new CouponCreateCommand(userId, "햄버거 쿠폰", "BURGER", 1000, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
-        final CouponCreateResult result = couponService.create(command);
+        final CouponCreateResult result = couponServiceImpl.create(command);
         final UUID couponId = result.id();
 
         // when
         for (int i = 0; i < 1000; i++) {
             try {
-                couponService.issue(new CouponIssueCommand(userId, couponId));
+                couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));
             } catch (Exception e) {
                 // 개별 발급 시도 중 발생하는 예외는 여기서는 무시합니다. (실제 서비스 로직 및 예외 타입에 따라 조정 필요)
             }
@@ -228,7 +229,7 @@ class CouponServiceTest {
         // given
         final UUID userId = UUID.randomUUID();
         final CouponCreateCommand command = new CouponCreateCommand(userId, "햄버거 쿠폰", "BURGER", 1000, LocalDateTime.now(), LocalDateTime.now().plusDays(7));
-        final CouponCreateResult result = couponService.create(command);
+        final CouponCreateResult result = couponServiceImpl.create(command);
         final UUID couponId = result.id();
 
         int numberOfThreads = 100;
@@ -240,7 +241,7 @@ class CouponServiceTest {
         for (int i = 0; i < numberOfRequests; i++) {
             executor.execute(() -> {
                 try {
-                    couponService.issue(new CouponIssueCommand(userId, couponId));
+                    couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));
                 } catch (Exception e) {
                     // 개별 발급 시도 중 발생하는 예외는 여기서는 무시합니다. (실제 서비스 로직 및 예외 타입에 따라 조정 필요)
                 } finally {
@@ -286,14 +287,14 @@ class CouponServiceTest {
         // given
         final UUID adminId = UUID.randomUUID();
         final CouponCreateCommand command = new CouponCreateCommand(adminId, "피자 쿠폰", "PIZZA", 500, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
-        final CouponCreateResult result = couponService.create(command);
+        final CouponCreateResult result = couponServiceImpl.create(command);
         final UUID couponId = result.id();
 
         // when
         for (int i = 0; i < 1000; i++) {
             UUID userId = UUID.randomUUID();
             try {
-                couponService.issue(new CouponIssueCommand(userId, couponId));
+                couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));
             } catch (Exception ignore) {
                 // 개별 발급 시도 중 발생하는 예외는 여기서는 무시합니다. (실제 서비스 로직 및 예외 타입에 따라 조정 필요)
             }
@@ -330,7 +331,7 @@ class CouponServiceTest {
         // given
         final UUID adminId = UUID.randomUUID();
         final CouponCreateCommand command = new CouponCreateCommand(adminId, "피자 쿠폰", "PIZZA", 500, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
-        final UUID couponId = couponService.create(command).id();
+        final UUID couponId = couponServiceImpl.create(command).id();
 
         int numberOfThreads = 100;
         int numberOfRequests = 10000;
@@ -343,7 +344,7 @@ class CouponServiceTest {
             final UUID userId = UUID.randomUUID(); // 각각 다른 사용자
             executor.execute(() -> {
                 try {
-                    couponService.issue(new CouponIssueCommand(userId, couponId));
+                    couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));
                 } catch (InvalidIssuedCouponException ignore) {
                     // 수량 초과 예외 무시
                 } finally {
@@ -393,15 +394,15 @@ class CouponServiceTest {
         // given
         final UUID adminId = UUID.randomUUID();
         final CouponCreateCommand command = new CouponCreateCommand(adminId, "수량 1 쿠폰", "CHICKEN", 1, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
-        final UUID couponId = couponService.create(command).id();
+        final UUID couponId = couponServiceImpl.create(command).id();
 
         final UUID user1 = UUID.randomUUID();
         final UUID user2 = UUID.randomUUID();
 
         // when
-        couponService.issue(new CouponIssueCommand(user1, couponId));
+        couponServiceImpl.issue(new CouponIssueCommand(user1, couponId));
         try {
-            couponService.issue(new CouponIssueCommand(user2, couponId));
+            couponServiceImpl.issue(new CouponIssueCommand(user2, couponId));
         } catch (Exception ignored) {
             // 개별 발급 시도 중 발생하는 예외는 여기서는 무시합니다. (실제 서비스 로직 및 예외 타입에 따라 조정 필요)
         }
@@ -432,12 +433,12 @@ class CouponServiceTest {
         final CouponCreateCommand createCommand = new CouponCreateCommand(
                 adminId, "치킨", "CHICKEN", 10, LocalDateTime.now(), LocalDateTime.now().plusDays(1)
         );
-        final UUID couponId = couponService.create(createCommand).id();
+        final UUID couponId = couponServiceImpl.create(createCommand).id();
 
         final CouponIssueCommand issueCommand = new CouponIssueCommand(adminId, couponId);
 
         // when
-        final CouponIssueResult result = couponService.issue(issueCommand);
+        final CouponIssueResult result = couponServiceImpl.issue(issueCommand);
 
         // then
         assertThat(result.userId()).isEqualTo(adminId);
@@ -453,7 +454,7 @@ class CouponServiceTest {
         final CouponCreateCommand createCommand = new CouponCreateCommand(
                 adminId, "1000명 대상 테스트 쿠폰", "CHICKEN", 100, LocalDateTime.now(), LocalDateTime.now().plusDays(1)
         );
-        final UUID couponId = couponService.create(createCommand).id();
+        final UUID couponId = couponServiceImpl.create(createCommand).id();
 
         // when
         int successfulIssues = 0;      // 실제 쿠폰 발급에 성공한 횟수
@@ -463,7 +464,7 @@ class CouponServiceTest {
         for (int i = 0; i < 1000; i++) {
             final UUID userId = UUID.randomUUID();
             try {
-                final CouponIssueResult result = couponService.issue(new CouponIssueCommand(userId, couponId));
+                final CouponIssueResult result = couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));
                 if (!result.alreadyIssued() && !result.quantityExceeded()) {
                     assertThat(result.userId()).isEqualTo(userId);
                     assertThat(result.couponId()).isEqualTo(couponId);
@@ -510,7 +511,7 @@ class CouponServiceTest {
         );
 
         // when
-        final CouponUsageResult result = couponService.usage(new CouponUsageCommand(userId, couponId));
+        final CouponUsageResult result = couponServiceImpl.usage(new CouponUsageCommand(userId, couponId));
 
         // then
         assertThat(result.userId()).isEqualTo(userId);
@@ -534,7 +535,7 @@ class CouponServiceTest {
         );
 
         // then
-        assertThatThrownBy(() -> couponService.usage(new CouponUsageCommand(otherUserId, couponId)))
+        assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(otherUserId, couponId)))
                 .isInstanceOf(IssuedCouponNotFoundException.class)
                 .hasMessage("발급되지 않았거나 소유하지 않은 쿠폰입니다.");
 
@@ -553,10 +554,10 @@ class CouponServiceTest {
         );
 
         // when
-        couponService.usage(new CouponUsageCommand(userId, couponId));
+        couponServiceImpl.usage(new CouponUsageCommand(userId, couponId));
 
         // then
-        assertThatThrownBy(() -> couponService.usage(new CouponUsageCommand(userId, couponId)))
+        assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(userId, couponId)))
                 .isInstanceOf(CouponAlreadyUsedException.class)
                 .hasMessage("이미 사용된 쿠폰입니다.");
 
@@ -566,12 +567,12 @@ class CouponServiceTest {
                                       final int quantity,
                                       final LocalDateTime validFrom, final LocalDateTime validUntil) {
         // 1. 쿠폰 생성
-        final UUID couponId = couponService.create(new CouponCreateCommand(
+        final UUID couponId = couponServiceImpl.create(new CouponCreateCommand(
                 adminId, "치킨 쿠폰", "CHICKEN", quantity, validFrom, validUntil
         )).id();
 
         // 2. 쿠폰 발급
-        final CouponIssueResult issued = couponService.issue(new CouponIssueCommand(userId, couponId));
+        final CouponIssueResult issued = couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));
         assertThat(issued.used()).isFalse();
 
         // 3. Kafka Consumer 가 비동기로 쿠폰 발급을 저장하는 동안 대기

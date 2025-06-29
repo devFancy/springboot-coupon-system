@@ -194,6 +194,39 @@
         "x": 0,
         "y": 16
       }
+    },
+    {
+      "type": "stat",
+      "title": "Kafka Consumer Max Lag (coupon_issue)",
+      "id": 7,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "sum(kafka_consumer_fetch_manager_records_lag_max{group=\"group_1\", topic=\"coupon_issue\"})",
+          "refId": "A",
+          "legendFormat": "Max Lag"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      }
     }
   ],
   "tags": [

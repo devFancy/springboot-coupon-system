@@ -1,5 +1,6 @@
 package dev.be.coupon.infra.redis;
 
+import dev.be.coupon.infra.redis.v1.CouponCountRedisRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
