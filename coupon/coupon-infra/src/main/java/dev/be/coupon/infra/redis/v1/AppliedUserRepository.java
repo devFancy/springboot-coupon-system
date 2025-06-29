@@ -1,5 +1,6 @@
-package dev.be.coupon.infra.redis;
+package dev.be.coupon.infra.redis.v1;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -11,7 +12,7 @@ public class AppliedUserRepository {
     private final RedisTemplate<String, String> redisTemplate;
     private static final String KEY_PREFIX = "applied_user:";
 
-    public AppliedUserRepository(final RedisTemplate<String, String> redisTemplate) {
+    public AppliedUserRepository(@Qualifier("stringRedisTemplate") final RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
