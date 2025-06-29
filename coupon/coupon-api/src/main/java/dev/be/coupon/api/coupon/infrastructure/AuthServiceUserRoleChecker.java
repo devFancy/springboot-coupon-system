@@ -1,4 +1,4 @@
-package dev.be.coupon.api.coupon.infrastructure.rolechecker;
+package dev.be.coupon.api.coupon.infrastructure;
 
 import dev.be.coupon.api.auth.application.AuthService;
 import dev.be.coupon.domain.coupon.UserRoleChecker;
