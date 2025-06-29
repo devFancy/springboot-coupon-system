@@ -2,18 +2,19 @@
 
 > 관련 포스팅
 
+* Kafka Retry/DLT 패턴으로 재시도 로직 구현하기 (작성 예정)
+
 * [MDC와 GlobalTraceId를 활용한 분산 추적](https://devfancy.github.io/SpringBoot-Distributed-Tracing-With-MDC/)
 
 * [쿠폰 시스템 개선기: SETNX에서 Redisson RLock과 AOP를 활용한 분산락 적용](https://devfancy.github.io/SpringBoot-Coupon-System-Redisson/)
 
-* [3편. Prometheus와 Grafana로 Spring Boot 기반 모니터링 대시보드 구축하기](https://devfancy.github.io/SpringBoot-Monitoring-Prometheus-Grafana/)
-
+* [Prometheus와 Grafana로 Spring Boot 기반 모니터링 대시보드 구축하기](https://devfancy.github.io/SpringBoot-Monitoring-Prometheus-Grafana/)
 
 ---
 
 ## Project Overview
 
-본 프로젝트는 블랙 프라이데이, 선착순 이벤트와 같이 
+본 프로젝트는 블랙 프라이데이, 선착순 이벤트와 같이 초당 수천 건 이상의
 대규모 트래픽이 예상되는 상황에서 안정적인 쿠폰 발급을 목표로 설계된 시스템입니다. 
 
 초당 수천 건의 동시 요청 속에서도 데이터 정합성을 보장하고, 
@@ -25,7 +26,7 @@
 
 * 응답 시간 최소화: 비동기 처리를 통해 사용자 API 응답 속도 향상
 
-* 장애 허용 및 재처리: 특정 컴포넌트 장애 시에도 데이터 유실을 막고, 실패한 요청을 안정적으로 재처리
+* 안정적인 장애 처리 및 부하 제어: Kafka와 DB로 유입되는 트래픽을 제어하여 시스템 전체의 안정성 확보
 
 
 ---
@@ -71,7 +72,7 @@ vUser 1,000명 동시 요청 환경에서 K6 부하 테스트를 수행한 결�
 
 ---
 
-## Core Logic: Asynchronous Issuance & Concurrency Control
+## [V1] Core Logic: Asynchronous Issuance & Concurrency Control
 
 대규모 동시 요청 환경에서 쿠폰 발급의 데이터 정합성을 보장하기 위해, 아래와 같은 `3단계 동시성 제어 전략`을 핵심으로 설계했습니다.
 
@@ -138,12 +139,12 @@ vUser 1,000명 동시 요청 환경에서 K6 부하 테스트를 수행한 결�
 
 * 멀티 모듈 구조: 각 모듈의 역할과 의존성을 명확히 분리하여 유연하고 확장 가능한 구조를 구현했습니다.
 
-![](/docs/image/coupon-system-design-multi-module.png)
+<img src="/docs/image/coupon-system-design-multi-module.png" width="700">
 
 ```markdown
 coupon/
 ├── coupon-api              # REST API + 인증 + 비즈니스 로직
-├── coupon-consumer   # Kafka 비동기 발급 처리
+├── coupon-consumer         # Kafka 비동기 발급 처리
 ├── coupon-infra            # 인프라 모듈 (JPA, Redis, Kafka)
 ├── coupon-domain           # 도메인 모델 (JPA Entity)
 
@@ -159,9 +160,10 @@ support/
 
 * Java 17 & Spring Boot 3.x: 안정적인 LTS 버전과 빠른 개발 속도, 강력한 멀티스레드 지원을 위해 선택했습니다.
 
-* Redis: 분산 락을 통한 동시성 제어 및 실시간 재고 관리를 위한 고성능 인메모리 데이터 저장소로 활용했습니다.
+* Redis: DB에 직접 가해지는 부하를 최소화하고, 실시간으로 대용량 트래픽을 제어하기 위해 선택했습니다. 
+  Redis의 싱글 스레드 기반 Atomic 연산은 Race Condition 없이 '사용자별 발급 여부'와 '전체 쿠폰 재고'를 정확하게 관리하는 데 사용합니다.
 
-* Apache Kafka: 대량의 쿠폰 발급 요청을 비동기적으로 처리하여 API 응답 시간을 최소화하고, 시스템 전체의 처리량을 향상시키기 위해 도입했습니다.
+* Kafka: 대량의 쿠폰 발급 요청을 비동기적으로 처리하여 API 응답 시간을 최소화하고, 시스템 전체의 처리량을 향상시키기 위해 도입했습니다.
 
 * MySQL: 데이터의 정합성이 중요한 쿠폰 발급 정보, 사용자 데이터 등을 안정적으로 저장하기 위해 관계형 데이터베이스를 사용했습니다.
 
@@ -289,3 +291,15 @@ IntelliJ IDE에서 아래 두 개의 Spring Boot 애플리케이션을 각각 �
 
 * Grafana: `http://localhost:3000` (ID/PW: admin/admin)
 * Prometheus: `http://localhost:9090`
+
+
+---
+
+## Reference
+
+
+* [[올리브영 테크블로그] 올리브영 초대량 쿠폰 발급 시스템 개선기](https://oliveyoung.tech/2024-12-11/oliveyoung-coupon-mess-issue/?keyword=쿠폰)
+
+* [[인프런] 실습으로 배우는 선착순 이벤트 시스템](https://www.inflearn.com/course/선착순-이벤트-시스템-실습)
+
+* [MAU 600만 서비스의 쿠폰함 성능 개선기: 백엔드 개발자의 고군분투](https://cwbeany.com/story/19)
