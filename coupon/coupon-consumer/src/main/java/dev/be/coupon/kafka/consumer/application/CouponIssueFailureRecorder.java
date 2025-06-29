@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-// Kafka Consumer에서 쿠폰 발급 실패 이력(FailedIssuedCoupon) 을 저장하는 컴포넌트
 @Component
 public class CouponIssueFailureRecorder {
     private final FailedIssuedCouponRepository repository;
@@ -18,7 +17,7 @@ public class CouponIssueFailureRecorder {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void record(UUID userId, UUID couponId) {
+    public void record(final UUID userId, final UUID couponId) {
         repository.save(new FailedIssuedCoupon(userId, couponId));
     }
 }
