@@ -1,4 +1,4 @@
-package dev.be.coupon.kafka.consumer.application;
+package dev.be.coupon.kafka.consumer.application.v1;
 
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
@@ -17,7 +17,7 @@ import java.util.UUID;
 class CouponIssueSuccessTest {
 
     @Autowired
-    private CouponIssueService couponIssueService;
+    private CouponIssueServiceImpl couponIssueServiceImpl;
 
     @Autowired
     private IssuedCouponJpaRepository issuedCouponJpaRepository;
@@ -36,7 +36,7 @@ class CouponIssueSuccessTest {
         CouponIssueMessage message = new CouponIssueMessage(userId, couponId);
 
         // when
-        couponIssueService.issue(message);
+        couponIssueServiceImpl.issue(message);
 
         // then
         boolean isIssued = issuedCouponJpaRepository.existsByUserIdAndCouponId(userId, couponId);

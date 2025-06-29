@@ -1,4 +1,4 @@
-package dev.be.coupon.kafka.consumer.application;
+package dev.be.coupon.kafka.consumer.application.v1;
 
 import dev.be.coupon.domain.coupon.FailedIssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class CouponIssueFailureTest {
 
     @Autowired
-    private CouponIssueService couponIssueService;
+    private CouponIssueServiceImpl couponIssueServiceImpl;
 
     @MockBean
     private IssuedCouponRepository issuedCouponRepository;
@@ -50,7 +50,7 @@ public class CouponIssueFailureTest {
         doThrow(new RuntimeException("DB 저장 실패! 테스트용 예외"))
                 .when(issuedCouponRepository).save(any());
 
-        couponIssueService.issue(message);
+        couponIssueServiceImpl.issue(message);
 
         // then
         List<FailedIssuedCoupon> failedIssuedCoupons = failedIssuedCouponRepository.findAllByIsResolvedFalse();
