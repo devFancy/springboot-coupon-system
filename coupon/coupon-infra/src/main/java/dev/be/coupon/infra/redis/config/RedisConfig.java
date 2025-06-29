@@ -55,7 +55,10 @@ public class RedisConfig {
         }
     }
 
-    @Bean
+    /**
+     * V1: Coupon 객체 전체를 직렬화하는 템플릿
+     */
+    @Bean("couponV1RedisTemplate")
     public RedisTemplate<String, Coupon> couponRedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Coupon> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -69,7 +72,28 @@ public class RedisConfig {
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(serializer);
         template.afterPropertiesSet();
-        log.info("couponRedisTemplate 빈 생성 완료");
+
+        log.info("[V1] couponRedisTemplate 빈 생성 완료");
+        return template;
+    }
+
+    /**
+     * V2: 모든 데이터를 String으로 다루는 템플릿
+     */
+    @Bean("couponV2RedisTemplate")
+    public RedisTemplate<String, String> couponV2RedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        StringRedisSerializer stringSerializer = new StringRedisSerializer();
+        template.setKeySerializer(stringSerializer);
+        template.setValueSerializer(stringSerializer);
+        template.setHashKeySerializer(stringSerializer);
+        template.setHashValueSerializer(stringSerializer);
+
+        template.afterPropertiesSet();
+
+        log.info("[V2] couponV2RedisTemplate 빈 생성 완료");
         return template;
     }
 }

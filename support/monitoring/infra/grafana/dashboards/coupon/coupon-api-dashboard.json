@@ -19,7 +19,7 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])",
+          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/v[12]/coupon/.*/issue/test\"}[1m])",
           "refId": "A",
           "legendFormat": "{{uri}} {{instance}} - TPS"
         }
@@ -48,7 +48,7 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "(rate(http_server_requests_seconds_sum{uri=~\"/api/coupon/.*/issue/test\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])) * 1000",
+          "expr": "(rate(http_server_requests_seconds_sum{uri=~\"/api/v[12]/coupon/.*/issue/test\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/v[12]/coupon/.*/issue/test\"}[1m])) * 1000",
           "refId": "A",
           "legendFormat": "{{uri}} {{instance}} - Avg Response Time"
         }
@@ -77,7 +77,7 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "100 * sum(rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\", status=~\"5..\"}[1m])) by (job, instance, uri) / sum(rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])) by (job, instance, uri)",
+          "expr": "100 * sum(rate(http_server_requests_seconds_count{uri=~\"/api/v[12]/coupon/.*/issue/test\", status=~\"5..\"}[1m])) by (job, instance, uri) / sum(rate(http_server_requests_seconds_count{uri=~\"/api/v[12]/coupon/.*/issue/test\"}[1m])) by (job, instance, uri)",
           "refId": "A",
           "legendFormat": "{{uri}} {{instance}} - 5xx Error Rate"
         }
@@ -253,6 +253,30 @@
         "x": 12,
         "y": 24
       }
+    },
+    {
+      "type": "graph",
+      "title": "Redis Waiting Queue Size",
+      "id": 9,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "sum(coupon_waiting_queue_size)",
+          "refId": "A",
+          "legendFormat": "Waiting Users"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Count",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 }
     }
   ],
   "tags": [

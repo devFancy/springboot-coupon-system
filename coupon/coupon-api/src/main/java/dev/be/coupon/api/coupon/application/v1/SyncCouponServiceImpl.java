@@ -1,4 +1,4 @@
-package dev.be.coupon.api.coupon.application;
+package dev.be.coupon.api.coupon.application.v1;
 
 import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
@@ -16,9 +16,9 @@ import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import dev.be.coupon.domain.coupon.UserRoleChecker;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
-import dev.be.coupon.infra.redis.AppliedUserRepository;
-import dev.be.coupon.infra.redis.CouponCacheRepository;
-import dev.be.coupon.infra.redis.CouponCountRedisRepository;
+import dev.be.coupon.infra.redis.v1.AppliedUserRepository;
+import dev.be.coupon.infra.redis.v1.CouponV1CacheRepository;
+import dev.be.coupon.infra.redis.v1.CouponCountRedisRepository;
 import dev.be.coupon.infra.redis.aop.DistributedLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,29 +30,29 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-public class CouponService {
+public class SyncCouponServiceImpl implements SyncCouponService {
 
     private final CouponRepository couponRepository;
     private final IssuedCouponRepository issuedCouponRepository;
     private final UserRoleChecker userRoleChecker;
-    private final CouponCacheRepository couponCacheRepository;
+    private final CouponV1CacheRepository couponV1CacheRepository;
     private final CouponCountRedisRepository couponCountRedisRepository;
     private final CouponIssueProducer couponIssueProducer;
     private final AppliedUserRepository appliedUserRepository;
 
-    private final Logger log = LoggerFactory.getLogger(CouponService.class);
+    private final Logger log = LoggerFactory.getLogger(SyncCouponServiceImpl.class);
 
-    public CouponService(final CouponRepository couponRepository,
-                         final IssuedCouponRepository issuedCouponRepository,
-                         final UserRoleChecker userRoleChecker,
-                         final CouponCacheRepository couponCacheRepository,
-                         final CouponCountRedisRepository couponCountRedisRepository,
-                         final CouponIssueProducer couponIssueProducer,
-                         final AppliedUserRepository appliedUserRepository) {
+    public SyncCouponServiceImpl(final CouponRepository couponRepository,
+                                 final IssuedCouponRepository issuedCouponRepository,
+                                 final UserRoleChecker userRoleChecker,
+                                 final CouponV1CacheRepository couponV1CacheRepository,
+                                 final CouponCountRedisRepository couponCountRedisRepository,
+                                 final CouponIssueProducer couponIssueProducer,
+                                 final AppliedUserRepository appliedUserRepository) {
         this.couponRepository = couponRepository;
         this.issuedCouponRepository = issuedCouponRepository;
         this.userRoleChecker = userRoleChecker;
-        this.couponCacheRepository = couponCacheRepository;
+        this.couponV1CacheRepository = couponV1CacheRepository;
         this.couponCountRedisRepository = couponCountRedisRepository;
         this.couponIssueProducer = couponIssueProducer;
         this.appliedUserRepository = appliedUserRepository;
@@ -110,7 +110,7 @@ public class CouponService {
         }
 
         // Kafka 메시지 발행 및 실패 시 보상 트랜잭션
-        String redisCountKey = "coupon_count:" + couponId;
+        String countKey = "coupon_count:" + couponId;
         try {
             couponIssueProducer.issue(userId, couponId);
             log.info("쿠폰 발급 요청 Kafka 전송 성공 - userId: {}, couponId: {}", userId, couponId);
@@ -118,21 +118,21 @@ public class CouponService {
             return CouponIssueResult.success(userId, couponId);
         } catch (KafkaException ke) {
             log.error("Kafka 메시지 발행 실패 - userId: {}, couponId: {}. Redis 변경사항 롤백 시도.", userId, couponId, ke);
-            rollbackRedisOperations(couponId, userId, redisCountKey);
+            rollbackRedisOperations(couponId, userId, countKey);
             throw new CouponIssueException("쿠폰 발급 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
         } catch (Exception e) {
             log.error("쿠폰 발급 중 예기치 않은 오류가 발생 - userId: {}, couponId: {}. Redis 변경사항 롤백 시도.", userId, couponId, e);
-            rollbackRedisOperations(couponId, userId, redisCountKey);
+            rollbackRedisOperations(couponId, userId, countKey);
             throw new CouponIssueException("쿠폰 발급 처리 중 예기치 않은 내부 오류가 발생했습니다.");
         }
     }
 
     private Coupon loadCouponWithCaching(final UUID couponId) {
-        return couponCacheRepository.findById(couponId)
+        return couponV1CacheRepository.findById(couponId)
                 .orElseGet(() -> {
                     Coupon fromDb = couponRepository.findById(couponId)
                             .orElseThrow(() -> new CouponNotFoundException("존재하지 않는 쿠폰입니다."));
-                    couponCacheRepository.save(fromDb);
+                    couponV1CacheRepository.save(fromDb);
                     return fromDb;
                 });
     }
@@ -143,7 +143,7 @@ public class CouponService {
     private CouponIssueResult validateDuplicateIssue(final UUID couponId, final UUID userId) {
         boolean isFirstIssue = appliedUserRepository.add(couponId, userId);
         if (!isFirstIssue) {
-            log.info("중복 발급 요청 감지 - userId: {}, couponId: {}", userId, couponId);
+            log.info("중복 발급 요청입니다. 이미 처리된 사용자입니다. - userId: {}", userId);
             return CouponIssueResult.alreadyIssued(userId, couponId);
         }
         return null;
@@ -156,9 +156,10 @@ public class CouponService {
     private CouponIssueResult validateQuantityLimit(final UUID couponId, final UUID userId, final int totalQuantity) {
         String countKey = "coupon_count:" + couponId;
         Long issuedCount = couponCountRedisRepository.increment(countKey);
+
         if (issuedCount > totalQuantity) {
             couponCountRedisRepository.decrement(countKey);
-            log.info("쿠폰 수량 초과 - userId: {}, couponId: {}", userId, couponId);
+            log.warn("[Consumer] 쿠폰 수량이 초과되었습니다. (현재 카운트: {})", issuedCount);
             return CouponIssueResult.quantityExceeded(userId, couponId);
         }
         return null;
@@ -167,10 +168,10 @@ public class CouponService {
     private void rollbackRedisOperations(final UUID couponId, final UUID userId, final String countKey) {
         try {
             appliedUserRepository.remove(couponId, userId);
-            couponCountRedisRepository.decrement(countKey);    // 카운트 감소 (DECR)
+            couponCountRedisRepository.decrement(countKey);
             log.info("Kafka 발행 실패로 인한 Redis 변경사항 롤백 완료 - userId: {}, couponId: {}", userId, couponId);
         } catch (Exception redisEx) {
-            log.error("Redis 롤백 작업 중 오류 발생 - userId: {}, couponId: {}. 데이터 불일치 가능성 있음.", userId, couponId, redisEx);
+            log.error("[Consumer] Redis 롤백 중 심각한 오류 발생. 데이터 불일치 가능성이 있습니다. - userId: {}", userId, redisEx);
         }
     }
 

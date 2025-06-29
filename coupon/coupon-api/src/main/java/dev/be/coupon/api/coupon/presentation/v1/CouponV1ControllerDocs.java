@@ -1,4 +1,4 @@
-package dev.be.coupon.api.coupon.presentation;
+package dev.be.coupon.api.coupon.presentation.v1;
 
 import dev.be.coupon.api.auth.presentation.AuthenticationPrincipal;
 import dev.be.coupon.api.auth.presentation.dto.LoginUser;
@@ -28,7 +28,7 @@ import java.util.UUID;
                     쿠폰 생성, 쿠폰 발급, 쿠폰 사용 기능을 제공합니다.
                 """
 )
-public interface CouponControllerDocs {
+public interface CouponV1ControllerDocs {
 
     @Operation(
             summary = "쿠폰 생성",

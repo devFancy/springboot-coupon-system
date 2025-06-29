@@ -6,10 +6,14 @@ dependencies {
 	implementation project(":coupon:coupon-infra")
 	implementation project(":support:logging")
 	implementation project(":support:monitoring")
+	implementation project(":support:common")
 
 	// spring
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// redisson (included spring data redis)
+	implementation "org.redisson:redisson-spring-boot-starter:${redissonVersion}"
 
 	// kafka
 	implementation 'org.springframework.kafka:spring-kafka'
