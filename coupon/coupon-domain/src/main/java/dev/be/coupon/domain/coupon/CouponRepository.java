@@ -14,12 +14,11 @@ public interface CouponRepository {
 
     Optional<Coupon> findById(final UUID couponId);
 
+    Optional<Coupon> findByIdWithPessimisticLock(final UUID couponId);
+
     /**
      * 현재 시간을 기준으로 'ACTIVE' 상태이며 발급 가능한 모든 쿠폰 목록을 조회합니다.
      * Coupon 엔티티의 실제 필드명(couponStatus, validFrom, validUntil)을 사용합니다.
-     * @param couponStatus 조회할 쿠폰 상태 (e.g., CouponStatus.ACTIVE)
-     * @param now 현재 시간 (validFrom과 validUntil 비교용)
-     * @return 발급 가능한 쿠폰 리스트
      */
     @Query("SELECT c FROM Coupon c " +
             "WHERE c.couponStatus = :status " +

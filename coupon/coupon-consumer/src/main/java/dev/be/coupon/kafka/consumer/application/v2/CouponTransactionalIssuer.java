@@ -83,7 +83,7 @@ public class CouponTransactionalIssuer {
     private Coupon loadCouponWithCaching(final UUID couponId) {
         return couponV2CacheRepository.findById(couponId)
                 .orElseGet(() -> {
-                    Coupon fromDb = couponRepository.findById(couponId)
+                    Coupon fromDb = couponRepository.findByIdWithPessimisticLock(couponId)
                             .orElseThrow(() -> new CouponNotFoundException("존재하지 않는 쿠폰입니다."));
                     couponV2CacheRepository.save(fromDb);
                     return fromDb;

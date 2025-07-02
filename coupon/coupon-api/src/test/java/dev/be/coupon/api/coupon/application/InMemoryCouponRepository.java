@@ -29,6 +29,11 @@ public class InMemoryCouponRepository implements CouponRepository {
     }
 
     @Override
+    public Optional<Coupon> findByIdWithPessimisticLock(UUID couponId) {
+        return Optional.ofNullable(coupons.get(couponId));
+    }
+
+    @Override
     public List<Coupon> findAvailableCoupons(final CouponStatus status, final LocalDateTime now) {
         return coupons.values().stream()
                 .filter(coupon -> coupon.getCouponStatus() == status)
