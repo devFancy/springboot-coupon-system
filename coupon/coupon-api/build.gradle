@@ -49,3 +49,7 @@ dependencies {
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
 }
+
+compileJava {
+    options.compilerArgs << '-parameters'
+}
