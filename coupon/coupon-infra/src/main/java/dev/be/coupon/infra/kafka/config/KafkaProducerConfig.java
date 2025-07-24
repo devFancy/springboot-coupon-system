@@ -28,7 +28,8 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.ACKS_CONFIG, "all");
 
         // 재시도 횟수: 일시적인 네트워크 문제나 브로커 장애 시 메시지를 재전송할 최대 횟수입니다.
-        config.put(ProducerConfig.RETRIES_CONFIG, 3);
+        // 멱등성 옵션이 활성화되면 이 설정은 무시되고, 내부적으로 Integer.MAX_VALUE로 설정되므로 명시적으로 추가하지 않습니다.
+        //config.put(ProducerConfig.RETRIES_CONFIG, 3);
 
         // 재시도 사이의 대기 시간
         config.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 1000);
@@ -37,6 +38,7 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120000);
 
         // 멱등성 활성화
+        // 실질적인 재시도 제어는 'delivery.timeout.ms'가 담당하게 됩니다.
         config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
 
         // 배치 처리 설정: 메시지 전송 효율을 높이기 위해 여러 메시지를 모아 배치로 전송합니다.
