@@ -37,13 +37,14 @@ class KafkaProducerConfigTest {
 
         // 세부 옵션 확인
         assertThat(configs.get(ProducerConfig.ACKS_CONFIG)).isEqualTo("all");
-        assertThat(configs.get(ProducerConfig.RETRIES_CONFIG)).isEqualTo(3);
+        assertThat(configs.get(ProducerConfig.RETRIES_CONFIG)).isNull();
         assertThat(configs.get(ProducerConfig.RETRY_BACKOFF_MS_CONFIG)).isEqualTo(1000);
         assertThat(configs.get(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG)).isEqualTo(120000);
         assertThat(configs.get(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG)).isEqualTo(true);
         assertThat(configs.get(ProducerConfig.BATCH_SIZE_CONFIG)).isEqualTo(16384);
         assertThat(configs.get(ProducerConfig.LINGER_MS_CONFIG)).isEqualTo(10);
         assertThat(configs.get(ProducerConfig.COMPRESSION_TYPE_CONFIG)).isEqualTo("snappy");
+        assertThat(configs.size()).isEqualTo(10);
     }
 
     @Test

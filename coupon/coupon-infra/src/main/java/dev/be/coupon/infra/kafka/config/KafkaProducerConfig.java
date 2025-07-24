@@ -27,6 +27,11 @@ public class KafkaProducerConfig {
         // 데이터 전송 신뢰도 설정: 모든 ISR에 복제될 때까지 대기
         config.put(ProducerConfig.ACKS_CONFIG, "all");
 
+        // 멱등성 활성화: 이 옵션을 true로 설정하면, 프로듀서는 메시지 중복을 방지하기 위해
+        // 내부적으로 acks=all, retries=Integer.MAX_VALUE 등을 강제합니다.
+        // 실질적인 재시도 제어는 'delivery.timeout.ms' 가 담당하게 됩니다.
+        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+
         // 재시도 횟수: 일시적인 네트워크 문제나 브로커 장애 시 메시지를 재전송할 최대 횟수입니다.
         // 멱등성 옵션이 활성화되면 이 설정은 무시되고, 내부적으로 Integer.MAX_VALUE로 설정되므로 명시적으로 추가하지 않습니다.
         //config.put(ProducerConfig.RETRIES_CONFIG, 3);
@@ -36,10 +41,6 @@ public class KafkaProducerConfig {
 
         // 프로듀서가 전송을 시도하는 총 시간 (재시도 포함)
         config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120000);
-
-        // 멱등성 활성화
-        // 실질적인 재시도 제어는 'delivery.timeout.ms'가 담당하게 됩니다.
-        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
 
         // 배치 처리 설정: 메시지 전송 효율을 높이기 위해 여러 메시지를 모아 배치로 전송합니다.
         config.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384); // 16KB
