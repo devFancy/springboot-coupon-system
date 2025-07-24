@@ -1,6 +1,5 @@
 package dev.be.coupon.infra.redis.v1;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -11,7 +10,7 @@ public class CouponCountRedisRepository {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    public CouponCountRedisRepository(@Qualifier("stringRedisTemplate") final RedisTemplate<String, String> redisTemplate) {
+    public CouponCountRedisRepository(final RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

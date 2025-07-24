@@ -1,5 +1,6 @@
-package dev.be.coupon.api.coupon.application;
+package dev.be.coupon.api.coupon.application.v1;
 
+import dev.be.coupon.api.coupon.application.FakeUserRoleChecker;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
@@ -9,7 +10,7 @@ import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.CouponIssueException;
 import dev.be.coupon.api.coupon.application.exception.InvalidIssuedCouponException;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
-import dev.be.coupon.api.coupon.application.v1.SyncCouponServiceImpl;
+import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
@@ -23,13 +24,12 @@ import dev.be.coupon.infra.redis.v1.CouponCountRedisRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -37,6 +37,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -75,7 +76,12 @@ class SyncCouponServiceImplTest {
     private IssuedCouponRepository issuedCouponRepository;
 
     @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+    @Qualifier("couponRedisTemplate")
+    private RedisTemplate<String, Coupon> redisTemplate;
+
+    @Autowired
+    @Qualifier("couponV2RedisTemplate")
+    private RedisTemplate<String, String> stringRedisTemplate;
 
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
@@ -88,7 +94,7 @@ class SyncCouponServiceImplTest {
         userRoleChecker = new FakeUserRoleChecker();
         userRoleChecker.updateIsAdmin(true);
 
-        CouponCountRedisRepository couponCountRedisRepository = new CouponCountRedisRepository(redisTemplate);
+        CouponCountRedisRepository couponCountRedisRepository = new CouponCountRedisRepository(stringRedisTemplate);
         CouponIssueProducer couponIssueProducer = new CouponIssueProducer(kafkaTemplate);
 
         couponServiceImpl = new SyncCouponServiceImpl(
@@ -104,17 +110,17 @@ class SyncCouponServiceImplTest {
 
     @AfterEach
     void tearDown() {
-        safeDelete("coupon_count:*");
-        safeDelete("lock:coupon:*");
-        safeDelete("applied_user:*");
-        safeDelete("coupon:*");
+        safeDelete(stringRedisTemplate, "coupon_count:*");
+        safeDelete(stringRedisTemplate, "lock:coupon:*");
+        safeDelete(stringRedisTemplate, "applied_user:*");
+        safeDelete(redisTemplate, "coupon:v1:meta:*");
     }
 
-    private void safeDelete(final String pattern) {
-        Optional.ofNullable(redisTemplate.keys(pattern))
-                .ifPresent(keys -> keys.stream()
-                        .filter(Objects::nonNull)
-                        .forEach(redisTemplate::delete));
+    private <T> void safeDelete(final RedisTemplate<String, T> template, final String pattern) {
+        Set<String> keys = template.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            template.delete(keys);
+        }
     }
 
     @DisplayName("관리자가 쿠폰을 생성한다.")
@@ -203,7 +209,7 @@ class SyncCouponServiceImplTest {
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // Redis 중복 발급 방지 키 확인 (사용자 ID가 하나만 있어야 함)
-                    final Long appliedUserSetSize = redisTemplate.opsForSet().size(appliedUserKey);
+                    final Long appliedUserSetSize = stringRedisTemplate.opsForSet().size(appliedUserKey);
                     assertThat(appliedUserSetSize)
                             .as("Redis 'applied_user:%s' 세트에는 해당 쿠폰에 대해 사용자 ID가 하나만 존재해야 합니다.", couponId)
                             .isEqualTo(1L);
@@ -219,7 +225,7 @@ class SyncCouponServiceImplTest {
                             .isEqualTo(1L);
                 });
         System.out.println("최종 쿠폰 발급 수 (특정 사용자 DB 기준): " + issuedCouponRepository.countByCouponId(couponId));
-        System.out.println("Redis 'applied_user' 세트 내 사용자 수: " + redisTemplate.opsForSet().size(appliedUserKey));
+        System.out.println("Redis 'applied_user' 세트 내 사용자 수: " + stringRedisTemplate.opsForSet().size(appliedUserKey));
         System.out.println("남은 쿠폰 수량: " + (result.totalQuantity() - issuedCouponRepository.countByCouponId(couponId)) );
     }
 
@@ -262,7 +268,7 @@ class SyncCouponServiceImplTest {
         await().atMost(20, TimeUnit.SECONDS)
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    final Long appliedUserSetSize = redisTemplate.opsForSet().size(appliedUserKey);
+                    final Long appliedUserSetSize = stringRedisTemplate.opsForSet().size(appliedUserKey);
                     assertThat(appliedUserSetSize)
                             .as("Redis 'applied_user:%s' 세트에는 해당 쿠폰에 대해 사용자 ID가 하나만 존재해야 합니다.", couponId)
                             .isEqualTo(1L);
@@ -278,7 +284,7 @@ class SyncCouponServiceImplTest {
                 });
 
         System.out.println("최종 쿠폰 발급 수 (특정 사용자 DB 기준): " + issuedCouponRepository.countByCouponId(couponId));
-        System.out.println("Redis 'applied_user' 세트 내 사용자 수: " + redisTemplate.opsForSet().size(appliedUserKey));
+        System.out.println("Redis 'applied_user' 세트 내 사용자 수: " + stringRedisTemplate.opsForSet().size(appliedUserKey));
     }
 
     @DisplayName("선착순 쿠폰: 500개 한정 쿠폰에 1,000명이 '쿠폰 받기' 요청 시, 500명에게만 발급한다. (단일 스레드)")
@@ -307,22 +313,18 @@ class SyncCouponServiceImplTest {
         await().atMost(10, TimeUnit.SECONDS)
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    final Long appliedUserSetSize = redisTemplate.opsForSet().size(redisAppliedUserKey);
-                    assertThat(appliedUserSetSize)
-                            .as("Redis 'applied_user:%s' set 쿠폰 발급에 성공한 사용자 수(500명)가 있어야 합니다.", couponId)
-                            .isEqualTo(500L);
-                    assertThat(issuedCouponRepository.countByCouponId(couponId))
-                            .as("DB에 쿠폰 ID(%s) 가 최종적으로 총 500개 발급되어야 합니다.", couponId)
-                            .isEqualTo(500L);
-                    final String currentRedisCount = redisTemplate.opsForValue().get(redisCouponCountKey);
-                    assertThat(currentRedisCount)
-                            .as("Redis 'coupon_count:%s' 값은 발급된 총 쿠폰 수(500)여야 합니다", couponId)
-                            .isEqualTo("500");
+                    final Long appliedUserSetSize = stringRedisTemplate.opsForSet().size(redisAppliedUserKey);
+                    assertThat(appliedUserSetSize).isEqualTo(500L);
+
+                    assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500L);
+
+                    final String currentRedisCount = stringRedisTemplate.opsForValue().get(redisCouponCountKey);
+                    assertThat(currentRedisCount).isEqualTo("500");
                 });
 
         System.out.println("최종 쿠폰 발급 수 (DB): " + issuedCouponRepository.countByCouponId(couponId));
-        System.out.println("Redis 'applied_user' 세트 크기: " + redisTemplate.opsForSet().size(redisAppliedUserKey));
-        System.out.println("Redis 'coupon_count' 값: " + redisTemplate.opsForValue().get(redisCouponCountKey));
+        System.out.println("Redis 'applied_user' 세트 크기: " + stringRedisTemplate.opsForSet().size(redisAppliedUserKey));
+        System.out.println("Redis 'coupon_count' 값: " + stringRedisTemplate.opsForValue().get(redisCouponCountKey));
     }
 
     @DisplayName("선착순 쿠폰(동시 요청): 500개 한정 쿠폰에 여러명이 동시에 '쿠폰 받기' 요청해도, 500개만 발급한다. (멀티 스레드)")
@@ -368,24 +370,18 @@ class SyncCouponServiceImplTest {
         await().atMost(20, TimeUnit.SECONDS)
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    final String currentRedisCount = redisTemplate.opsForValue().get(redisCouponCountKey);
-                    assertThat(currentRedisCount)
-                            .as("Redis 'coupon_count:%s' 값은 발급된 총 쿠폰 수(500)여야 합니다.", couponId)
-                            .isEqualTo("500");
+                    final String currentRedisCount = stringRedisTemplate.opsForValue().get(redisCouponCountKey);
+                    assertThat(currentRedisCount).isEqualTo("500");
 
-                    assertThat(issuedCouponRepository.countByCouponId(couponId))
-                            .as("DB에는 쿠폰 ID(%s)에 대해 최종적으로 발급된 쿠폰 수(500개)가 반영되어야 합니다.", couponId)
-                            .isEqualTo(500L);
+                    assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(500L);
 
-                    final Long appliedUserSetSize = redisTemplate.opsForSet().size(redisAppliedUserKey);
-                    assertThat(appliedUserSetSize)
-                            .as("Redis 'applied_user:%s' 세트에는 쿠폰 발급에 성공한 사용자 수(500명)가 있어야 합니다.", couponId)
-                            .isEqualTo(500L);
+                    final Long appliedUserSetSize = stringRedisTemplate.opsForSet().size(redisAppliedUserKey);
+                    assertThat(appliedUserSetSize).isEqualTo(500L);
                 });
 
         System.out.println("최종 쿠폰 발급 수 (DB): " + issuedCouponRepository.countByCouponId(couponId));
         System.out.println("Redis 'applied_user' 세트 크기: " + redisTemplate.opsForSet().size(redisAppliedUserKey));
-        System.out.println("Redis 'coupon_count' 값: " + redisTemplate.opsForValue().get(redisCouponCountKey));
+        System.out.println("Redis 'coupon_count' 값: " + stringRedisTemplate.opsForValue().get(redisCouponCountKey));
     }
 
     @DisplayName("쿠폰 소진 후 추가 '쿠폰 받기' 요청 시, 전체 발급 수량은 기존 소진 수량으로 정확히 유지된다. (롤백 확인)")
@@ -420,7 +416,7 @@ class SyncCouponServiceImplTest {
 
         // then
         final String countKey = "coupon_count:" + couponId;
-        final Long count = Long.parseLong(Objects.requireNonNull(redisTemplate.opsForValue().get(countKey)));
+        final Long count = Long.parseLong(Objects.requireNonNull(stringRedisTemplate.opsForValue().get(countKey)));
         assertThat(count).isEqualTo(1); // 롤백이 되지 않으면 2가 됨
         assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(1);
     }
@@ -490,7 +486,7 @@ class SyncCouponServiceImplTest {
         System.out.println("예외 발생 횟수: " + exceptionFailures);
 
         String redisKey = "coupon_count:" + couponId;
-        String countValue = redisTemplate.opsForValue().get(redisKey);
+        String countValue = stringRedisTemplate.opsForValue().get(redisKey);
         assertThat(countValue).isEqualTo("100");
 
         assertThat(successfulIssues).as("실제 성공적으로 발급된 쿠폰 수").isEqualTo(100);
