@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
@@ -58,7 +59,7 @@ public class RedisConfig {
     /**
      * V1: Coupon 객체 전체를 직렬화하는 템플릿
      */
-    @Bean("couponV1RedisTemplate")
+    @Bean("couponRedisTemplate")
     public RedisTemplate<String, Coupon> couponRedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Coupon> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -80,6 +81,7 @@ public class RedisConfig {
     /**
      * V2: 모든 데이터를 String으로 다루는 템플릿
      */
+    @Primary
     @Bean("couponV2RedisTemplate")
     public RedisTemplate<String, String> couponV2RedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
