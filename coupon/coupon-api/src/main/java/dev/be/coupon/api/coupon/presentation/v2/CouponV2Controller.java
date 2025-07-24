@@ -32,7 +32,7 @@ public class CouponV2Controller implements CouponV2ControllerDocs {
     @PostMapping(value = "/v2/coupon/{couponId}/issue")
     public ResponseEntity<CommonResponse<String>> issue(
             @AuthenticationPrincipal final LoginUser loginUser,
-            @PathVariable final UUID couponId) {
+            @PathVariable("couponId") final UUID couponId) {
 
         if (loginUser == null || loginUser.id() == null) {
             throw new UnauthorizedAccessException("로그인된 사용자만 쿠폰을 발급받을 수 있습니다.");
@@ -45,7 +45,7 @@ public class CouponV2Controller implements CouponV2ControllerDocs {
     @PostMapping(value = "/v2/coupon/{couponId}/issue/test")
     public ResponseEntity<CommonResponse<String>> issue(
             @RequestBody final CouponIssueRequest request,
-            @PathVariable final UUID couponId) {
+            @PathVariable("couponId") final UUID couponId) {
 
         CouponIssueCommand command = new CouponIssueCommand(request.userId(), couponId);
         return getCommonResponseResponseEntity(command);
