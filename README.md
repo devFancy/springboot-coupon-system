@@ -3,7 +3,7 @@
 이 프로젝트는 대규모 트래픽 환경에서 발생하는 동시성 이슈를 해결하고, 
 대기열(Waiting Queue) 시스템을 중심으로 안정적인 쿠폰 발급 아키텍처를 설계하고 구현하며 얻은 기술적인 경험과 고민을 정리했습니다.
 
-(이 문서는 V2 아키텍처를 중심으로 설명합니다. 초기 버전(V1)의 분산 락 기반 아키텍처에 대한 상세 설명은 [여기(링크)](./docs/coupon-issuance-api-v1.md)에서 확인하실 수 있습니다.)
+(이 문서는 V2 아키텍처를 중심으로 설명합니다. [초기 V1 아키텍처의 한계와 V2 개선 과정](./docs/coupon-system-v1-vs-v2-comparison)에서 확인하실 수 있습니다.)
 
 > 관련 포스팅
 
@@ -12,6 +12,7 @@
 * [쿠폰 시스템 개선기: SETNX에서 Redisson RLock과 AOP를 활용한 분산락 적용](https://devfancy.github.io/SpringBoot-Coupon-System-Redisson/)
 
 * [Prometheus와 Grafana로 Spring Boot 기반 모니터링 대시보드 구축하기](https://devfancy.github.io/SpringBoot-Monitoring-Prometheus-Grafana/)
+
 
 ---
 
@@ -237,7 +238,7 @@ support/
 
   * 가정: 한정된 수량(예: 500개)의 쿠폰에 대해 수천 명의 사용자가 동시에 발급을 요청합니다.
   
-  * 검증: Race Condition 없이 정확히 500개의 쿠폰만 소진되고, 그 이후의 모든 요청은 실패 처리되는지 확인합니다.
+  * 검증: Race Condition 없이 정확히 한정된 수량의 쿠폰만 소진되고, 그 이후의 모든 요청은 실패 처리되는지 확인합니다.
 
 
 ---
@@ -260,8 +261,8 @@ docker-compose를 사용하여 Redis, Kafka, MySQL 등 외부 인프라를 실�
 
 IntelliJ IDE에서 아래 두 개의 Spring Boot 애플리케이션을 각각 실행합니다.
 
-* `coupon-api` 모듈의 CouponApiApplication.java
 * `coupon-consumer` 모듈의 CouponKafkaConsumerApplication.java
+* `coupon-api` 모듈의 CouponApiApplication.java
 
 [4] 모니터링 대시보드 확인 (Optional)
 
