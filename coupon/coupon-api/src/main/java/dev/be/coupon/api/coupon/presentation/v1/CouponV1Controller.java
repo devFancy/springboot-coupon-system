@@ -2,7 +2,7 @@ package dev.be.coupon.api.coupon.presentation.v1;
 
 import dev.be.coupon.api.auth.presentation.AuthenticationPrincipal;
 import dev.be.coupon.api.auth.presentation.dto.LoginUser;
-import dev.be.coupon.api.coupon.application.v1.SyncCouponServiceImpl;
+import dev.be.coupon.api.coupon.application.v1.CouponServiceImplV1;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueResult;
@@ -30,9 +30,9 @@ import java.util.UUID;
 @RestController
 public class CouponV1Controller implements CouponV1ControllerDocs {
 
-    private final SyncCouponServiceImpl couponServiceImpl;
+    private final CouponServiceImplV1 couponServiceImpl;
 
-    public CouponV1Controller(final SyncCouponServiceImpl couponServiceImpl) {
+    public CouponV1Controller(final CouponServiceImplV1 couponServiceImpl) {
         this.couponServiceImpl = couponServiceImpl;
     }
 

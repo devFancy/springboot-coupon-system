@@ -45,7 +45,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * SyncCouponServiceImplTest 주의사항:
+ * CouponServiceImplV1Test 주의사항:
  * <p>
  * 이 테스트는 Kafka Consumer 가 실제 DB(JPA Repository)에 접근해 데이터를 저장하는 구조이므로,
  * 테스트에서도 Spring Context 에서 관리하는 실제 JPA 기반 Repository 를 사용해야 합니다.
@@ -61,9 +61,9 @@ import java.util.concurrent.TimeUnit;
  * - Kafka Application 실행
  */
 @SpringBootTest
-class SyncCouponServiceImplTest {
+class CouponServiceImplV1Test {
 
-    private SyncCouponServiceImpl couponServiceImpl;
+    private CouponServiceImplV1 couponServiceImpl;
     private FakeUserRoleChecker userRoleChecker;
 
     @Autowired
@@ -97,7 +97,7 @@ class SyncCouponServiceImplTest {
         CouponCountRedisRepository couponCountRedisRepository = new CouponCountRedisRepository(stringRedisTemplate);
         CouponIssueProducer couponIssueProducer = new CouponIssueProducer(kafkaTemplate);
 
-        couponServiceImpl = new SyncCouponServiceImpl(
+        couponServiceImpl = new CouponServiceImplV1(
                 couponRepository,
                 issuedCouponRepository,
                 userRoleChecker,

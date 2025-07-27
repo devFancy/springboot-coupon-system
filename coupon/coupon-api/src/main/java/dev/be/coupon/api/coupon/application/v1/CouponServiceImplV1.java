@@ -30,7 +30,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-public class SyncCouponServiceImpl implements SyncCouponService {
+public class CouponServiceImplV1 implements CouponServiceV1 {
 
     private final CouponRepository couponRepository;
     private final IssuedCouponRepository issuedCouponRepository;
@@ -40,15 +40,15 @@ public class SyncCouponServiceImpl implements SyncCouponService {
     private final CouponIssueProducer couponIssueProducer;
     private final AppliedUserRepository appliedUserRepository;
 
-    private final Logger log = LoggerFactory.getLogger(SyncCouponServiceImpl.class);
+    private final Logger log = LoggerFactory.getLogger(CouponServiceImplV1.class);
 
-    public SyncCouponServiceImpl(final CouponRepository couponRepository,
-                                 final IssuedCouponRepository issuedCouponRepository,
-                                 final UserRoleChecker userRoleChecker,
-                                 final CouponV1CacheRepository couponV1CacheRepository,
-                                 final CouponCountRedisRepository couponCountRedisRepository,
-                                 final CouponIssueProducer couponIssueProducer,
-                                 final AppliedUserRepository appliedUserRepository) {
+    public CouponServiceImplV1(final CouponRepository couponRepository,
+                               final IssuedCouponRepository issuedCouponRepository,
+                               final UserRoleChecker userRoleChecker,
+                               final CouponV1CacheRepository couponV1CacheRepository,
+                               final CouponCountRedisRepository couponCountRedisRepository,
+                               final CouponIssueProducer couponIssueProducer,
+                               final AppliedUserRepository appliedUserRepository) {
         this.couponRepository = couponRepository;
         this.issuedCouponRepository = issuedCouponRepository;
         this.userRoleChecker = userRoleChecker;
@@ -89,6 +89,7 @@ public class SyncCouponServiceImpl implements SyncCouponService {
      * - RDB 부하 감소
      * <p>
      */
+    // 락이 필요한 메서드에만 적용하는 것이 좋다
     @DistributedLock(key = "'coupon:' + #command.couponId() + ':user:' + #command.userId()", waitTime = 5, leaseTime = 30)
     public CouponIssueResult issue(final CouponIssueCommand command) {
         final UUID couponId = command.couponId();
