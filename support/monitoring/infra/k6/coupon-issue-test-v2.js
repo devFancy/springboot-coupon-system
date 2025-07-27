@@ -41,7 +41,7 @@ export const options = {
     },
 };
 
-const couponId = 'fb702ab9-0445-4e55-aaff-969c9d5aace0'; // 쿠폰 ID
+const couponId = '2489ef7b-5a3e-41cf-a26b-6aeec575c5e0'; // 쿠폰 ID
 
 export default function () {
     sleep(1);
