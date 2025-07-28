@@ -35,5 +35,5 @@ public @interface DistributedLock {
      * Redisson 의 Watchdog 은 락을 점유한 스레드가 활성 상태인 동안 이 시간을 자동으로 연장하려고 시도합니다.
      * 주의: 이 시간이 실제 로직 수행 시간보다 너무 짧고 Watchdog 연장이 실패하면, 로직 실행 중 락이 해제될 위험이 있습니다.
      */
-    long leaseTime() default 30L;
+    long leaseTime() default 10L;
 }

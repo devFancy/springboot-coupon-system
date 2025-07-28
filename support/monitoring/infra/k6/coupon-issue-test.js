@@ -10,6 +10,12 @@ import {sleep} from 'k6';
 // };
 
 export const options = {
+    ext: {
+        influxdb: {
+            // k6가 InfluxDB로 데이터를 보내는 주기를 5초로 설정합니다.
+            pushInterval: '5s',
+        },
+    },
     scenarios: {
         warmup_then_load: {
             executor: 'ramping-vus',
@@ -17,13 +23,14 @@ export const options = {
             stages: [
                 {duration: '1m', target: 1000},
                 // {duration: '9m', target: 1000},
-                // {duration: '1m', target: 2000},
-                // {duration: '1m', target: 3000},
-                // {duration: '1m', target: 4000},
-                // {duration: '1m', target: 5000},
-                // {duration: '5m', target: 5000},
+                {duration: '1m', target: 2000},
+                {duration: '1m', target: 3000},
+                {duration: '1m', target: 4000},
+                {duration: '1m', target: 5000},
+                // {duration: '1m', target: 6000},
                 // { duration: '1m', target: 8000 },
-                // { duration: '1m', target: 10000 },
+                // { duration: '2m', target: 10000 },
+                // { duration: '5m', target: 10000 },
             ],
         },
     },
@@ -34,16 +41,19 @@ export const options = {
     },
 };
 
-const couponId = 'ae17c1cd-a7a4-4302-8e18-6c07693ca179'; // 쿠폰 ID
+const couponId = '09b23694-7ea6-4c2f-83e7-db1bb6f7a16c'; // 쿠폰 ID
 
 export default function () {
     sleep(1);
 
     const userId = uuidv4();
-
+    const globalTraceId = `gtxid-k6-test-${uuidv4()}`;
     // API Server url (e.g. localhost -> 192.168.x.x)
-    const url = `http://localhost:8080/api/v1/coupon/${couponId}/issue/test`;
-    const headers = {'Content-Type': 'application/json'};
+    const url = `http://localhost:8080/api/coupon/${couponId}/issue/test`;
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-Global-Trace-Id': globalTraceId
+    };
     const payload = JSON.stringify({userId});
 
     const res = http.post(url, payload, {
@@ -51,9 +61,9 @@ export default function () {
         timeout: "60s"
     });
 
-    // 성공으로 간주하는 HTTP 상태 코드: 200 (OK), 201 (Created), 409 (Conflict - 예: 중복 발급 시도)
+    // 성공으로 간주하는 HTTP 상태 코드: 200 (OK), 201 (Created), 202(Accepted) 409 (Conflict - 예: 중복 발급 시도)
     check(res, {
-        'issue request success': (r) => [200, 201, 409].includes(r.status),
+        'issue request success': (r) => [200, 201, 202, 409].includes(r.status),
     });
 
     // 아래 try-catch 블록의 console.log 및 console.error 부분은 메시지 확인용이므로, 성능 테스트 시 해당 부분을 주석 처리합니다.

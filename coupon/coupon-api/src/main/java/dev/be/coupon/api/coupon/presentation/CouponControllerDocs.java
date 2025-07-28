@@ -1,13 +1,17 @@
-package dev.be.coupon.api.coupon.presentation.v2;
+package dev.be.coupon.api.coupon.presentation;
 
 import dev.be.coupon.api.auth.presentation.AuthenticationPrincipal;
 import dev.be.coupon.api.auth.presentation.dto.LoginUser;
+import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
+import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
+import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
 import dev.be.coupon.common.support.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,10 +24,40 @@ import java.util.UUID;
         name = "쿠폰",
         description = "쿠폰과 관련된 그룹입니다."
 )
-public interface CouponV2ControllerDocs {
+public interface CouponControllerDocs {
+
 
     @Operation(
-            summary = "쿠폰 발급 요청 (V2 - 비동기)",
+            summary = "쿠폰 생성",
+            description = "관리자 권한이 있는 계정만 쿠폰을 생성할 수 있다."
+    )
+    @RequestBody(
+            description = "쿠폰 생성 요청 예시",
+            content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                            {
+                              "name": "치킨 할인 쿠폰",
+                              "type": "CHICKEN",
+                              "totalQuantity": 100,
+                              "validFrom": "2025-08-01T00:00:00",
+                              "validUntil": "2025-12-31T23:59:59"
+                            }
+                            """)
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "쿠폰 생성 성공"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content),
+            @ApiResponse(responseCode = "403", description = "권한 없는 사용자", content = @Content)
+    })
+    ResponseEntity<CommonResponse<CouponCreateResponse>> create(
+            @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
+            @RequestBody final CouponCreateRequest request
+    );
+
+    @Operation(
+            summary = "쿠폰 발급 요청 (비동기)",
             description = """
                         비동기 방식으로 쿠폰 발급을 요청합니다.
                         
@@ -66,6 +100,21 @@ public interface CouponV2ControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content)
     })
     ResponseEntity<CommonResponse<String>> issue(
+            @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
+            @PathVariable final UUID couponId
+    );
+
+
+    @Operation(
+            summary = "쿠폰 사용",
+            description = "사용자는 발급받은 쿠폰을 사용할 수 있다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "쿠폰 사용 성공"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content),
+            @ApiResponse(responseCode = "404", description = "발급되지 않은 쿠폰", content = @Content)
+    })
+    ResponseEntity<CommonResponse<CouponUsageResponse>> usage(
             @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable final UUID couponId
     );

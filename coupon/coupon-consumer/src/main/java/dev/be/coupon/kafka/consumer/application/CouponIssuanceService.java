@@ -2,7 +2,7 @@ package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 
-public interface CouponIssueService {
+public interface CouponIssuanceService {
 
-    void issue(final CouponIssueMessage message);
+    void process(final CouponIssueMessage message);
 }

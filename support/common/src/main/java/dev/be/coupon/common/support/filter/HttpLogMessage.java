@@ -1,4 +1,4 @@
-package dev.be.coupon.common.support.filter.v1;
+package dev.be.coupon.common.support.filter;
 
 import org.springframework.http.HttpStatus;
 

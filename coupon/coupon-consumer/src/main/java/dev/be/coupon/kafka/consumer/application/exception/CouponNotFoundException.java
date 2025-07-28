@@ -1,4 +1,4 @@
-package dev.be.coupon.kafka.consumer.application.v2.exception;
+package dev.be.coupon.kafka.consumer.application.exception;
 
 
 import dev.be.coupon.common.support.error.CouponException;

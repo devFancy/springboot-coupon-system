@@ -1,8 +1,5 @@
 package dev.be.coupon.infra.redis.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import dev.be.coupon.domain.coupon.Coupon;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -14,7 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
@@ -56,34 +52,9 @@ public class RedisConfig {
         }
     }
 
-    /**
-     * V1: Coupon 객체 전체를 직렬화하는 템플릿
-     */
-    @Bean("couponRedisTemplate")
-    public RedisTemplate<String, Coupon> couponRedisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Coupon> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule()); // LocalDateTime 대응
-        mapper.activateDefaultTyping(mapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
-
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(mapper);
-
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
-        template.afterPropertiesSet();
-
-        log.info("[V1] couponRedisTemplate 빈 생성 완료");
-        return template;
-    }
-
-    /**
-     * V2: 모든 데이터를 String으로 다루는 템플릿
-     */
     @Primary
-    @Bean("couponV2RedisTemplate")
-    public RedisTemplate<String, String> couponV2RedisTemplate(RedisConnectionFactory connectionFactory) {
+    @Bean
+    public RedisTemplate<String, String> couponRedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 

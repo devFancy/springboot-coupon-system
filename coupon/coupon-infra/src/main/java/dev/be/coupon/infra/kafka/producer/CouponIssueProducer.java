@@ -1,23 +1,19 @@
 package dev.be.coupon.infra.kafka.producer;
 
+import dev.be.coupon.infra.kafka.KafkaTopic;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.kafka.support.SendResult;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 /**
- * CouponIssueProducer
- * <p>
- * 쿠폰 발급 요청을 Kafka 토픽("coupon_issue")으로 비동기 전송합니다.
+ * 쿠폰 발급 요청을 Kafka 토픽으로 전송합니다.
  * 이 메시지는 coupon-consumer 모듈의 CouponIssueConsumer 가 수신하여 DB에 저장합니다.
  */
 @Component
@@ -31,32 +27,32 @@ public class CouponIssueProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
+    /**
+     * 쿠폰 발급 요청 메시지를 동기적으로 Kafka에 발행합니다.
+     * .join()을 호출하여 메시지 전송이 완료될 때까지 현재 스레드를 블로킹합니다.
+     */
     public void issue(final UUID userId, final UUID couponId) {
         CouponIssueMessage payload = new CouponIssueMessage(userId, couponId);
         String globalTraceId = MDC.get("globalTraceId");
 
-        Message<CouponIssueMessage> message = MessageBuilder
-                .withPayload(payload)
-                .setHeader(KafkaHeaders.TOPIC, "coupon_issue")
-                .setHeader(GLOBAL_TRACE_ID_HEADER, globalTraceId)
-                .build();
+        ProducerRecord<String, Object> record = new ProducerRecord<>(KafkaTopic.COUPON_ISSUE.getTopicName(), payload);
 
-        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(message);
-        future.whenComplete((result, exception) -> {
-            if (exception == null) {
+        if (globalTraceId != null) {
+            record.headers().add(GLOBAL_TRACE_ID_HEADER, globalTraceId.getBytes(StandardCharsets.UTF_8));
+        }
+
+        kafkaTemplate.send(record).whenComplete((result, ex) -> {
+            if (ex != null) {
+                log.error("메시지 전송 실패. GlobalTraceId: {}, Record: {}",
+                        globalTraceId, record, ex);
+            } else {
                 log.info("메시지 전송 성공. GlobalTraceId: {}, Topic: {}, Partition: {}, Offset: {}, Payload: {}",
                         globalTraceId,
                         result.getRecordMetadata().topic(),
                         result.getRecordMetadata().partition(),
                         result.getRecordMetadata().offset(),
                         payload);
-            } else {
-                log.error("메시지 전송 실패 GlobalTraceId: {}, Payload: {}",
-                        globalTraceId,
-                        payload,
-                        exception);
-                // 여기에 실패 시 필요한 추가 로직을 구현 (e.g., 재시도, 알림, DB에 실패 기록 등)
             }
-        });
+        }).join(); // 이 메서드가 호출되면, whenComplete의 콜백이 실행될 때까지 스레드가 블로킹됩니다.
     }
 }
