@@ -1,23 +1,23 @@
-package dev.be.coupon.infra.redis.v2;
+package dev.be.coupon.infra.redis;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.UUID;
 
-// 처리 대기실
-@Repository
-public class CouponWaitingQueueRepository {
+/**
+ * Redis의 Sorted Set을 사용하여 쿠폰 발급 대기열을 관리하는 컴포넌트입니다.
+ * 선착순 로직에서 사용자의 참여 순서를 기록하고 관리하는 역할을 합니다.
+ */
+@Component
+public class CouponRedisWaitingQueue {
 
     private final StringRedisTemplate redisTemplate;
+    private static final String KEY_PREFIX = "coupon:wait_queue:";
 
-    public CouponWaitingQueueRepository(final StringRedisTemplate redisTemplate) {
+    public CouponRedisWaitingQueue(final StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
-    }
-
-    public String getKey(final UUID couponId) {
-        return "coupon:wait_queue:" + couponId.toString();
     }
 
     /**
@@ -30,11 +30,11 @@ public class CouponWaitingQueueRepository {
     }
 
     /**
-     * 대기열에서 지정된 수만큼 사용자를 가져옵니다.  (ZRANGE)
+     * 특정 쿠폰 대기열의 현재 크기를 반환합니다. (ZCARD)
      */
-    public Set<String> getWaitingUsers(final UUID couponId, long count) {
+    public Long getQueueSize(final UUID couponId) {
         String key = getKey(couponId);
-        return redisTemplate.opsForZSet().range(key, 0, count - 1);
+        return redisTemplate.opsForZSet().size(key);
     }
 
     /**
@@ -45,14 +45,10 @@ public class CouponWaitingQueueRepository {
             return;
         }
         String key = getKey(couponId);
-        redisTemplate.opsForZSet().remove(key, userIds.toArray(new String[0]));
+        redisTemplate.opsForZSet().remove(key, (Object[]) userIds.toArray(new String[0]));
     }
 
-    /**
-     * 특정 쿠폰 대기열의 현재 크기를 반환합니다. (ZCARD)
-     */
-    public Long getQueueSize(final UUID couponId) {
-        String key = getKey(couponId);
-        return redisTemplate.opsForZSet().size(key);
+    private String getKey(final UUID couponId) {
+        return KEY_PREFIX + couponId.toString();
     }
 }
