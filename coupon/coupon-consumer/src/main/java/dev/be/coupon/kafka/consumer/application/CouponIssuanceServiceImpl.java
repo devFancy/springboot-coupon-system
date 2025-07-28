@@ -32,12 +32,7 @@ public class CouponIssuanceServiceImpl implements CouponIssuanceService {
         this.issuedCouponSaver = issuedCouponSaver;
     }
 
-    /**
-     * 분산 락을 적용하여 쿠폰 발급을 처리하고 트랜잭션은 DB 저장 로직으로 분리되었습니다.
-     * 순서: Lock -> (Non-Transactional Logic) -> Transactional Save -> Unlock
-     */
     @Override
-    @DistributedLock(key = "'coupon:' + #message.couponId()", waitTime = 5, leaseTime = 30)
     public void process(final CouponIssueMessage message) {
         final UUID userId = message.userId();
         final UUID couponId = message.couponId();

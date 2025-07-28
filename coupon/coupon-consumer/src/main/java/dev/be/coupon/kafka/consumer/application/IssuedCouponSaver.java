@@ -2,6 +2,7 @@ package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
+import dev.be.coupon.infra.redis.aop.DistributedLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,11 @@ public class IssuedCouponSaver {
         this.issuedCouponRepository = issuedCouponRepository;
     }
 
+    /**
+     * DB에 쿠폰을 저장하는 구간만 분산 락으로 보호하여 동시성을 제어합니다.
+     * 순서: Lock -> Transaction -> Unlock
+     */
+    @DistributedLock(key = "'coupon:' + #couponId", waitTime = 5, leaseTime = 10)
     @Transactional
     public void save(final UUID userId, final UUID couponId) {
         if (issuedCouponRepository.existsByUserIdAndCouponId(userId, couponId)) {
