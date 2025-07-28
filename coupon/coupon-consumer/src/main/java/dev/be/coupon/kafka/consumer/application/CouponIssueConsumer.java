@@ -26,16 +26,15 @@ public class CouponIssueConsumer {
     }
 
     /**
-     * Kafka "coupon_issue" 토픽으로부터 메시지를 수신하여 쿠폰을 발급합니다.
+     * Kafka 토픽으로부터 메시지를 수신하여 쿠폰을 발급합니다.
      * 발급 처리 도중 예외가 발생할 경우 실패 이력을 저장한 뒤 예외를 던져 재처리 대상에 포함시킵니다.
      * 저장된 실패 이력은 coupon-api 모듈의 스케줄러(FailedCouponIssueRetryScheduler)를 통해 재처리됩니다.
      */
-    // Topic name -> Enum 값으로 할 것.
-    @KafkaListener(topics = "coupon_issue", groupId = "group_1")
+    @KafkaListener(topics = "#{T(dev.be.coupon.infra.kafka.KafkaTopic).COUPON_ISSUE.getTopicName()}", groupId = "group_1")
     public void listener(final CouponIssueMessage message,
                          @Header(name = GLOBAL_TRACE_ID_KEY, required = false) final String globalTraceId,
                          final Acknowledgment ack) {
-        // 꼭 필요한 부분에만 조건문을 추가할 것
+
         if (!Objects.isNull(globalTraceId)) {
             MDC.put(GLOBAL_TRACE_ID_KEY, globalTraceId);
         }

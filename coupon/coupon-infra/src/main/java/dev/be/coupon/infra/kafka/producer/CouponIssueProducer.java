@@ -1,5 +1,6 @@
 package dev.be.coupon.infra.kafka.producer;
 
+import dev.be.coupon.infra.kafka.KafkaTopic;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
@@ -19,7 +20,6 @@ import java.util.UUID;
 public class CouponIssueProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private static final String TOPIC_NAME = "coupon_issue";
     private static final String GLOBAL_TRACE_ID_HEADER = "globalTraceId";
     private static final Logger log = LoggerFactory.getLogger(CouponIssueProducer.class);
 
@@ -35,7 +35,7 @@ public class CouponIssueProducer {
         CouponIssueMessage payload = new CouponIssueMessage(userId, couponId);
         String globalTraceId = MDC.get("globalTraceId");
 
-        ProducerRecord<String, Object> record = new ProducerRecord<>(TOPIC_NAME, payload);
+        ProducerRecord<String, Object> record = new ProducerRecord<>(KafkaTopic.COUPON_ISSUE.getTopicName(), payload);
 
         if (globalTraceId != null) {
             record.headers().add(GLOBAL_TRACE_ID_HEADER, globalTraceId.getBytes(StandardCharsets.UTF_8));
