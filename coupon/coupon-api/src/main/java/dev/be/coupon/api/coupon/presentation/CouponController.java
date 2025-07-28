@@ -50,7 +50,7 @@ public class CouponController implements CouponControllerDocs {
     }
 
     @Override
-    @PostMapping(value = "/v2/coupon/{couponId}/issue")
+    @PostMapping(value = "/{couponId}/issue")
     public ResponseEntity<CommonResponse<String>> issue(
             @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable("couponId") final UUID couponId) {
@@ -63,7 +63,7 @@ public class CouponController implements CouponControllerDocs {
         return getCommonResponseResponseEntity(command);
     }
 
-    @PostMapping(value = "/v2/coupon/{couponId}/issue/test")
+    @PostMapping(value = "/{couponId}/issue/test")
     public ResponseEntity<CommonResponse<String>> issue(
             @RequestBody final CouponIssueRequest request,
             @PathVariable("couponId") final UUID couponId) {
