@@ -3,7 +3,7 @@ package dev.be.coupon.api.coupon.infrastructure;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.domain.coupon.CouponStatus;
-import dev.be.coupon.infra.redis.v2.CouponWaitingQueueRepository;
+import dev.be.coupon.infra.redis.CouponRedisWaitingQueue;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
@@ -18,12 +18,12 @@ import java.util.concurrent.atomic.AtomicLong;
 @Component
 public class CouponQueueMetrics {
     private final CouponRepository couponRepository;
-    private final CouponWaitingQueueRepository waitingQueueRepository;
+    private final CouponRedisWaitingQueue waitingQueueRepository;
     private final AtomicLong waitingQueueSize = new AtomicLong(0);
     private final Logger log = LoggerFactory.getLogger(CouponQueueMetrics.class);
 
     public CouponQueueMetrics(final CouponRepository couponRepository,
-                              final CouponWaitingQueueRepository waitingQueueRepository,
+                              final CouponRedisWaitingQueue waitingQueueRepository,
                               final MeterRegistry meterRegistry) {
         this.couponRepository = couponRepository;
         this.waitingQueueRepository = waitingQueueRepository;

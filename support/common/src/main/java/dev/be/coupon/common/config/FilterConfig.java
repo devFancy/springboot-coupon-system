@@ -1,6 +1,6 @@
 package dev.be.coupon.common.config;
 
-import dev.be.coupon.common.support.filter.v1.HttpRequestAndResponseLoggingFilter;
+import dev.be.coupon.common.support.filter.HttpRequestAndResponseLoggingFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

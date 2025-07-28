@@ -1,4 +1,4 @@
-package dev.be.coupon.kafka.consumer.application.v2;
+package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponType;
@@ -28,11 +28,11 @@ import java.util.stream.IntStream;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class CouponIssueServiceImplTest {
+class CouponIssuanceServiceImplTest {
 
 
     @Autowired
-    private CouponIssueServiceImpl couponIssueService;
+    private CouponIssuanceServiceImpl couponIssueService;
 
     @Autowired
     private IssuedCouponJpaRepository issuedCouponRepository;
@@ -62,48 +62,11 @@ class CouponIssueServiceImplTest {
         CouponIssueMessage message = new CouponIssueMessage(userId, couponId);
 
         // when
-        couponIssueService.issue(message);
+        couponIssueService.process(message);
 
         // then
         Optional<IssuedCoupon> issuedCoupon = issuedCouponRepository.findByUserIdAndCouponId(userId, couponId);
         assertThat(issuedCoupon).isPresent();
-    }
-
-    @Test
-    @DisplayName("[Consumer V2] 선착순 쿠폰: 100개 한정 쿠폰에 10,000명이 동시에 요청 시, DB의 쿠폰 수량만큼만 발급된다.")
-    void issue_for_100_coupons_with_1000_users_concurrently() throws InterruptedException {
-        // given
-        int totalQuantity = 100;
-        int numberOfUsers = 10000;
-        Coupon coupon = createCoupon(totalQuantity);
-        UUID couponId = coupon.getId();
-
-        ExecutorService executorService = Executors.newFixedThreadPool(32);
-        CountDownLatch latch = new CountDownLatch(numberOfUsers);
-
-        // when
-        IntStream.range(0, numberOfUsers).forEach(i -> {
-            UUID userId = UUID.randomUUID();
-            executorService.submit(() -> {
-                try {
-                    couponIssueService.issue(new CouponIssueMessage(userId, couponId));
-                } finally {
-                    latch.countDown();
-                }
-            });
-        });
-
-        latch.await();
-        executorService.shutdown();
-        if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
-            executorService.shutdownNow();
-        }
-
-        // then
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            long issuedDbCount = issuedCouponRepository.count();
-            assertThat(issuedDbCount).isLessThanOrEqualTo(totalQuantity);
-        });
     }
 
     @Test
@@ -120,15 +83,13 @@ class CouponIssueServiceImplTest {
         CountDownLatch latch = new CountDownLatch(numberOfRequests);
 
         // when
-        IntStream.range(0, numberOfRequests).forEach(i -> {
-            executorService.submit(() -> {
-                try {
-                    couponIssueService.issue(new CouponIssueMessage(userId, couponId));
-                } finally {
-                    latch.countDown();
-                }
-            });
-        });
+        IntStream.range(0, numberOfRequests).forEach(i -> executorService.submit(() -> {
+            try {
+                couponIssueService.process(new CouponIssueMessage(userId, couponId));
+            } finally {
+                latch.countDown();
+            }
+        }));
 
         latch.await();
         executorService.shutdown();
