@@ -49,7 +49,10 @@
 
 ![](/docs/image/influxdb-dashboard-2.png)
 
-(Consumer 애플리케이션 -> API 애플리케이션 순으로 실행한 뒤 아래 명령어를 순서대로 입력한다.)
+- 사전 조건: 
+  - Consumer 애플리케이션 -> API 애플리케이션 순으로 실행한 뒤 아래 명령어를 순서대로 입력한다.
+  - k6 스크립트 파일이 위치한 경로로 이동한다. (cd springboot-coupon-system/support/monitoring/infra/k6)
+
 - 쿠폰 생성 - 명령어: k6 run --out influxdb=http://localhost:8086/k6 coupon-create-test.js
 - 쿠폰 발급 - 명령어: k6 run --out influxdb=http://localhost:8086/k6 coupon-issue-test.js
     - 해당 명령어를 입력하면 아래와 같이 dashboard 에 잘 반영된 것을 확인할 수 있다.
