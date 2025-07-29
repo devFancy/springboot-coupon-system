@@ -52,7 +52,7 @@ class CouponIssuanceServiceImplTest {
         couponRepository.deleteAllInBatch();
     }
 
-    @DisplayName("[Consumer V2] 쿠폰 발급 메시지를 받으면 DB에 저장한다.")
+    @DisplayName("쿠폰 발급 메시지를 받으면 DB에 저장한다.")
     @Test
     void should_save_issued_coupon_after_validation() {
         // given
@@ -70,7 +70,7 @@ class CouponIssuanceServiceImplTest {
     }
 
     @Test
-    @DisplayName("[Consumer V2] 중복 발급 요청: 한 명의 유저가 동일 쿠폰에 대해 여러 번 동시에 요청해도, 1회만 발급된다.")
+    @DisplayName("중복 발급 요청: 한 명의 유저가 동일 쿠폰에 대해 여러 번 동시에 요청해도, 1회만 발급된다.")
     void issue_for_same_user_multiple_times_concurrently() throws InterruptedException {
         // given
         int totalQuantity = 100;
@@ -108,7 +108,7 @@ class CouponIssuanceServiceImplTest {
 
     private Coupon createCoupon(int totalQuantity) {
         Coupon coupon = new Coupon(
-                "선착순 쿠폰 V2",
+                "선착순 쿠폰",
                 CouponType.CHICKEN,
                 totalQuantity,
                 LocalDateTime.now().minusDays(1),
