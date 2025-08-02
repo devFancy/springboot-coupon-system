@@ -42,12 +42,11 @@ public class CouponIssuanceServiceImpl implements CouponIssuanceService {
         try {
             final Coupon coupon = loadCouponWithCaching(couponId);
             coupon.validateIssuableStatus(LocalDateTime.now());
-
             issuedCouponSaver.save(userId, couponId);
-
         } catch (Exception e) {
             log.error("쿠폰 발급 처리 중 예상치 못한 오류 발생 - userId: {}, couponId: {}", userId, couponId, e);
             couponIssueFailureRecorder.record(userId, couponId);
+            throw e;
         }
     }
 

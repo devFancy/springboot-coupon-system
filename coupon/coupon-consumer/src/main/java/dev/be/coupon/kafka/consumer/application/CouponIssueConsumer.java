@@ -42,8 +42,10 @@ public class CouponIssueConsumer {
 
         try {
             couponIssuanceService.process(message);
-        } finally {
             ack.acknowledge();
+        } catch (Exception e) {
+            log.error("메시지 처리 실패, 재처리를 위해 커밋하지 않음: {}", message, e);
+        } finally {
             MDC.remove(GLOBAL_TRACE_ID_KEY);
         }
     }
