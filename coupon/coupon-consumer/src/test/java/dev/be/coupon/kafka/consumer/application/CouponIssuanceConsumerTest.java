@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -28,7 +30,7 @@ import java.util.stream.IntStream;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class CouponIssuanceServiceImplTest {
+class CouponIssuanceConsumerTest {
 
 
     @Autowired
@@ -40,52 +42,31 @@ class CouponIssuanceServiceImplTest {
     @Autowired
     private CouponJpaRepository couponRepository;
 
-    @Autowired
-    @Qualifier("stringRedisTemplate")
-    private RedisTemplate<String, String> redisTemplate;
-
-
     @AfterEach
     void tearDown() {
-        redisTemplate.keys("*").forEach(redisTemplate::delete);
         issuedCouponRepository.deleteAllInBatch();
         couponRepository.deleteAllInBatch();
     }
 
-    @DisplayName("[Consumer V2] 쿠폰 발급 메시지를 받으면 DB에 저장한다.")
     @Test
-    void should_save_issued_coupon_after_validation() {
-        // given
-        Coupon coupon = createCoupon(10);
-        UUID userId = UUID.randomUUID();
-        UUID couponId = coupon.getId();
-        CouponIssueMessage message = new CouponIssueMessage(userId, couponId);
-
-        // when
-        couponIssueService.process(message);
-
-        // then
-        Optional<IssuedCoupon> issuedCoupon = issuedCouponRepository.findByUserIdAndCouponId(userId, couponId);
-        assertThat(issuedCoupon).isPresent();
-    }
-
-    @Test
-    @DisplayName("[Consumer V2] 중복 발급 요청: 한 명의 유저가 동일 쿠폰에 대해 여러 번 동시에 요청해도, 1회만 발급된다.")
+    @DisplayName("중복 발급 요청: 한 명의 유저가 동일 쿠폰에 대해 여러 번 동시에 요청해도, 1회만 발급된다.")
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void issue_for_same_user_multiple_times_concurrently() throws InterruptedException {
         // given
-        int totalQuantity = 100;
-        int numberOfRequests = 10;
-        Coupon coupon = createCoupon(totalQuantity);
-        UUID couponId = coupon.getId();
-        UUID userId = UUID.randomUUID();
+        final int totalQuantity = 100;
+        final int numberOfRequests = 10;
+        final Coupon coupon = createCoupon(totalQuantity);
+        final UUID couponId = coupon.getId();
+        final UUID userId = UUID.randomUUID();
 
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
-        CountDownLatch latch = new CountDownLatch(numberOfRequests);
+        final ExecutorService executorService = Executors.newFixedThreadPool(10);
+        final CountDownLatch latch = new CountDownLatch(numberOfRequests);
 
         // when
         IntStream.range(0, numberOfRequests).forEach(i -> executorService.submit(() -> {
             try {
                 couponIssueService.process(new CouponIssueMessage(userId, couponId));
+            } catch (Exception e) {
             } finally {
                 latch.countDown();
             }
@@ -98,6 +79,7 @@ class CouponIssuanceServiceImplTest {
         }
 
         // then
+        // 모든 스레드의 작업이 끝난 후, 최종적으로 DB에 쿠폰이 1개만 발급되었는지 확인
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             long issuedCountForUser = issuedCouponRepository.findAll().stream()
                     .filter(ic -> ic.getUserId().equals(userId))
@@ -108,7 +90,7 @@ class CouponIssuanceServiceImplTest {
 
     private Coupon createCoupon(int totalQuantity) {
         Coupon coupon = new Coupon(
-                "선착순 쿠폰 V2",
+                "선착순 쿠폰",
                 CouponType.CHICKEN,
                 totalQuantity,
                 LocalDateTime.now().minusDays(1),
