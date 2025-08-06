@@ -16,6 +16,9 @@ public class CouponIssueFailureRecorder {
         this.repository = repository;
     }
 
+    /**
+     * 쿠폰 발급 트랜잭션이 롤백되더라도, 실패 이력만큼은 별도의 트랜잭션으로 커밋하기 위해 사용합니다.
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void record(final UUID userId, final UUID couponId) {
         repository.save(new FailedIssuedCoupon(userId, couponId));
