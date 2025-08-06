@@ -32,7 +32,15 @@ public class CouponIssuanceServiceImpl implements CouponIssuanceService {
         this.issuedCouponSaver = issuedCouponSaver;
     }
 
+    /**
+     * DB에 쿠폰을 저장하는 구간만 분산 락으로 보호하여 동시성을 제어합니다.
+     * 순서: Lock -> Transaction -> Unlock
+     <pr>
+     * 발급 처리 도중 예외가 발생할 경우 실패 이력을 저장한 뒤 예외를 던져 재처리 대상에 포함시킵니다.
+     * 저장된 실패 이력은 coupon-api 모듈의 스케줄러(FailedCouponIssueRetryScheduler)를 통해 재처리됩니다.
+     */
     @Override
+    @DistributedLock(key = "'coupon:' + #message.couponId", waitTime = 5, leaseTime = 10)
     public void process(final CouponIssueMessage message) {
         final UUID userId = message.userId();
         final UUID couponId = message.couponId();
