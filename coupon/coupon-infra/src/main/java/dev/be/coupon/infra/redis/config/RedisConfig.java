@@ -66,7 +66,7 @@ public class RedisConfig {
 
         template.afterPropertiesSet();
 
-        log.info("[V2] couponV2RedisTemplate 빈 생성 완료");
+        log.info("couponRedisTemplate 빈 생성 완료");
         return template;
     }
 }

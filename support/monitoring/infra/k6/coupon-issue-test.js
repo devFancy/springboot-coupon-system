@@ -27,9 +27,9 @@ export const options = {
                 {duration: '1m', target: 3000},
                 {duration: '1m', target: 4000},
                 {duration: '1m', target: 5000},
-                // {duration: '1m', target: 6000},
-                // { duration: '1m', target: 8000 },
-                // { duration: '2m', target: 10000 },
+                {duration: '1m', target: 6000},
+                { duration: '1m', target: 8000 },
+                { duration: '2m', target: 10000 },
                 // { duration: '5m', target: 10000 },
             ],
         },
@@ -41,7 +41,7 @@ export const options = {
     },
 };
 
-const couponId = '09b23694-7ea6-4c2f-83e7-db1bb6f7a16c'; // 쿠폰 ID
+const couponId = '138be4d5-9acd-4f55-a378-3895e5d64c0a'; // 쿠폰 ID
 
 export default function () {
     sleep(1);
