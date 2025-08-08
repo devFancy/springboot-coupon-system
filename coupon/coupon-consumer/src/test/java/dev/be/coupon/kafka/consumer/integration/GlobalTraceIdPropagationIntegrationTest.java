@@ -20,6 +20,13 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Producer에서 발행한 Kafka 메시지가 Consumer에 도달하기까지
+ * MDC의 Trace 정보(GlobalTraceId, TraceId, SpanId)가 올바르게 전파되는지 검증하는 통합 테스트.
+ * <p>
+ * 본 테스트는 HTTP 요청을 거치지 않고 서비스 계층을 직접 호출하므로,
+ * 실제 환경에서 Filter가 설정하는 TraceId와 SpanId를 테스트 코드 내에서 직접 생성하여 MDC에 설정합니다.
+ */
 @SpringBootTest(properties = {
         "spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
         "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}"
@@ -49,8 +56,14 @@ public class GlobalTraceIdPropagationIntegrationTest {
     @Test
     void global_traceId_is_propagated_through_kafka() {
         // given
+        // Filter 역할을 시뮬레이션하기 위한 MDC 컨텍스트 설정
         final String globalTraceID = UUID.randomUUID().toString();
+        final String traceId = UUID.randomUUID().toString().substring(0, 32);
+        final String spanId = traceId.substring(0, 16);
+
         MDC.put("globalTraceId", globalTraceID);
+        MDC.put("traceId", traceId);
+        MDC.put("spanId", spanId);
 
         try {
             Coupon coupon = createCoupon();
@@ -69,6 +82,8 @@ public class GlobalTraceIdPropagationIntegrationTest {
 
         } finally {
             MDC.remove("globalTraceId");
+            MDC.remove("traceId");
+            MDC.remove("spanId");
         }
     }
 
