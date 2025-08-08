@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
         partitions = 1,
         topics = {"coupon_issue"})
 @ActiveProfiles("test")
-public class GlobalTraceIdPropagationIntegrationTest {
+public class TracingContextPropagationIntegrationTest {
 
     @Autowired
     private CouponIssueProducer couponIssueProducer;
