@@ -33,12 +33,19 @@ public class KafkaConsumerConfig {
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
-
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1");
+
         // 오프셋 자동 커밋을 비활성화 -> 메시지 처리 완료 후 애플리케이션이 직접 커밋 시점을 제어하여, 메시지 유실을 방지
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
         // 한 번의 poll() 호출로 가져올 최대 레코드 수를 지정
         config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);
+
+        // poll() 간 최대 시간. 메시지 처리 시간보다 넉넉하게 설정. 10분
+        config.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 600000);
+
+        // 리밸런싱 시 중단을 최소화하는 협력적 할당 전략 사용
+        config.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, "org.apache.kafka.clients.consumer.CooperativeStickyAssignor");
 
         return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
     }
