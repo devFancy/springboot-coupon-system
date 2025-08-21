@@ -4,9 +4,9 @@ import dev.be.coupon.api.auth.application.AuthService;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
-import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
+import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 import dev.be.coupon.domain.coupon.exception.CouponAlreadyUsedException;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
@@ -124,9 +124,9 @@ class CouponServiceImplTest {
         final CouponCreateResult result = couponServiceImpl.create(command);
 
         // then
-        assertThat(result.id()).isNotNull();
-        assertThat(result.name()).isEqualTo(command.name());
-        assertThat(couponRepository.findById(result.id())).isPresent();
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getName()).isEqualTo(command.getName());
+        assertThat(couponRepository.findById(result.getId())).isPresent();
     }
 
     @DisplayName("사용자가 쿠폰 발급을 요청하면 성공적으로 접수된다.")
@@ -313,7 +313,7 @@ class CouponServiceImplTest {
                 "CHICKEN", totalQuantity,
                 LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(10)
         );
-        return couponServiceImpl.create(command).id();
+        return couponServiceImpl.create(command).getId();
     }
 
     private UUID createAndIssueCoupon(final UUID adminId, final UUID userId,
@@ -323,7 +323,7 @@ class CouponServiceImplTest {
         given(authService.isAdmin(adminId)).willReturn(true);
         final UUID couponId = couponServiceImpl.create(new CouponCreateCommand(
                 adminId, "테스트용 쿠폰", "CHICKEN", quantity, validFrom, validUntil
-        )).id();
+        )).getId();
 
         // 2. 쿠폰 발급 요청
         CouponIssueRequestResult result = couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));

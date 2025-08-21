@@ -4,10 +4,10 @@ import dev.be.coupon.api.auth.application.AuthService;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
-import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.CouponNotFoundException;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
+import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 import dev.be.coupon.domain.coupon.CouponRepository;
@@ -61,12 +61,12 @@ public class CouponServiceImpl implements CouponService {
     public CouponCreateResult create(
             final CouponCreateCommand command) {
 
-        if (!authService.isAdmin(command.userId())) {
+        if (!authService.isAdmin(command.getUserId())) {
             throw new UnauthorizedAccessException("쿠폰 생성은 관리자만 가능합니다.");
         }
 
         final Coupon coupon = command.toDomain();
-        return CouponCreateResult.from(couponRepository.save(coupon));
+        return CouponCreateResult.Companion.from(couponRepository.save(coupon));
     }
 
 
@@ -116,8 +116,8 @@ public class CouponServiceImpl implements CouponService {
 
     @Transactional
     public CouponUsageResult usage(final CouponUsageCommand command) {
-        final UUID userId = command.userId();
-        final UUID couponId = command.couponId();
+        final UUID userId = command.getUserId();
+        final UUID couponId = command.getCouponId();
         final LocalDateTime now = LocalDateTime.now();
 
         IssuedCoupon issuedCoupon = issuedCouponRepository.findByUserIdAndCouponId(userId, couponId)
