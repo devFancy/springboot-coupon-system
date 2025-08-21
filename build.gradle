@@ -3,6 +3,10 @@ plugins {
     id 'org.springframework.boot' apply(false)
     id 'io.spring.dependency-management'
     id 'org.asciidoctor.jvm.convert' apply(false)
+
+    id 'org.jetbrains.kotlin.jvm' version "${kotlinVersion}" apply false
+    id 'org.jetbrains.kotlin.plugin.spring' version "${kotlinVersion}" apply false
+    id 'org.jetbrains.kotlin.plugin.jpa' version "${kotlinVersion}" apply false
 }
 
 allprojects {
@@ -20,6 +24,9 @@ subprojects {
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'org.asciidoctor.jvm.convert'
+    apply plugin: "kotlin"
+    apply plugin: "kotlin-spring"
+    apply plugin: "kotlin-jpa"
 
     dependencyManagement {
         imports {
