@@ -6,14 +6,20 @@ import dev.be.coupon.domain.user.vo.Username;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "users")
 @Entity
 public class User {
@@ -32,10 +38,19 @@ public class User {
     @Embedded
     private Password password;
 
+    @CreatedDate
+    @Column(name = "create_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     protected User() {
     }
 
-    public User(final String username, final String password, final PasswordHasher passwordHasher) {
+    public User(final String username, final String password,
+                final PasswordHasher passwordHasher) {
         this.userRole = UserRole.USER;
         this.id = UUID.randomUUID();
         this.username = new Username(username);
