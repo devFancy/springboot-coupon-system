@@ -29,6 +29,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -49,6 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * - Docker Compose 실행 - MySQL, Redis, Kafka 구동되어야 함
  * - Kafka Application 실행
  */
+@ActiveProfiles("test")
 @SpringBootTest
 class CouponServiceImplTest {
 

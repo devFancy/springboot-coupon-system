@@ -1,8 +1,5 @@
 package dev.be.coupon.domain.coupon;
 
-import dev.be.coupon.domain.coupon.Coupon;
-import dev.be.coupon.domain.coupon.CouponStatus;
-import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.domain.coupon.exception.CouponNotCurrentlyUsableException;
 import dev.be.coupon.domain.coupon.exception.CouponNotIssuableException;
 import dev.be.coupon.domain.coupon.exception.InvalidCouponException;

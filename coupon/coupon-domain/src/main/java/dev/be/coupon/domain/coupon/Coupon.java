@@ -45,14 +45,14 @@ public class Coupon {
     @Embedded
     private CouponName couponName;
 
-    @Column(name = "type", nullable = false)
+    @Column(name = "coupon_type", nullable = false, columnDefinition = "varchar(255)")
     @Enumerated(EnumType.STRING)
     private CouponType couponType;
 
     @Column(name = "total_quantity", nullable = false)
     private int totalQuantity;
 
-    @Column(name = "status", nullable = false)
+    @Column(name = "coupon_status", nullable = false, columnDefinition = "varchar(255)")
     @Enumerated(EnumType.STRING)
     private CouponStatus couponStatus; // 쿠폰 발급시 기본값으로 사용 가능(ACTIVE) 으로 설정
 
