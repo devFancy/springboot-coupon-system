@@ -2,7 +2,7 @@ version: "3.8"
 services:
   mysql:
     image: mysql:8.0.34
-    container_name: mysql-coupon
+    container_name: mysql
     restart: always
     ports:
       - '3306:3306'
