@@ -7,7 +7,7 @@ spring:
     enabled: false
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
@@ -16,6 +16,12 @@ spring:
     redis:
       host: localhost
       port: 6379
+
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+    consumer:
+      bootstrap-servers: localhost:9092
 
 springdoc:
   swagger-ui:
