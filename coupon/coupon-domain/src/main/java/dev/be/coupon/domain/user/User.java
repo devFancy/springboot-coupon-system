@@ -28,7 +28,7 @@ public class User {
     @Id
     private UUID id;
 
-    @Column(name = "user_role", nullable = false)
+    @Column(name = "user_role", nullable = false, columnDefinition = "varchar(255)")
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
@@ -39,7 +39,7 @@ public class User {
     private Password password;
 
     @CreatedDate
-    @Column(name = "create_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
