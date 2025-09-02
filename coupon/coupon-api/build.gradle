@@ -22,6 +22,10 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
 
+    // flyway
+    implementation ("org.flywaydb:flyway-core:${flywayVersion}")
+    implementation ("org.flywaydb:flyway-mysql:${flywayVersion}")
+
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${swaggerVersion}")
 
     // jwt
