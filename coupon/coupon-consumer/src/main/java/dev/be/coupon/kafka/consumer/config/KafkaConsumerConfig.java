@@ -29,23 +29,36 @@ public class KafkaConsumerConfig {
         deserializer.addTrustedPackages("*");
         deserializer.setUseTypeMapperForKey(true);
 
+        // 공통 필수 설정
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1");
 
-        // 오프셋 자동 커밋을 비활성화 -> 메시지 처리 완료 후 애플리케이션이 직접 커밋 시점을 제어하여, 메시지 유실을 방지
+        // 1. 신뢰성 관련 설정
+        // 1-1) 오프셋 수동 커밋 설정 -> 메시지 처리 완료 후 애플리케이션이 직접 커밋 시점을 제어하여, 메시지 유실을 방지.
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        // 1-2) 새로운 컨슈머 그룹이 처음 토픽을 읽을 때, 가장 오래된 메시지부터 읽도록 설정
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-        // 한 번의 poll() 호출로 가져올 최대 레코드 수를 지정
-        config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);
-
-        // poll() 간 최대 시간. 메시지 처리 시간보다 넉넉하게 설정. 10분
-        config.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 600000);
-
-        // 리밸런싱 시 중단을 최소화하는 협력적 할당 전략 사용
+        // 2. 안정성 관련 설정
+        // 2-1) 컨슈머가 브로커(그룹 코디네이터)에게 하트비트를 보내지 않고 버틸 수 있는 최대 시간(기본값: 10,000 ms = 10초)
+        config.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 30000);
+        // 2-2) 컨슈머가 얼마자 자주 하트비트를 보낼지 결정하는 주기. (기본값: 3,000ms = 3초)
+        config.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 10000);
+        // 2-3) poll() 간 최대 시간. 메시지 처리 시간보다 넉넉하게 설정. (기본값: 300,000ms = 5분)
+        config.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 600000); // 10분
+        // 2-4) 리밸런싱 시 중단을 최소화하는 '협력적 리밸런스' 전략 사용.
         config.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, "org.apache.kafka.clients.consumer.CooperativeStickyAssignor");
+
+        // 3. 성능 관련 설정
+        // 3-1) poll() 요청 시 브로커가 응답해야 할 최소 데이터 크기. (기본값: 1 byte)
+        config.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 2);
+        // 3-2) poll() 요청 시 브로커에서 대기할 최대 시간. (기본값: 500ms)
+        config.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 1000);
+        // 3-3) 컨슈머가 브로커로부터 한 번의 poll() 호출로 가져올 최대 메시지 개수. (기본값: 500)
+        config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1000);
 
         return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
     }

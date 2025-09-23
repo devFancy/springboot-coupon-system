@@ -32,6 +32,7 @@ public class CouponIssueProducer {
         CouponIssueMessage payload = new CouponIssueMessage(userId, couponId);
         ProducerRecord<String, Object> record = new ProducerRecord<>(KafkaTopic.COUPON_ISSUE.getTopicName(), payload);
 
+        // 순서: send() 호출 -> whenComplete() 등록 -> .join() 호출 및 대기 -> (메시지 전송이 완료되면) whenComplete() 콜백 실행 -> .join() 대기 해제
         kafkaTemplate.send(record).whenComplete((result, ex) -> {
             if (ex != null) {
                 log.error("메시지 전송 실패. Record: {}", record, ex);

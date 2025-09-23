@@ -35,6 +35,7 @@ public class KafkaProducerConfig {
         // 멱등성 활성화: 이 옵션을 true로 설정하면, 프로듀서는 메시지 중복을 방지하기 위해
         // 내부적으로 acks=all, retries=Integer.MAX_VALUE 등을 강제합니다.
         // 실질적인 재시도 제어는 'delivery.timeout.ms' 가 담당하게 됩니다.
+        // 'max.in.flight.requests.per.connection' 을 5 이하로 강제한다 -> 한 번에 최대 5개의 배치(batch)까지만 응답 없이 연속으로 보내도록 제한한다는 의미
         config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
 
         // 재시도 횟수: 일시적인 네트워크 문제나 브로커 장애 시 메시지를 재전송할 최대 횟수입니다.
@@ -49,6 +50,7 @@ public class KafkaProducerConfig {
 
         // 배치 처리 설정: 메시지 전송 효율을 높이기 위해 여러 메시지를 모아 배치로 전송합니다.
         config.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384); // 16KB
+        // 첫 번째 메시지가 배치에 담긴 후, 전송을 대기하는 최대 시간.
         config.put(ProducerConfig.LINGER_MS_CONFIG, 10);
 
         // 압축 타입 설정: 네트워크 대역폭과 저장 공간을 절약하기 위해 메시지 압축을 사용합니다.
