@@ -16,15 +16,13 @@ import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.infra.redis.CouponEntryRedisCounter;
-import dev.be.coupon.infra.redis.CouponRedisCache;
-import dev.be.coupon.infra.redis.CouponRedisWaitingQueue;
+import dev.be.coupon.infra.redis.CouponRedisDuplicateValidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 import java.util.UUID;
 
 
@@ -33,8 +31,7 @@ public class CouponServiceImpl implements CouponService {
 
     private final CouponRepository couponRepository;
     private final IssuedCouponRepository issuedCouponRepository;
-    private final CouponRedisWaitingQueue waitingQueueRepository;
-    private final CouponRedisCache couponRedisCache;
+    private final CouponRedisDuplicateValidate couponRedisDuplicateValidate;
     private final CouponEntryRedisCounter couponEntryRedisCounter;
     private final CouponIssueProducer couponIssueProducer;
     private final AuthService authService;
@@ -44,15 +41,13 @@ public class CouponServiceImpl implements CouponService {
 
     public CouponServiceImpl(final CouponRepository couponRepository,
                              final IssuedCouponRepository issuedCouponRepository,
-                             final CouponRedisWaitingQueue waitingQueueRepository,
-                             final CouponRedisCache couponRedisCache,
+                             final CouponRedisDuplicateValidate couponRedisDuplicateValidate,
                              final CouponEntryRedisCounter couponEntryRedisCounter,
                              final CouponIssueProducer couponIssueProducer,
                              final AuthService authService) {
         this.couponRepository = couponRepository;
         this.issuedCouponRepository = issuedCouponRepository;
-        this.waitingQueueRepository = waitingQueueRepository;
-        this.couponRedisCache = couponRedisCache;
+        this.couponRedisDuplicateValidate = couponRedisDuplicateValidate;
         this.couponEntryRedisCounter = couponEntryRedisCounter;
         this.couponIssueProducer = couponIssueProducer;
         this.authService = authService;
@@ -70,15 +65,14 @@ public class CouponServiceImpl implements CouponService {
     }
 
 
-    // 입장 통제(INCR) -> 대기(Sorted set) -> 카프카 프로듀서
+    // 중복 검증 -> 선착순 보장 -> 카프카 프로듀서
     public CouponIssueRequestResult issue(final CouponIssueCommand command) {
         final UUID couponId = command.couponId();
         final UUID userId = command.userId();
-        final int totalQuantity = getTotalQuantityWithCaching(couponId);
 
         // 1. 중복 참여 검증 (Redis Set 활용)
-        Boolean isFirstEntryForUser = waitingQueueRepository.add(couponId, userId);
-        if (!isFirstEntryForUser) {
+        Boolean isFirstUser = couponRedisDuplicateValidate.isFirstUser(couponId, userId);
+        if (!isFirstUser) {
             log.info("중복 참여 요청 - userId: {}", userId);
             return CouponIssueRequestResult.DUPLICATE;
         }
