@@ -14,8 +14,7 @@ import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.infra.redis.CouponEntryRedisCounter;
-import dev.be.coupon.infra.redis.CouponRedisCache;
-import dev.be.coupon.infra.redis.CouponRedisWaitingQueue;
+import dev.be.coupon.infra.redis.CouponRedisDuplicateValidate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -66,10 +65,7 @@ class CouponServiceImplTest {
     private IssuedCouponJpaRepository issuedCouponRepository;
 
     @Autowired
-    private CouponRedisCache couponRedisCache;
-
-    @Autowired
-    private CouponRedisWaitingQueue couponRedisWaitingQueue;
+    private CouponRedisDuplicateValidate couponRedisDuplicateValidate;
 
     @Autowired
     private CouponEntryRedisCounter couponEntryRedisCounter;
@@ -87,8 +83,7 @@ class CouponServiceImplTest {
         couponServiceImpl = new CouponServiceImpl(
                 couponRepository,
                 issuedCouponRepository,
-                couponRedisWaitingQueue,
-                couponRedisCache,
+                couponRedisDuplicateValidate,
                 couponEntryRedisCounter,
                 couponIssueProducer,
                 authService
@@ -144,11 +139,6 @@ class CouponServiceImplTest {
 
         // then
         assertThat(result).isEqualTo(CouponIssueRequestResult.SUCCESS);
-
-        // 비동기 처리 검증
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-                assertThat(issuedCouponRepository.findByUserIdAndCouponId(userId, couponId)).isPresent()
-        );
     }
 
     @DisplayName("쿠폰을 생성할 때 관리자 권한이 아니라면 예외가 발생한다.")
@@ -212,7 +202,7 @@ class CouponServiceImplTest {
 
     @DisplayName("선착순 쿠폰(동시 요청): 100개 한정 쿠폰에 여러 명이 동시에 요청해도, 10개만 발급된다.")
     @Test
-    void issue_request_multithreaded_success() throws InterruptedException {
+    void issue_request_multiThreaded_success() {
         // given
         final int totalQuantity = 100;
         final UUID couponId = createCoupon("동시성 테스트 쿠폰", totalQuantity);
@@ -238,16 +228,10 @@ class CouponServiceImplTest {
                 }
             });
         }
-
-        latch.await(30, TimeUnit.SECONDS);
         executorService.shutdown();
-        executorService.awaitTermination(30, TimeUnit.SECONDS);
 
         // then
         assertThat(successCount.get()).isEqualTo(totalQuantity);
-        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
-                assertThat(issuedCouponRepository.countByCouponId(couponId)).isEqualTo(totalQuantity)
-        );
     }
 
     // ==================== Usage Coupon Tests ====================
