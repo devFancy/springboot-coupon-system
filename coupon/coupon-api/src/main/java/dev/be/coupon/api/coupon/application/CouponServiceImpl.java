@@ -65,19 +65,19 @@ public class CouponServiceImpl implements CouponService {
     }
 
 
-    // 중복 검증 -> 선착순 보장 -> 카프카 프로듀서
+    // 중복 참여 방지 -> 선착순 보장 -> 카프카 프로듀서
     public CouponIssueRequestResult issue(final CouponIssueCommand command) {
         final UUID couponId = command.couponId();
         final UUID userId = command.userId();
 
-        // 1. 중복 참여 검증 (Redis Set 활용)
+        // 1. 중복 참여 방지 (Redis Set 활용)
         Boolean isFirstUser = couponRedisDuplicateValidate.isFirstUser(couponId, userId);
         if (!isFirstUser) {
             log.info("중복 참여 요청 - userId: {}", userId);
             return CouponIssueRequestResult.DUPLICATE;
         }
 
-        // 2. 선착순 마감 여부 판별 (Redis INCR 활용)
+        // 2. 선착순 보장 (Redis INCR 활용)
         long entryOrder = couponEntryRedisCounter.increment(couponId);
         final int totalQuantity = getTotalQuantityFromCoupon(couponId);
 
