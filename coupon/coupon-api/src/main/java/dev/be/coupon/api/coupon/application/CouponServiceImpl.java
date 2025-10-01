@@ -79,33 +79,19 @@ public class CouponServiceImpl implements CouponService {
 
         // 2. 선착순 마감 여부 판별 (Redis INCR 활용)
         long entryOrder = couponEntryRedisCounter.increment(couponId);
+        final int totalQuantity = getTotalQuantityFromCoupon(couponId);
+
         if (entryOrder > totalQuantity) {
             log.warn("선착순 마감(절대 순번 기준) - userId: {}, entryOrder: {}, totalQuantity: {}", userId, entryOrder, totalQuantity);
-
-            waitingQueueRepository.remove(couponId, Set.of(userId.toString()));
+            couponRedisDuplicateValidate.remove(couponId, userId);
             return CouponIssueRequestResult.SOLD_OUT;
         }
 
         // 3. 선착순 성공 시, Kafka 프로듀서에 즉시 메시지 발행
         couponIssueProducer.issue(userId, couponId);
-        log.info("쿠폰 발급 요청 성공. Kafka 발행 완료. userId: {}, entryOrder: {}", userId, entryOrder);
+        log.info("쿠폰 발급 요청 성공. Kafka 프로듀서에 메시지 발행 완료. userId: {}, entryOrder: {}", userId, entryOrder);
 
         return CouponIssueRequestResult.SUCCESS;
-    }
-
-    // 캐시를 먼저 확인하여 불필요한 DB 조회를 막습니다.
-    private int getTotalQuantityWithCaching(final UUID couponId) {
-        Integer totalQuantity = couponRedisCache.getTotalQuantityById(couponId);
-        if (totalQuantity != null) {
-            return totalQuantity;
-        }
-
-        log.info("캐시 미스 발생. DB에서 쿠폰 정보를 조회합니다. couponId: {}", couponId);
-        Coupon couponFromDb = couponRepository.findById(couponId)
-                .orElseThrow(() -> new CouponNotFoundException("ID: " + couponId + "에 해당하는 쿠폰을 찾을 수 없습니다."));
-
-        couponRedisCache.save(couponFromDb);
-        return couponFromDb.getTotalQuantity();
     }
 
     @Transactional
@@ -120,7 +106,7 @@ public class CouponServiceImpl implements CouponService {
                     return new IssuedCouponNotFoundException("발급되지 않았거나 소유하지 않은 쿠폰입니다.");
                 });
 
-        Coupon coupon = loadCouponWithCaching(issuedCoupon.getCouponId());
+        Coupon coupon = findCouponById(issuedCoupon.getCouponId());
         coupon.validateUsableStatus(now);
 
         issuedCoupon.use(now);
@@ -132,14 +118,14 @@ public class CouponServiceImpl implements CouponService {
         return CouponUsageResult.from(userId, couponId, issuedCoupon.isUsed(), issuedCoupon.getUsedAt());
     }
 
+    private int getTotalQuantityFromCoupon(final UUID couponId) {
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new CouponNotFoundException("ID: " + couponId + "에 해당하는 쿠폰을 찾을 수 없습니다."));
+        return coupon.getTotalQuantity();
+    }
 
-    private Coupon loadCouponWithCaching(final UUID couponId) {
-        return couponRedisCache.getCouponById(couponId)
-                .orElseGet(() -> {
-                    Coupon fromDb = couponRepository.findById(couponId)
-                            .orElseThrow(() -> new CouponNotFoundException("존재하지 않는 쿠폰입니다."));
-                    couponRedisCache.save(fromDb);
-                    return fromDb;
-                });
+    private Coupon findCouponById(final UUID couponId) {
+        return couponRepository.findById(couponId)
+                .orElseThrow(() -> new CouponNotFoundException("ID: " + couponId + "에 해당하는 쿠폰을 찾을 수 없습니다."));
     }
 }
