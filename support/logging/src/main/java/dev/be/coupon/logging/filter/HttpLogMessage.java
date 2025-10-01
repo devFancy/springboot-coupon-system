@@ -1,4 +1,4 @@
-package dev.be.coupon.common.support.filter;
+package dev.be.coupon.logging.filter;
 
 import org.springframework.http.HttpStatus;
 
