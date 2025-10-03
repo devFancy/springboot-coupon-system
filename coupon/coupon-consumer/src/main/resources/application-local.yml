@@ -22,6 +22,3 @@ spring:
       bootstrap-servers: localhost:9092
     listener:
       ack-mode: manual
-
-sentry:
-  dsn: ${SENTRY_DSN}

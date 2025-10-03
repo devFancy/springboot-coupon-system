@@ -38,6 +38,3 @@ security:
       secret-key: coupon@dPtnfwjdasdkkasjdnvxcu32ad128znczSs2n42dbashdyasdbav2Clvyx9vsnasd
       access:
         expire-length : 3600000 # 1시간
-
-sentry:
-  dsn: ${SENTRY_DSN}
