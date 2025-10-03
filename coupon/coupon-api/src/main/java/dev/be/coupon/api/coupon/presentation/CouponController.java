@@ -11,11 +11,14 @@ import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
+import dev.be.coupon.common.support.error.CouponException;
+import dev.be.coupon.common.support.error.ErrorType;
 import dev.be.coupon.common.support.response.CommonResponse;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -85,6 +88,12 @@ public class CouponController implements CouponControllerDocs {
         CouponUsageCommand command = new CouponUsageCommand(loginUser.id(), couponId);
         CouponUsageResult result = couponService.usage(command);
         return ResponseEntity.ok().body(CommonResponse.success(CouponUsageResponse.from(result)));
+    }
+
+    @Override
+    @GetMapping("/sentry-test")
+    public ResponseEntity<CommonResponse<Void>> sentryTest() {
+        throw new CouponException(ErrorType.DEFAULT_ERROR);
     }
 
     private ResponseEntity<CommonResponse<String>> getCommonResponseResponseEntity(CouponIssueCommand command) {
