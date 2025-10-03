@@ -118,4 +118,6 @@ public interface CouponControllerDocs {
             @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable final UUID couponId
     );
+
+    ResponseEntity<CommonResponse<Void>> sentryTest();
 }

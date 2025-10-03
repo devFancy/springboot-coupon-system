@@ -1,5 +1,6 @@
 package dev.be.coupon.logging.filter;
 
+import io.sentry.Sentry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,13 +21,18 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * 모든 HTTP 요청과 응답을 로깅하고, 분산 추적을 위한 Global Trace ID를 관리하는 필터입니다.
+ * 1. 요청/응답의 상세 정보(메서드, URI, 헤더, 바디 등)를 로깅합니다.
+ * 2. 분산 시스템 환경에서 MDC 요청 추적을 위해 'X-Global-Trace-Id' 헤더를 확인합니다.
+ */
 public class HttpRequestAndResponseLoggingFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(HttpRequestAndResponseLoggingFilter.class);
+
+    // MSA 환경에서 서비스 간 HTTP 통신 시 Global Trace ID를 전파하기 위한 표준 헤더 이름입니다.
     private static final String GLOBAL_TRACE_ID_HEADER = "X-Global-Trace-Id";
     private static final String GLOBAL_TRACE_ID_KEY = "globalTraceId";
-    private static final String TRACE_ID = "traceId";
-
 
     @Override
     protected void doFilterInternal(@NonNull final HttpServletRequest request,
@@ -36,14 +42,18 @@ public class HttpRequestAndResponseLoggingFilter extends OncePerRequestFilter {
         final ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
         final ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
 
+        // 추후 외부(e.g. 게이트웨이)로부터 GlobalTraceId 헤더 값을 가져올 수 있기 때문에 설정함.
         String globalTraceId = requestWrapper.getHeader(GLOBAL_TRACE_ID_HEADER);
         if (!StringUtils.hasText(globalTraceId)) {
             globalTraceId = UUID.randomUUID().toString().substring(0, 32);
         }
+        final String fixedGlobalTraceId = globalTraceId;
         MDC.put(GLOBAL_TRACE_ID_KEY, globalTraceId);
 
-        final String traceId = UUID.randomUUID().toString().substring(0, 32);
-        MDC.put(TRACE_ID, traceId);
+        // Sentry의 Tags 부분에 globalTraceId 추가
+        Sentry.configureScope(scope -> {
+            scope.setTag(GLOBAL_TRACE_ID_KEY, fixedGlobalTraceId);
+        });
 
         try {
             filterChain.doFilter(requestWrapper, responseWrapper);
@@ -68,7 +78,6 @@ public class HttpRequestAndResponseLoggingFilter extends OncePerRequestFilter {
             } catch (IOException copyException) {
                 log.error("[HttpRequestAndResponseLoggingFilter] I/O exception occurred while copying response body", copyException);
             }
-            MDC.remove(TRACE_ID);
             MDC.remove(GLOBAL_TRACE_ID_KEY);
         }
     }

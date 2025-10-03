@@ -13,8 +13,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackages = {
         "dev.be.coupon.api",
         "dev.be.coupon.domain",
+        "dev.be.coupon.infra",
         "dev.be.coupon.common",
-        "dev.be.coupon.infra"
+        "dev.be.coupon.logging"
 })
 @EnableJpaRepositories(basePackages = {
         "dev.be.coupon.infra.jpa",

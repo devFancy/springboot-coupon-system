@@ -2,12 +2,11 @@ dependencies {
     implementation 'org.springframework:spring-context'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    // Actuator가 micrometer-tracing-api를 포함한 필수 의존성들을 자동으로 가져옵니다.
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
     // Spring Boot 3.x 이상에서는 Micrometer Observability 가 기본 통합되어 있음
     // 로그에서 traceId / spanId 출력이 가능하도록 Brave 기반의 Tracing Bridge 를 명시적으로 추가
     // 로그 출력 시 logback 패턴 설정 필요 (e.g. %32X{traceId:-},%16X{spanId:-} )
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-//    implementation "io.sentry:sentry-logback:${property("sentryVersion")}"
+
+    implementation "io.sentry:sentry-logback:${property("sentryVersion")}"
+    implementation "io.sentry:sentry-spring-boot-starter-jakarta:${property("sentryVersion")}"
 }
