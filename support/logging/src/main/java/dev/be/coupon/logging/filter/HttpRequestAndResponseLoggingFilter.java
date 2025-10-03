@@ -1,5 +1,6 @@
 package dev.be.coupon.logging.filter;
 
+import io.sentry.Sentry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,8 +47,13 @@ public class HttpRequestAndResponseLoggingFilter extends OncePerRequestFilter {
         if (!StringUtils.hasText(globalTraceId)) {
             globalTraceId = UUID.randomUUID().toString().substring(0, 32);
         }
+        final String fixedGlobalTraceId = globalTraceId;
         MDC.put(GLOBAL_TRACE_ID_KEY, globalTraceId);
 
+        // Sentry의 Tags 부분에 globalTraceId 추가
+        Sentry.configureScope(scope -> {
+            scope.setTag(GLOBAL_TRACE_ID_KEY, fixedGlobalTraceId);
+        });
 
         try {
             filterChain.doFilter(requestWrapper, responseWrapper);
