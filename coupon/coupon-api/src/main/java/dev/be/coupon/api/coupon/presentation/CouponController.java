@@ -11,6 +11,8 @@ import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
+import dev.be.coupon.common.support.error.CouponException;
+import dev.be.coupon.common.support.error.ErrorType;
 import dev.be.coupon.common.support.response.CommonResponse;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
@@ -91,7 +93,7 @@ public class CouponController implements CouponControllerDocs {
     @Override
     @GetMapping("/sentry-test")
     public ResponseEntity<CommonResponse<Void>> sentryTest() {
-        throw new RuntimeException("Error");
+        throw new CouponException(ErrorType.DEFAULT_ERROR);
     }
 
     private ResponseEntity<CommonResponse<String>> getCommonResponseResponseEntity(CouponIssueCommand command) {
