@@ -2,6 +2,7 @@ package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponRepository;
+import dev.be.coupon.domain.coupon.exception.CouponNotIssuableException;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import dev.be.coupon.infra.redis.aop.DistributedLock;
 import dev.be.coupon.kafka.consumer.application.exception.CouponNotFoundException;
@@ -33,12 +34,12 @@ public class CouponIssuanceServiceImpl implements CouponIssuanceService {
      * '동일한 당첨 메시지'가 두 번 이상 소비되는 것을 막고, DB에 쿠폰이 두 번 저장되지 않도록 보장
      * DB에 쿠폰을 저장하는 구간만 분산 락으로 보호하여 동시성을 제어합니다.
      * 순서: Lock -> Transaction -> Unlock
-     <pr>
+     * <pr>
      * 발급 처리 도중 예외가 발생할 경우 실패 이력을 저장한 뒤 예외를 던져 재처리 대상에 포함시킵니다.
      * 저장된 실패 이력은 coupon-api 모듈의 스케줄러(FailedCouponIssueRetryScheduler)를 통해 재처리됩니다.
      */
     @Override
-    @DistributedLock(key = "'coupon:' + #message.couponId", waitTime = 5, leaseTime = 10)
+    @DistributedLock(key = "'coupon:' + #message.couponId + ':' + #message.userId", waitTime = 5, leaseTime = 10)
     public void process(final CouponIssueMessage message) {
         final UUID userId = message.userId();
         final UUID couponId = message.couponId();
@@ -49,6 +50,8 @@ public class CouponIssuanceServiceImpl implements CouponIssuanceService {
             final Coupon coupon = findCouponById(couponId);
             coupon.validateIssuableStatus(LocalDateTime.now());
             issuedCouponSaver.save(userId, couponId);
+        } catch (CouponNotIssuableException | CouponNotFoundException e) {
+            log.warn("쿠폰 발급 비즈니스 로직 실패 - userId: {}, couponId: {}. 원인: {}", userId, couponId, e.getMessage());
         } catch (Exception e) {
             log.error("쿠폰 발급 처리 중 예상치 못한 오류 발생 - userId: {}, couponId: {}", userId, couponId, e);
             couponIssueFailureRecorder.record(userId, couponId);
