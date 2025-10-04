@@ -26,6 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -109,7 +110,8 @@ class CouponServiceImplTest {
     @Test
     void issue_request_multiThreaded_success() throws InterruptedException {
         // given
-        final UUID couponId = createCoupon(100).getId();
+        final int totalQuantity = 100;
+        final UUID couponId = createCoupon(totalQuantity).getId();
 
         final int threadCount = 100;
         final int requestCount = 10000;
@@ -117,6 +119,7 @@ class CouponServiceImplTest {
         CountDownLatch latch = new CountDownLatch(requestCount);
 
         AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger soldOutCount = new AtomicInteger(0);
 
         // when
         for (int i = 0; i < requestCount; i++) {
@@ -126,17 +129,20 @@ class CouponServiceImplTest {
                     CouponIssueRequestResult result = couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));
                     if (result == CouponIssueRequestResult.SUCCESS) {
                         successCount.incrementAndGet();
+                    } else if (result == CouponIssueRequestResult.SOLD_OUT) {
+                        soldOutCount.incrementAndGet();
                     }
                 } finally {
                     latch.countDown();
                 }
             });
         }
-        Thread.sleep(10000);
+        latch.await(10, TimeUnit.SECONDS);
         executorService.shutdown();
 
         // then
         assertThat(successCount.get()).isEqualTo(100);
+        assertThat(soldOutCount.get()).isEqualTo(requestCount - totalQuantity);
     }
 
     @DisplayName("사용자가 발급된 쿠폰을 사용하면 사용 처리된다.")
