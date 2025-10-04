@@ -5,7 +5,7 @@ spring:
     password: 1234
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -22,3 +22,7 @@ spring:
       bootstrap-servers: localhost:9092
     listener:
       ack-mode: manual
+
+kafka:
+  topic:
+    coupon-issue: coupon_issue

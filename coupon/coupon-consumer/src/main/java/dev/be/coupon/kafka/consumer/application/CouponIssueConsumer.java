@@ -26,7 +26,7 @@ public class CouponIssueConsumer {
      * 발급 처리 도중 예외가 발생할 경우 실패 이력을 저장한 뒤 예외를 던져 재처리 대상에 포함시킵니다.
      * 저장된 실패 이력은 coupon-api 모듈의 스케줄러(FailedCouponIssueRetryScheduler)를 통해 재처리됩니다.
      */
-    @KafkaListener(topics = "#{T(dev.be.coupon.infra.kafka.KafkaTopic).COUPON_ISSUE.getTopicName()}", groupId = "group_1")
+    @KafkaListener(topics = "${kafka.topic.coupon-issue}", groupId = "group_1")
     public void listener(final CouponIssueMessage message,
                          final Acknowledgment ack) {
         log.info("발급 처리 메시지 수신: {}", message);
