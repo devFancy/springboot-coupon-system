@@ -1,10 +1,10 @@
 package dev.be.coupon.infra.kafka.producer;
 
-import dev.be.coupon.infra.kafka.KafkaTopic;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -18,10 +18,13 @@ import java.util.UUID;
 public class CouponIssueProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final String topic;
     private static final Logger log = LoggerFactory.getLogger(CouponIssueProducer.class);
 
-    public CouponIssueProducer(final KafkaTemplate<String, Object> kafkaTemplate) {
+    public CouponIssueProducer(final KafkaTemplate<String, Object> kafkaTemplate,
+                               @Value("${kafka.topic.coupon-issue}") final String topic) {
         this.kafkaTemplate = kafkaTemplate;
+        this.topic = topic;
     }
 
     /**
@@ -30,7 +33,7 @@ public class CouponIssueProducer {
      */
     public void issue(final UUID userId, final UUID couponId) {
         CouponIssueMessage payload = new CouponIssueMessage(userId, couponId);
-        ProducerRecord<String, Object> record = new ProducerRecord<>(KafkaTopic.COUPON_ISSUE.getTopicName(), payload);
+        ProducerRecord<String, Object> record = new ProducerRecord<>(topic, payload);
 
         // 순서: send() 호출 -> whenComplete() 등록 -> .join() 호출 및 대기 -> (메시지 전송이 완료되면) whenComplete() 콜백 실행 -> .join() 대기 해제
         kafkaTemplate.send(record).whenComplete((result, ex) -> {

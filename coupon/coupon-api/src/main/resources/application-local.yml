@@ -4,11 +4,11 @@ spring:
     username: root
     password: 1234
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -25,6 +25,10 @@ spring:
       bootstrap-servers: localhost:9092
     listener:
       ack-mode: manual
+
+kafka:
+  topic:
+    coupon-issue: coupon_issue
 
 springdoc:
   swagger-ui:
