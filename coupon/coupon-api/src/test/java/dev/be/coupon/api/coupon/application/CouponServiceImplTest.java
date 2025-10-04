@@ -7,6 +7,7 @@ import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
+import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 import dev.be.coupon.domain.coupon.exception.CouponAlreadyUsedException;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
@@ -14,6 +15,7 @@ import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.infra.redis.CouponEntryRedisCounter;
+import dev.be.coupon.infra.redis.CouponRedisCache;
 import dev.be.coupon.infra.redis.CouponRedisDuplicateValidate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -71,6 +73,9 @@ class CouponServiceImplTest {
     private CouponEntryRedisCounter couponEntryRedisCounter;
 
     @Autowired
+    private CouponRedisCache couponRedisCache;
+
+    @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
 
     @Autowired
@@ -85,6 +90,7 @@ class CouponServiceImplTest {
                 issuedCouponRepository,
                 couponRedisDuplicateValidate,
                 couponEntryRedisCounter,
+                couponRedisCache,
                 couponIssueProducer,
                 authService
         );
@@ -200,15 +206,15 @@ class CouponServiceImplTest {
         );
     }
 
-    @DisplayName("선착순 쿠폰(동시 요청): 100개 한정 쿠폰에 여러 명이 동시에 요청해도, 10개만 발급된다.")
+    @DisplayName("선착순 이벤트로 동시에 요청해도 쿠폰 총 수량만 발급되도록 한다.")
     @Test
-    void issue_request_multiThreaded_success() {
+    void issue_request_multiThreaded_success() throws InterruptedException {
         // given
         final int totalQuantity = 100;
         final UUID couponId = createCoupon("동시성 테스트 쿠폰", totalQuantity);
 
         final int threadCount = 100;
-        final int requestCount = 1000;
+        final int requestCount = 10000;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(requestCount);
 
@@ -228,6 +234,7 @@ class CouponServiceImplTest {
                 }
             });
         }
+        Thread.sleep(10000);
         executorService.shutdown();
 
         // then
@@ -299,7 +306,11 @@ class CouponServiceImplTest {
                 "CHICKEN", totalQuantity,
                 LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(10)
         );
-        return couponServiceImpl.create(command).id();
+        final UUID couponId = couponServiceImpl.create(command).id();
+        Coupon coupon = couponRepository.findById(couponId).orElseThrow();
+        couponRedisCache.save(coupon);
+
+        return couponId;
     }
 
     private UUID createAndIssueCoupon(final UUID adminId, final UUID userId,
