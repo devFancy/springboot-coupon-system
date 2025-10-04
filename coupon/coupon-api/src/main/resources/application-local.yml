@@ -4,7 +4,7 @@ spring:
     username: root
     password: 1234
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
   jpa:
     hibernate:
