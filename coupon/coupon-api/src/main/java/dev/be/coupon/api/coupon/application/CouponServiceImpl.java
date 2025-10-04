@@ -16,6 +16,7 @@ import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.infra.redis.CouponEntryRedisCounter;
+import dev.be.coupon.infra.redis.CouponRedisCache;
 import dev.be.coupon.infra.redis.CouponRedisDuplicateValidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ public class CouponServiceImpl implements CouponService {
     private final IssuedCouponRepository issuedCouponRepository;
     private final CouponRedisDuplicateValidate couponRedisDuplicateValidate;
     private final CouponEntryRedisCounter couponEntryRedisCounter;
+    private final CouponRedisCache couponRedisCache;
     private final CouponIssueProducer couponIssueProducer;
     private final AuthService authService;
 
@@ -43,12 +45,14 @@ public class CouponServiceImpl implements CouponService {
                              final IssuedCouponRepository issuedCouponRepository,
                              final CouponRedisDuplicateValidate couponRedisDuplicateValidate,
                              final CouponEntryRedisCounter couponEntryRedisCounter,
+                             final CouponRedisCache couponRedisCache,
                              final CouponIssueProducer couponIssueProducer,
                              final AuthService authService) {
         this.couponRepository = couponRepository;
         this.issuedCouponRepository = issuedCouponRepository;
         this.couponRedisDuplicateValidate = couponRedisDuplicateValidate;
         this.couponEntryRedisCounter = couponEntryRedisCounter;
+        this.couponRedisCache = couponRedisCache;
         this.couponIssueProducer = couponIssueProducer;
         this.authService = authService;
     }
@@ -69,6 +73,7 @@ public class CouponServiceImpl implements CouponService {
     public CouponIssueRequestResult issue(final CouponIssueCommand command) {
         final UUID couponId = command.couponId();
         final UUID userId = command.userId();
+        final int totalQuantity = getTotalQuantityWithCaching(couponId);
 
         // 1. 중복 참여 방지 (Redis Set 활용)
         Boolean isFirstUser = couponRedisDuplicateValidate.isFirstUser(couponId, userId);
@@ -79,8 +84,6 @@ public class CouponServiceImpl implements CouponService {
 
         // 2. 선착순 보장 (Redis INCR 활용)
         long entryOrder = couponEntryRedisCounter.increment(couponId);
-        final int totalQuantity = getTotalQuantityFromCoupon(couponId);
-
         if (entryOrder > totalQuantity) {
             log.warn("선착순 마감(절대 순번 기준) - userId: {}, entryOrder: {}, totalQuantity: {}", userId, entryOrder, totalQuantity);
             couponRedisDuplicateValidate.remove(couponId, userId);
@@ -92,6 +95,21 @@ public class CouponServiceImpl implements CouponService {
         log.info("쿠폰 발급 요청 성공. Kafka 프로듀서에 메시지 발행 완료. userId: {}, entryOrder: {}", userId, entryOrder);
 
         return CouponIssueRequestResult.SUCCESS;
+    }
+
+    // 캐시를 먼저 확인하여 불필요한 DB 조회를 막습니다.
+    private int getTotalQuantityWithCaching(final UUID couponId) {
+        Integer totalQuantity = couponRedisCache.getTotalQuantityById(couponId);
+        if (totalQuantity != null) {
+            return totalQuantity;
+        }
+
+        log.info("캐시 미스 발생. DB에서 쿠폰 정보를 조회합니다. couponId: {}", couponId);
+        Coupon couponFromDb = couponRepository.findById(couponId)
+                .orElseThrow(() -> new CouponNotFoundException("ID: " + couponId + "에 해당하는 쿠폰을 찾을 수 없습니다."));
+
+        couponRedisCache.save(couponFromDb);
+        return couponFromDb.getTotalQuantity();
     }
 
     @Transactional
@@ -116,12 +134,6 @@ public class CouponServiceImpl implements CouponService {
                 couponId, issuedCoupon.getId(), userId, issuedCoupon.getUsedAt());
 
         return CouponUsageResult.from(userId, couponId, issuedCoupon.isUsed(), issuedCoupon.getUsedAt());
-    }
-
-    private int getTotalQuantityFromCoupon(final UUID couponId) {
-        Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new CouponNotFoundException("ID: " + couponId + "에 해당하는 쿠폰을 찾을 수 없습니다."));
-        return coupon.getTotalQuantity();
     }
 
     private Coupon findCouponById(final UUID couponId) {

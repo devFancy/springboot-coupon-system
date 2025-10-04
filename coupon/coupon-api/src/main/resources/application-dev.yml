@@ -26,6 +26,10 @@ spring:
     listener:
       ack-mode: manual
 
+kafka:
+  topic:
+    coupon-issue: coupon_issue
+
 springdoc:
   swagger-ui:
     path: /service-docs.html

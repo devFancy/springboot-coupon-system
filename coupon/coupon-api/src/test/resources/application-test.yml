@@ -23,6 +23,10 @@ spring:
     consumer:
       bootstrap-servers: localhost:9092
 
+kafka:
+  topic:
+    coupon-issue: coupon_issue_test
+
 springdoc:
   swagger-ui:
     path: /service-docs.html

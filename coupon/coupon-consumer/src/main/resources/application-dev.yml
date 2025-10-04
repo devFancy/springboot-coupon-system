@@ -23,5 +23,9 @@ spring:
     listener:
       ack-mode: manual
 
+kafka:
+  topic:
+    coupon-issue: coupon_issue
+
 sentry:
   dsn: ${SENTRY_DSN}
