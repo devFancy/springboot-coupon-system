@@ -26,21 +26,6 @@
 | User              | 회원가입                                                                                      |
 | Coupon            | 쿠폰 생성, 수량·유효기간 관리                                                                         |
 | IssuedCoupon      | 사용자에게 발급된 쿠폰 관리 (발급, 중복 방지, 사용 처리 등)                                                      |
-| UserCouponHistory | 사용자가 보유하거나 사용한 쿠폰 이력 조회                                                                   |
-
-
-> 참고: UserCouponHistory는 현재 구현되어 있지 않으며, IssuedCoupon 엔티티를 통해 사용자별 쿠폰 사용 이력을 충분히 조회할 수 있는 구조로 설계되어 있습니다.
-단, 복잡한 이력 조회 성능을 요구하거나 CQRS 적용이 필요한 경우 확장 가능한 Projection View로 설계 여지를 두었습니다.
-
-```markdown
-[Coupon] ──▶ 쿠폰 정의
-     │ defines
-     ▼
-[IssuedCoupon] ──▶ 발급 및 사용 처리
-     │
-     ▼
-[UserCouponHistory] ◀─ 사용자별 이력 조회
-```
 
 
 ---
@@ -110,27 +95,6 @@
 | 실패 일시  | failedAt   | 쿠폰 발급 실패가 발생한 시점                           |
 | 재시도 횟수 | retryCount | 해당 실패 이력에 대해 재시도한 횟수                       |
 | 해결 여부  | isResolved | 실패 건이 정상적으로 재처리되어 해결되었는지 여부 (`true` = 해결됨) |
-
-
-### UserCouponHistory (사용자 쿠폰 이력 조회, 조회 전용 View)
-
-> 사용자 기준으로 발급된 쿠폰의 보유 여부, 사용 이력, 만료 여부 등을 조회하는 전용 읽기 모델(Projection View) 입니다.
-> 현재 구현에는 포함되어 있지 않으며, 다음과 같은 상황에서 도입을 고려할 수 있습니다.
-> 
-> * 복잡한 필터 조건을 적용한 사용자 쿠폰 이력 조회가 빈번하게 발생할 때
-> * 읽기 성능 최적화를 위해 CQRS 또는 Read Model을 도입할 필요가 있을 때
-
-
-| 한글명      | 영문명            | 설명                                            |
-| -------- | -------------- | --------------------------------------------- |
-| 사용자 ID   | userId         | 쿠폰 소유자                                        |
-| 발급 쿠폰 ID | issuedCouponId | 사용자가 발급받은 개별 쿠폰 ID (Projection View에서 필드로 표현) |
-| 사용 여부    | used           | 쿠폰 사용 여부 (필터 조건 가능)                           |
-| 쿠폰 타입    | couponType     | 발급받은 쿠폰의 종류                                   |
-| 발급일      | issuedAt       | 발급 시점                                         |
-| 사용일      | usedAt         | 사용한 경우 사용 시각                                  |
-| 만료일      | validUntil     | 만료된 쿠폰 필터링용 정보                                |
-| 조회 기준 상태 | statusFilter   | ALL, USED, UNUSED, EXPIRED 등 조회 조건            |
 
 
 ---
