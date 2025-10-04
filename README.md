@@ -78,12 +78,11 @@
 
 ### Design & Module Structure
 
-> 도메인 모델링 및 용어 정의는 해당 [문서](https://github.com/devFancy/springboot-coupon-system/blob/main/docs/domain-glossary-and-modeling.md)에 상세히 정리했습니다.
+> [용어 사전 및 도메인 모델링 관련 문서](https://github.com/devFancy/springboot-coupon-system/blob/main/docs/domain-glossary-and-modeling.md)
 
-프로젝트는 도메인 중심 설계를 기반으로, 각 모듈이 명확한 책임을 갖도록 **멀티 모듈** 구조로 설계되었습니다.
+프로젝트는 도메인 중심 설계를 기반으로, 각 모듈이 명확한 책임을 갖도록 `멀티 모듈` 구조로 설계되었습니다.
 
-* 도메인 중심 설계: `Coupon`, `IssuedCoupon` 등 핵심 도메인 모델이 비즈니스 로직의 중심이 되도록 구성하여 응집도를 높였습니다. (e.g., 쿠폰 수량 관리 로직은 `Coupon` 엔티티
-  내부에서 제어)
+* 도메인 중심 설계: `Coupon`, `IssuedCoupon` 등 핵심 도메인 모델이 비즈니스 로직의 중심이 되도록 구성하여 응집도를 높였습니다.
 
 * 멀티 모듈 구조: 각 모듈의 역할과 의존성을 명확히 분리하여 유연하고 확장 가능한 구조를 구현했습니다.
 
@@ -97,7 +96,7 @@ coupon/
 ├── coupon-domain # 도메인 모델 (JPA Entity)
 
 support/
-├── logging # 공통 로그 필터 및 설정
+├── logging # 공통 로그 필터 및 분산 추적
 ├── monitoring # Prometheus, Grafana, K6 구성
 └── common # 공통 예외 처리, 응답 구조 등
 ```
@@ -184,7 +183,7 @@ support/
 `API 서버`는 Redis를 통해 빠르고 효율적으로 선착순 요청을 처리하는 관문 역할을 합니다.
 따라서 테스트는 Redis 기반의 제어 로직이 많은 동시 요청 하에서 정확하게 동작하는지를 집중적으로 검증합니다.
 
-> 관련 클래스명: [CouponServiceImplTest](https://github.com/devFancy/springboot-coupon-system/blob/refactor/interceptor-global-trace-id-40/coupon/coupon-api/src/test/java/dev/be/coupon/api/coupon/application/CouponServiceImplTest.java))
+> 관련 클래스명: [CouponServiceImplTest](https://github.com/devFancy/springboot-coupon-system/blob/main/coupon/coupon-api/src/test/java/dev/be/coupon/api/coupon/application/CouponServiceImplTest.java)
 
 * 중복 요청 방지 테스트(`fail_issue_request_due_to_duplicate_entry`)
 
@@ -205,11 +204,11 @@ support/
     * 검증: Race Condition 없이 정확히 100개의 요청만 `SUCCESS` 응답을 받고, 나머지 9,900개의 요청은 `SOLD_OUT` 처리되는지 검증합니다. 이 테스트는 API 서버의 선착순
       처리 성능과 정확성을 보장합니다.
 
-### Consumer 서버: DB에 안정으로 저장되는지 검증
+### Consumer 서버: DB에 안정적으로 저장되는지 검증
 
 `Consumer 서버`는 Kafka로부터 전달받은 메시지를 최종적으로 DB에 저장하는 역할을 합니다. 따라서 테스트는 메시지를 유실하거나 중복 저장하지 않고, 안정적으로 처리하는지를 집중적으로 검증합니다.
 
-> 관련 클래스명: [CouponIssuanceServiceImplTest](https://github.com/devFancy/springboot-coupon-system/blob/refactor/interceptor-global-trace-id-40/coupon/coupon-consumer/src/test/java/dev/be/coupon/kafka/consumer/application/CouponIssuanceServiceImplTest.java)
+> 관련 클래스명: [CouponIssuanceServiceImplTest](https://github.com/devFancy/springboot-coupon-system/blob/main/coupon/coupon-consumer/src/test/java/dev/be/coupon/kafka/consumer/application/CouponIssuanceServiceImplTest.java)
 
 * API 서버로부터 요청받은 메시지 처리 테스트
 
