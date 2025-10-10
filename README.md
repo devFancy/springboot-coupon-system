@@ -53,48 +53,48 @@
 
 ```mermaid
 sequenceDiagram
-    actor User
-    participant API Server
-    participant Redis
-    participant Kafka
-    participant Consumer Server
-    participant DB as MySQL
+  actor User
+  participant API Server
+  participant Redis
+  participant Kafka
+  participant Consumer Server
+  participant DB as MySQL
 
-    User->>API Server: 쿠폰 발급 요청
-    
-    note over API Server, Redis: 선착순 & 중복 참여 검증
-    API Server->>Redis: 1. 중복 참여 확인 (SADD)
-    API Server->>Redis: 2. 선착순 순번 증가 (INCR)
+  User->>API Server: 쿠폰 발급 요청
 
-    alt 선착순 성공
-        API Server->>Kafka: 쿠폰 발급 요청 메시지 발행
-        API Server-->>User: 발급 요청 성공
-    else 선착순 마감
-        API Server-->>User: 선착순 마감 응답
+  note over API Server, Redis: 선착순 & 중복 참여 검증
+  API Server->>Redis: 1. 중복 참여 확인 (SADD)
+  API Server->>Redis: 2. 선착순 순번 증가 (INCR)
+
+  alt 선착순 성공
+    API Server->>Kafka: [신규 토픽] 쿠폰 발급 요청 메시지 발행
+    API Server-->>User: 발급 요청 성공
+  else 선착순 마감
+    API Server-->>User: 선착순 마감 응답
+  end
+
+  note over Kafka, DB: 비동기 발급 처리
+  Consumer Server->>Kafka: 메시지 요청 (poll)
+  Kafka-->>Consumer Server: 메시지 반환
+
+  alt 발급 처리 성공
+    Consumer Server->>DB: 쿠폰 발급 정보 저장
+    note over Consumer Server, DB: (재처리였다면) 실패 이력을 'resolved'로 업데이트
+    Consumer Server->>Kafka: 처리 완료(ack)
+  else 발급 처리 실패
+    Consumer Server->>DB: [신규] 실패 이력 저장 / [재처리] 재시도 횟수 증가
+    note right of Consumer Server: ack 미전송
+  end
+
+  note over API Server, DB: 스케줄러 기반 재처리(주기적)
+  loop 5분마다
+    API Server->>DB: 미처리 및 재시도 5회 미만 실패 건 조회
+    DB-->>API Server: 실패 목록
+
+    opt 실패 건 하나 이상 존재시
+      API Server->>Kafka: [재처리 토픽]으로 실패 건 재발행
     end
-    
-    note over Kafka, DB: 비동기 발급 처리
-    Consumer Server->>Kafka: 메시지 요청 (poll)
-    Kafka-->>Consumer Server: 메시지 반환
-    
-    alt DB 저장 성공
-      Consumer Server->>DB: 쿠폰 발급 정보 저장
-      Consumer Server->>Kafka: 처리 완료(ack)
-    else DB 저장 실패
-      Consumer Server->>DB: 실패 이력 테이블에 저장
-      note right of Consumer Server: ack 미전송 (재처리 유도)
-    end
-    
-    note over API Server, DB: 스케줄러 기반 재처리(주기적)
-    loop 5분마다
-      API Server->>DB: 미처리 실패 건 조회
-      DB-->>API Server: 실패 목록
-      
-      opt 실패 건 하나 이상 존재시
-        API Server->>Kafka: 실패 건 Kafka 토픽으로 재발행
-        API Server->>DB: 'resolved' 상태로 업데이트
-      end
-    end
+  end
 ```
 
 위 아키텍처의 실제 처리 흐름은 다음과 같은 2단계로 이루어집니다.
