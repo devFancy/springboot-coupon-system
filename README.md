@@ -1,6 +1,6 @@
 # Coupon System Design
 
-이 프로젝트는 대규모 트래픽 환경에서 발생하는 동시성 이슈를 해결하고,  
+이 프로젝트는 높은 동시성 환경에서 발생하는 동시성 이슈를 해결하고,  
 메시지 큐를 중심으로 안정적인 쿠폰 발급 아키텍처를 설계하고 구현하며 얻은 기술적인 경험과 고민을 정리했습니다.
 
 
@@ -14,12 +14,12 @@
 
 ## Project Overview
 
-본 프로젝트는 블랙 프라이데이, 선착순 이벤트와 같이 대규모 트래픽이 예상되는 상황에서 안정적인 쿠폰 발급을 목표로 설계된 시스템입니다.
-동시 요청 속에서도 데이터 정합성을 보장하고, 사용자에게는 빠른 응답 속도를 제공하기 위해 비동기 메시지 큐를 활용한 아키텍처를 구현했습니다.
+본 프로젝트는 블랙 프라이데이, 선착순 이벤트와 같이 동시 요청이 집중되는 상황에서 안정적인 쿠폰 발급을 목표로 설계된 시스템입니다.
+높은 동시 요청 속에서도 데이터 정합성을 보장하고, 사용자에게는 빠른 응답 속도를 제공하기 위해 비동기 메시지 큐를 활용한 아키텍처를 구현했습니다.
 
 > 주요 해결 과제
 
-* 대용량 트래픽 제어: Race Condition을 방지하고 정확한 수량 관리를 통한 데이터 무결성 확보
+* 동시성 제어: Race Condition을 방지하고 정확한 수량 관리를 통한 데이터 무결성 확보
 
 * 응답 시간 최소화: 비동기 처리를 통해 사용자 API 응답 속도 향상
 
@@ -205,7 +205,7 @@ support/
 
 ## Testing Strategy
 
-대규모 동시성 환경에서의 안정성을 코드 레벨에서 증명하기 위해, 실제 운영과 유사한 시나리오를 기반으로 각 서버의 역할과 책임에 맞는 테스트 전략을 적용했습니다.
+높은 동시성 환경에서의 안정성을 코드 레벨에서 증명하기 위해, 실제 운영과 유사한 시나리오를 기반으로 각 서버의 역할과 책임에 맞는 테스트 전략을 적용했습니다.
 
 ### API 서버: 선착순 내에 들어오는지 검증
 
@@ -214,13 +214,13 @@ support/
 
 > 관련 클래스명: [CouponServiceImplTest](https://github.com/devFancy/springboot-coupon-system/blob/main/coupon/coupon-api/src/test/java/dev/be/coupon/api/coupon/application/CouponServiceImplTest.java)
 
-* 중복 요청 방지 테스트(`fail_issue_request_due_to_duplicate_entry`)
+* 중복 요청 방지 테스트
 
     * 시나리오: 한 명의 사용자가 동일한 쿠폰 발급을 연속으로 두 번 요청합니다.
 
     * 검증: 첫 번째 요청은 `SUCCESS`로 접수되지만, 두 번째 요청은 Redis의 Set 자료구조에 의해 중복으로 감지되어 `DUPLICATE`를 반환하는지 확인합니다.
 
-* 선착순 마감 테스트(`fail_issue_request_due_to_sold_out`)
+* 선착순 마감 테스트
 
     * 시나리오: 발급 수량이 1개인 쿠폰에 대해 두 명의 사용자가 순차적으로 발급을 요청합니다.
 
@@ -237,13 +237,13 @@ support/
 
 `Consumer 서버`는 Kafka로부터 전달받은 메시지를 최종적으로 DB에 저장하는 역할을 합니다. 따라서 테스트는 메시지를 유실하거나 중복 저장하지 않고, 안정적으로 처리하는지를 집중적으로 검증합니다.
 
-> 관련 클래스명: [CouponIssuanceServiceImplTest](https://github.com/devFancy/springboot-coupon-system/blob/main/coupon/coupon-consumer/src/test/java/dev/be/coupon/kafka/consumer/application/CouponIssuanceServiceImplTest.java)
+> 관련 클래스명: [CouponConsumerConcurrencyTest](https://github.com/devFancy/springboot-coupon-system/blob/main/coupon/coupon-consumer/src/test/java/dev/be/coupon/kafka/consumer/integration/CouponConsumerConcurrencyTest.java)
 
-* API 서버로부터 요청받은 메시지 처리 테스트
+* 동시 요청 처리 테스트
 
-    * 시나리오: API 서버가 선별한 100개의 유효한 발급 메시지를 테스트용 Kafka 토픽으로 발행합니다.
+    * 시나리오: ExecutorService와 CountDownLatch를 사용하여 100개의 스레드가 동시에 쿠폰 발급 메시지를 Kafka 토픽으로 발행하는 상황을 시뮬레이션합니다.
 
-    * 검증:  100개의 메시지가 모두 누락 없이 처리되어 DB에 정확히 100개의 발급된 쿠폰 테이블의 데이터에 저장되는지 확인합니다.
+    * 검증: 100개의 메시지가 모두 누락 없이 처리되어 DB에 정확히 100개의 발급된 쿠폰 테이블의 데이터에 저장되는지 확인합니다.
 
 ---
 
