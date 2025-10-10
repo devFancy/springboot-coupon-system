@@ -12,7 +12,7 @@ public interface FailedIssuedCouponRepository {
 
     FailedIssuedCoupon save(final FailedIssuedCoupon failedIssuedCoupon);
 
-    List<FailedIssuedCoupon> findAllByIsResolvedFalse();
+    List<FailedIssuedCoupon> findAllByIsResolvedFalseAndRetryCountLessThan(int retryCount);
 
     FailedIssuedCoupon findByIdWithLock(UUID id);
 }
