@@ -47,7 +47,7 @@ public class KafkaConsumerConfig {
         config.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 30000);
         // 2-2) 컨슈머가 얼마자 자주 하트비트를 보낼지 결정하는 주기. (기본값: 3,000ms = 3초)
         config.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 10000);
-        // 2-3) poll() 간 최대 시간. 메시지 처리 시간보다 넉넉하게 설정. (기본값: 300,000ms = 5분)
+        // 2-3) poll()로 가져온 메시지를 처리하는 데 허용된 최대 시간. (기본값: 300,000ms = 5분)
         config.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 600000); // 10분
         // 2-4) 리밸런싱 시 중단을 최소화하는 '협력적 리밸런스' 전략 사용.
         config.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, "org.apache.kafka.clients.consumer.CooperativeStickyAssignor");
