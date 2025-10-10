@@ -170,6 +170,28 @@
   * 쿠폰 발급 수량은 1 이상이야 한다.
   * 유효 종료일이 지나면 쿠폰 상태는 `EXPIRED` 로 변경될 수 있다.
 
+#### 처리 흐름: 쿠폰 생성
+
+```mermaid
+sequenceDiagram
+    actor 관리자 (Admin)
+    participant API Server
+    participant DB as MySQL
+
+    관리자 (Admin)->>API Server: 쿠폰 생성 요청
+    activate API Server
+
+    note over API Server: 관리자 권한 확인 (내부 처리)
+
+    API Server->>DB: Coupon 정보 저장
+    activate DB
+    DB-->>API Server: 저장 완료
+    deactivate DB
+
+    API Server-->>관리자 (Admin): 쿠폰 생성 성공 응답
+    deactivate API Server
+```
+
 ### IssuedCoupon (발급된 쿠폰)
 
 속성(상태)
@@ -193,3 +215,35 @@
   * 발급받지 않은 쿠폰은 사용할 수 없다.
   * 사용된 쿠폰은 재사용이 불가능하다.
   * 유효 기간이 지난 쿠폰은 사용할 수 없다.
+
+#### 처리 흐름: 쿠폰 사용
+
+```mermaid
+sequenceDiagram
+    actor 사용자 (User)
+    participant API Server
+    participant DB as MySQL
+
+    사용자 (User)->>API Server: 쿠폰 사용 요청
+    activate API Server
+
+    API Server->>DB: 1. 발급된 쿠폰 조회 (IssuedCoupon)
+    activate DB
+    DB-->>API Server: 발급된 쿠폰 정보
+    deactivate DB
+
+    API Server->>DB: 2. 원본 쿠폰 정보 조회 (Coupon)
+    activate DB
+    DB-->>API Server: 원본 쿠폰 정보
+    deactivate DB
+
+    note over API Server: 쿠폰 유효성 검증 (기간, 상태 등)
+
+    API Server->>DB: 3. '사용됨' 상태로 업데이트
+    activate DB
+    DB-->>API Server: 업데이트 완료
+    deactivate DB
+
+    API Server-->>사용자 (User): 쿠폰 사용 성공 응답
+    deactivate API Server
+```
