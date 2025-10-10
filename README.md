@@ -182,12 +182,7 @@ support/
 ```json
 {
   "resultType": "SUCCESS",
-  "data": {
-    "userId": "a7b4eb1d-391f-4ef9-982e-9b4c0c754d4f",
-    "couponId": "6d86751d-a9fa-4c9d-8e93-287b91bfa287",
-    "used": false,
-    "issuedAt": "2025-05-20T21:41:46.380488"
-  },
+  "data": "쿠폰 발급 요청이 성공적으로 접수되었습니다. 잠시 후 쿠폰함에서 확인해주세요.",
   "errorMessage": null
 }
 ```
