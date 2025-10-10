@@ -28,3 +28,4 @@ spring:
 kafka:
   topic:
     coupon-issue: coupon_issue_test
+    coupon-issue-retry: coupon_issue_retry_test

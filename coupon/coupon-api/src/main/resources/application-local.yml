@@ -7,6 +7,7 @@ spring:
     enabled: false
     locations: classpath:db/migration
   jpa:
+    open-in-view: false # OSIV 기능을 비활성화합니다.
     hibernate:
       ddl-auto: update
     properties:
@@ -29,6 +30,7 @@ spring:
 kafka:
   topic:
     coupon-issue: coupon_issue
+    coupon-issue-retry: coupon_issue_retry
 
 springdoc:
   swagger-ui:

@@ -8,17 +8,14 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
 
-/**
- * "coupon_issue" Kafka 토픽으로부터 쿠폰 발급 메시지를 수신하여 발급 쿠폰을 DB에 저장합니다.
- */
 @Component
 public class CouponIssueConsumer {
 
-    private final CouponIssuanceService couponIssuanceService;
+    private final CouponIssuanceFacade couponIssuanceFacade;
     private final Logger log = LoggerFactory.getLogger(CouponIssueConsumer.class);
 
-    public CouponIssueConsumer(final CouponIssuanceService couponIssuanceService) {
-        this.couponIssuanceService = couponIssuanceService;
+    public CouponIssueConsumer(final CouponIssuanceFacade couponIssuanceFacade) {
+        this.couponIssuanceFacade = couponIssuanceFacade;
     }
 
     /**
@@ -32,7 +29,20 @@ public class CouponIssueConsumer {
         log.info("발급 처리 메시지 수신: {}", message);
 
         try {
-            couponIssuanceService.process(message);
+            couponIssuanceFacade.process(message);
+            ack.acknowledge();
+        } catch (Exception e) {
+            log.error("메시지 처리 실패, 재처리를 위해 커밋하지 않음: {}", message, e);
+        }
+    }
+
+    @KafkaListener(topics = "${kafka.topic.coupon-issue-retry}", groupId = "group_1")
+    public void listenerRetry(final CouponIssueMessage message,
+                         final Acknowledgment ack) {
+        log.info("발급 처리 메시지 수신: {}", message);
+
+        try {
+            couponIssuanceFacade.processRetry(message);
             ack.acknowledge();
         } catch (Exception e) {
             log.error("메시지 처리 실패, 재처리를 위해 커밋하지 않음: {}", message, e);

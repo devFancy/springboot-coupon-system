@@ -101,7 +101,7 @@ public class CouponController implements CouponControllerDocs {
 
         return switch (result) {
             case SUCCESS -> ResponseEntity.status(HttpStatus.ACCEPTED)
-                    .body(CommonResponse.success("쿠폰 발급 요청이 성공적으로 접수되었습니다."));
+                    .body(CommonResponse.success("쿠폰 발급 요청이 성공적으로 접수되었습니다. 잠시 후 쿠폰함에서 확인해주세요."));
             case SOLD_OUT -> ResponseEntity.status(HttpStatus.OK)
                     .body(CommonResponse.success("아쉽지만, 쿠폰이 모두 소진되었습니다."));
             case DUPLICATE -> ResponseEntity.status(HttpStatus.OK)

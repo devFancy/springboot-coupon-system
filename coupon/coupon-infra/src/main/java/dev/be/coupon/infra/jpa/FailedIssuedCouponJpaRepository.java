@@ -17,10 +17,11 @@ public interface FailedIssuedCouponJpaRepository extends FailedIssuedCouponRepos
     FailedIssuedCoupon save(final FailedIssuedCoupon failedIssuedCoupon);
 
     @Override
-    List<FailedIssuedCoupon> findAllByIsResolvedFalse();
+    @Query("select f from FailedIssuedCoupon f where f.isResolved = false and f.retryCount < :retryCount")
+    List<FailedIssuedCoupon> findAllByIsResolvedFalseAndRetryCountLessThan(final int retryCount);
 
     @Override
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select f from FailedIssuedCoupon f where f.id = :id")
-    FailedIssuedCoupon findByIdWithLock(@Param("id") UUID id);
+    FailedIssuedCoupon findByIdWithLock(@Param("id") final UUID id);
 }
