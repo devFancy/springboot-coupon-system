@@ -1,17 +1,5 @@
 # Coupon System Design
 
-이 프로젝트는 높은 동시성 환경에서 발생하는 동시성 이슈를 해결하고,  
-메시지 큐를 중심으로 안정적인 쿠폰 발급 아키텍처를 설계하고 구현하며 얻은 기술적인 경험과 고민을 정리했습니다.
-
-
-> 관련 포스팅
-
-* [MDC와 GlobalTraceId를 활용한 분산 추적](https://devfancy.github.io/SpringBoot-Distributed-Tracing-With-MDC/)
-
-* [Prometheus와 Grafana로 Spring Boot 기반 모니터링 대시보드 구축하기](https://devfancy.github.io/SpringBoot-Monitoring-Prometheus-Grafana/)
-
----
-
 ## Project Overview
 
 본 프로젝트는 블랙 프라이데이, 선착순 이벤트와 같이 동시 요청이 집중되는 상황에서 안정적인 쿠폰 발급을 목표로 설계된 시스템입니다.

@@ -76,7 +76,7 @@ public class DistributedLockAop {
             try {
                 stopWatch.start();
                 log.info("락 획득 성공 및 비즈니스 로직 시작: 키='{}'", lockName);
-                // (3) @DistributedLock 어노테이션이 선언된 원본 메서드(예: CouponIssueService#issue) 실행.
+                // (3) @DistributedLock 어노테이션이 선언된 원본 메서드 실행.
                 return joinPoint.proceed();
             } finally {
                 stopWatch.stop();
