@@ -7,11 +7,15 @@
 - [ ] 🔖 Have you added appropriate labels? e.g. `feature`, `refactor`
 
 
-## What is the problem you are trying to solve?
+## Problem
+
+> What is the problem you are trying to solve?
 
 - 
 
-## How did you solve it?
+## Solution
+
+> How did you solve it?
 
 - 
 
