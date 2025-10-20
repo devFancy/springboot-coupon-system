@@ -5,6 +5,11 @@ import org.springframework.http.HttpStatus;
 
 public enum ErrorType {
 
+    SENTRY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,
+            ErrorCode.E500,
+            "Sentry 테스트를 위한 강제 예외 발생!",
+            LogLevel.ERROR),
+
     DEFAULT_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,
             ErrorCode.E500,
             "An unexpected error has occurred.",
