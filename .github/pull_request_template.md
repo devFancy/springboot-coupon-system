@@ -6,9 +6,14 @@
 - [ ] 💭 Is the related issue registered?
 - [ ] 🔖 Have you added appropriate labels? e.g. `feature`, `refactor`
 
-## Description
 
-- [ ]
+## What is the problem you are trying to solve?
+
+- 
+
+## How did you solve it?
+
+- 
 
 ## Considerations
 
