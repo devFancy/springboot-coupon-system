@@ -9,6 +9,7 @@ datasources:
     access: proxy
     url: http://prometheus:9090
     isDefault: true
+
   - name: coupon-performance-influxdb
     type: influxdb
     access: proxy
@@ -16,3 +17,8 @@ datasources:
     user: admin
     password: admin1234
     url: http://influxdb:8086
+
+  - name: Loki
+    type: loki
+    url: http://loki:3100
+    isDefault: false
