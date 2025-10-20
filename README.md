@@ -168,7 +168,7 @@ support/
 
 * Grafana: K6 부하 테스트의 실시간 TPS, Error Rate, Latency 및 Consumer Lag을 시각화하여 시스템의 병목 지점을 직관적으로 파악합니다.
 
-### Distributed Tracing: Spring Cloud Sleuth & Sentry
+### Distributed Tracing: Micrometer Tracing & Sentry
 
 * TraceId: 사용자의 최초 요청(`coupon-api`)부터 Kafka를 거쳐 `coupon-consumer` 가 DB에 저장하기까지의 모든 과정을 `globalTraceId` 하나로 묶어 추적합니다.
 
@@ -184,7 +184,29 @@ support/
 
 ---
 
-## 6. API Specification
+## 6. Tech Stack
+
+| **Category**    | **Tech**                         | **Description**                |
+|-----------------|----------------------------------|--------------------------------|
+| Backend         | Java 17, Spring Boot 3.x         |                                |
+| ORM             | Spring Data JPA                  |                                |
+| Data Store      | MySQL 8.x                        | 쿠폰 발급 내역 등 데이터 영속화             |
+| In-Memory Store | Redis                            | 선착순/중복 발급 제어                   |
+| Messaging       | Kafka                            | 비동기 요청 처리를 위한 메시지 큐            |
+| Concurrency     | Redisson                         | Consumer 단의 최종 정합성 보장을 위한 분산 락 |
+| Observability   | [Metrics] Prometheus, Grafana    | 실시간 성능 지표 모니터링 및 대시보드          |
+|                 | [Tracing] Micrometer Tracing     | MSA 환경 분산 추적                   |
+|                 | [Error] Sentry                   | 애플리케이션 에러 및 예외 수집/알림           |
+|                 | [Logging] Grafana Loki, Promtail | 중앙화된 로그 수집 및 검색                |
+| DB Migration    | Flyway                           | SQL 기반의 안정적인 DB 스키마 버전 관리      |
+| API Docs        | Swagger (Springdoc OpenAPI)      | API 명세 자동화 및 테스트 UI            |
+| Testing         | K6, JUnit 5, Mockito             | 부하 테스트 및 단위/통합 테스트             |
+| DevOps          | Docker Compose                   | 로컬 개발 환경 구성                    |
+
+
+---
+
+## 7. API Specification
 
 애플리케이션 실행 후, `http://localhost:8080/service-docs.html` 에서 전체 API 명세 및 테스트를 직접 수행할 수 있습니다.
 
@@ -199,7 +221,7 @@ support/
 
 ---
 
-## 7. Testing Strategy
+## 8. Testing Strategy
 
 높은 동시성 환경에서의 안정성을 코드 레벨에서 증명하기 위해, 실제 운영과 유사한 시나리오를 기반으로 각 서버의 역할과 책임에 맞는 테스트 전략을 적용했습니다.
 
@@ -240,7 +262,7 @@ support/
 
 ---
 
-## 8. How to Run
+## 9. How to Run
 
 [1] 프로젝트 빌드 (Build Project)
 
