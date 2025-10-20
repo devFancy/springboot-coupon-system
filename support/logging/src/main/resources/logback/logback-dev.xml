@@ -2,11 +2,71 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
+    <springProperty scope="context"
+                    name="APP_NAME" source="spring.application.name"
+                    defaultValue="coupon-app"
+    />
+
+    <property name="LOG_DIR" value="logs/${APP_NAME}"/>
+    <property name="LOG_RETENTION_DAYS" value="30"/>
+    <property name="MAX_FILE_SIZE" value="100MB"/>
+
+    <property name="STDOUT_LOG_PATTERN"
+              value="%clr(%d{HH:mm:ss.SSS}){faint}|%clr(${level:-%5p})|%32X{globalTraceId:-}|%32X{traceId:-},%16X{spanId:-}|%clr(%-40.40logger{39}){cyan}%clr(|){faint}%m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+    <property name="FILE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS}|%-5level|${APP_NAME}|%32X{globalTraceId:-}|%32X{traceId:-},%16X{spanId:-}|%-40.40logger{39}|%m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%clr(%d{HH:mm:ss.SSS}){faint}|%clr(${level:-%5p})|%32X{globalTraceId:-}|%32X{traceId:-},%16X{spanId:-}|%clr(%-40.40logger{39}){cyan}%clr(|){faint}%m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}</pattern>
+            <pattern>${STDOUT_LOG_PATTERN}</pattern>
             <charset>utf8</charset>
         </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <file>${LOG_DIR}/${APP_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${APP_NAME}.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${LOG_RETENTION_DAYS}</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <file>${LOG_DIR}/${APP_NAME}_error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${APP_NAME}_error.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${LOG_RETENTION_DAYS}</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="LOKI_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <timestamp>
+                <fieldName>timestamp</fieldName>
+                <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+            </timestamp>
+        </encoder>
+
+        <file>${LOG_DIR}/${APP_NAME}.json.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${APP_NAME}.%d{yyyy-MM-dd}_%i.json.log</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${LOG_RETENTION_DAYS}</maxHistory>
+        </rollingPolicy>
     </appender>
 
     <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
@@ -16,9 +76,14 @@
 
     <logger name="org.springframework" level="WARN"/>
     <logger name="dev.be" level="INFO"/>
+    <logger name="org.apache.kafka" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR"/>
         <appender-ref ref="SENTRY"/>
+        <appender-ref ref="LOKI_FILE"/>
     </root>
 </configuration>

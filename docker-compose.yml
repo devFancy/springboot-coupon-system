@@ -32,6 +32,32 @@ services:
     environment:
       - TZ=Asia/Seoul
 
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./support/monitoring/infra/loki/loki-config.yml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    environment:
+      - TZ=Asia/Seoul
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      # 1. promtail 설정 파일을 컨테이너에 연결합니다.
+      - ./support/monitoring/infra/promtail/promtail-config.yml:/etc/promtail/config.yaml
+
+      # 2. (핵심) 애플리케이션 관련 로그 폴더들을 Promtail 컨테이너 내부의 /var/logs 폴더로 연결합니다.
+      - ./logs:/var/logs
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+    environment:
+      - TZ=Asia/Seoul
+
   influxdb:
     image: influxdb:1.8
     container_name: influxdb

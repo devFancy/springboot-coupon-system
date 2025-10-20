@@ -90,12 +90,6 @@ public class CouponController implements CouponControllerDocs {
         return ResponseEntity.ok().body(CommonResponse.success(CouponUsageResponse.from(result)));
     }
 
-    @Override
-    @GetMapping("/sentry-test")
-    public ResponseEntity<CommonResponse<Void>> sentryTest() {
-        throw new CouponException(ErrorType.DEFAULT_ERROR);
-    }
-
     private ResponseEntity<CommonResponse<String>> getCommonResponseResponseEntity(CouponIssueCommand command) {
         CouponIssueRequestResult result = couponService.issue(command);
 
@@ -107,5 +101,11 @@ public class CouponController implements CouponControllerDocs {
             case DUPLICATE -> ResponseEntity.status(HttpStatus.OK)
                     .body(CommonResponse.success("이미 참여하셨습니다."));
         };
+    }
+
+    @Override
+    @GetMapping("/sentry-test")
+    public ResponseEntity<CommonResponse<Void>> sentryTest() {
+        throw new CouponException(ErrorType.SENTRY_ERROR);
     }
 }

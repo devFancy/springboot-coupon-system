@@ -48,6 +48,9 @@ dependencies {
     // awaitility - 비동기 처리
     testImplementation ("org.awaitility:awaitility:${awaitilityVersion}")
 
+    // sentry
+    implementation "io.sentry:sentry-spring-boot-starter-jakarta:${property("sentryVersion")}"
+
 }
 
 tasks.withType(Test).configureEach {

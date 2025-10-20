@@ -8,5 +8,8 @@ dependencies {
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
 
     implementation "io.sentry:sentry-logback:${property("sentryVersion")}"
-    implementation "io.sentry:sentry-spring-boot-starter-jakarta:${property("sentryVersion")}"
+
+    // Logback - JSON 출력
+    api 'com.fasterxml.jackson.core:jackson-databind'
+    api "net.logstash.logback:logstash-logback-encoder:${property("logbackEncoderVersion")}"
 }
