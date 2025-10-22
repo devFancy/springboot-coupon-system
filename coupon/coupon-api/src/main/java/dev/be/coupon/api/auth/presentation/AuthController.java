@@ -6,7 +6,7 @@ import dev.be.coupon.api.auth.application.dto.AuthLoginCommand;
 import dev.be.coupon.api.auth.application.dto.AuthLoginResult;
 import dev.be.coupon.api.auth.presentation.dto.request.AuthLoginRequest;
 import dev.be.coupon.api.auth.presentation.dto.response.AuthLoginResponse;
-import dev.be.coupon.common.support.response.CommonResponse;
+import dev.be.coupon.common.support.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,7 +25,7 @@ public class AuthController implements AuthControllerDocs {
     }
 
     @PostMapping(value = "/auth/login")
-    public ResponseEntity<CommonResponse<AuthLoginResponse>> login(@Valid @RequestBody final AuthLoginRequest request) {
+    public ResponseEntity<ApiResponse<AuthLoginResponse>> login(@Valid @RequestBody final AuthLoginRequest request) {
         AuthLoginCommand command = new AuthLoginCommand(request.username(), request.password());
         AuthLoginResult result = authService.login(command);
 
@@ -33,6 +33,6 @@ public class AuthController implements AuthControllerDocs {
         AuthLoginResult finalResult = result.withAccessToken(accessToken);
 
         AuthLoginResponse response = new AuthLoginResponse(finalResult.id(), finalResult.username(), accessToken);
-        return ResponseEntity.ok().body(CommonResponse.success(response));
+        return ResponseEntity.ok().body(ApiResponse.success(response));
     }
 }

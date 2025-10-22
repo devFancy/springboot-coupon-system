@@ -2,9 +2,8 @@ package dev.be.coupon.api.auth.presentation;
 
 import dev.be.coupon.api.auth.presentation.dto.request.AuthLoginRequest;
 import dev.be.coupon.api.auth.presentation.dto.response.AuthLoginResponse;
-import dev.be.coupon.common.support.response.CommonResponse;
+import dev.be.coupon.common.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +24,8 @@ public interface AuthControllerDocs {
             description = "아이디와 비밀번호를 기반으로 로그인을 합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "로그인 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공"),
     })
-    ResponseEntity<CommonResponse<AuthLoginResponse>> login(
+    ResponseEntity<ApiResponse<AuthLoginResponse>> login(
             @RequestBody AuthLoginRequest request);
 }

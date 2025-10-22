@@ -2,9 +2,8 @@ package dev.be.coupon.api.user.presentation;
 
 import dev.be.coupon.api.user.presentation.dto.UserSignUpRequest;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpResponse;
-import dev.be.coupon.common.support.response.CommonResponse;
+import dev.be.coupon.common.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -25,9 +24,9 @@ public interface UserControllerDocs {
             description = "아이디와 비밀번호를 기반으로 회원가입을 합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "회원가입 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
     })
-    ResponseEntity<CommonResponse<UserSignUpResponse>> signUp(
+    ResponseEntity<ApiResponse<UserSignUpResponse>> signUp(
             @RequestBody final UserSignUpRequest request
     );
 }
