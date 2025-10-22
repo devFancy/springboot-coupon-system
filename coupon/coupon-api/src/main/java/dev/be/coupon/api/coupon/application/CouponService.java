@@ -9,9 +9,9 @@ import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 
 public interface CouponService {
 
-    CouponIssueRequestResult issue(final CouponIssueCommand command);
-
     CouponCreateResult create(final CouponCreateCommand command);
+
+    CouponIssueRequestResult issue(final CouponIssueCommand command);
 
     CouponUsageResult usage(final CouponUsageCommand command);
 }

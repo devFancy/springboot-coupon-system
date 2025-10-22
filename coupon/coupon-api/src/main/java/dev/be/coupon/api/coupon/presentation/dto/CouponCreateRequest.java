@@ -1,18 +1,17 @@
 package dev.be.coupon.api.coupon.presentation.dto;
 
-import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
+import dev.be.coupon.domain.coupon.CouponDiscountType;
+import dev.be.coupon.domain.coupon.CouponType;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public record CouponCreateRequest(
-        String name,
-        String type,
+        String couponName,
+        CouponType couponType,
+        CouponDiscountType couponDiscountType,
+        BigDecimal couponDiscountValue,
         int totalQuantity,
-        LocalDateTime validFrom,
-        LocalDateTime validUntil
+        LocalDateTime expiredAt
 ) {
-    public CouponCreateCommand toCommand(UUID userId) {
-        return new CouponCreateCommand(userId, name, type, totalQuantity, validFrom, validUntil);
-    }
 }
