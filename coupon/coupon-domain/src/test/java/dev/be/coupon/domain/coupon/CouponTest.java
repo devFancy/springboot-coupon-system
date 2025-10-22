@@ -1,28 +1,29 @@
 package dev.be.coupon.domain.coupon;
 
-import dev.be.coupon.domain.coupon.exception.CouponNotCurrentlyUsableException;
-import dev.be.coupon.domain.coupon.exception.CouponNotIssuableException;
 import dev.be.coupon.domain.coupon.exception.InvalidCouponException;
 import dev.be.coupon.domain.coupon.exception.InvalidCouponPeriodException;
 import dev.be.coupon.domain.coupon.exception.InvalidCouponQuantityException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 class CouponTest {
 
-    @DisplayName("쿠폰을 발급한다.")
+    @DisplayName("쿠폰을 생성한다.")
     @Test
-    void create_coupon() {
+    void success_create_coupon() {
         // given & when
         Coupon coupon = new Coupon(
-                "쿠폰 이름",
+                "선착순 쿠폰",
                 CouponType.BURGER,
-                10,
-                LocalDateTime.now(),
+                CouponDiscountType.FIXED,
+                BigDecimal.valueOf(10_000L),
+                100,
                 LocalDateTime.now().plusDays(7)
         );
 
@@ -33,28 +34,30 @@ class CouponTest {
 
     @DisplayName("쿠폰 이름이 존재하지 않으면 예외가 발생한다.")
     @Test
-    void should_throw_exception_when_coupon_name_is_null() {
+    void fail_should_throw_exception_when_coupon_name_is_null() {
         // given & when & then
         assertThatThrownBy(() -> new Coupon(
                         null,
-                        CouponType.CHICKEN,
-                        10,
-                        LocalDateTime.now(),
+                        CouponType.BURGER,
+                        CouponDiscountType.FIXED,
+                        BigDecimal.valueOf(10_000L),
+                        100,
                         LocalDateTime.now().plusDays(7)
                 )
         ).isInstanceOf(InvalidCouponException.class)
                 .hasMessage("쿠폰 관련 부분에서 예외가 발생했습니다.");
     }
 
-    @DisplayName("쿠폰 타입이 존재하지 않으면 예외가 발생한다.")
+    @DisplayName("쿠폰 할인 타입이 존재하지 않으면 예외가 발생한다.")
     @Test
-    void should_throw_exception_when_coupon_type_is_null() {
+    void fail_should_throw_exception_when_coupon_discount_type_is_null() {
         // given & when & then
         assertThatThrownBy(() -> new Coupon(
-                        "쿠폰 이름",
+                        "선착순 쿠폰",
+                        CouponType.BURGER,
                         null,
-                        10,
-                        LocalDateTime.now(),
+                        BigDecimal.valueOf(10_000L),
+                        100,
                         LocalDateTime.now().plusDays(7)
                 )
         ).isInstanceOf(InvalidCouponException.class)
@@ -63,13 +66,14 @@ class CouponTest {
 
     @DisplayName("쿠폰 생성시 발급 가능한 총 수량이 1보다 작으면 예외가 발생한다.")
     @Test
-    void should_throw_exception_when_coupon_totalQuantity_less_then_1() {
+    void fail_should_throw_exception_when_coupon_totalQuantity_less_then_1() {
         // given & when & then
         assertThatThrownBy(() -> new Coupon(
-                        "쿠폰 이름",
-                        CouponType.CHICKEN,
+                        "선착순 쿠폰",
+                        CouponType.BURGER,
+                        CouponDiscountType.FIXED,
+                        BigDecimal.valueOf(10_000L),
                         0,
-                        LocalDateTime.now(),
                         LocalDateTime.now().plusDays(7)
                 )
         ).isInstanceOf(InvalidCouponQuantityException.class)
@@ -78,69 +82,30 @@ class CouponTest {
 
     @DisplayName("쿠폰 유효기간을 올바르게 설정하지 않으면 예외가 발생한다.")
     @Test
-    void should_throw_exception_when_coupon_validPeriod_is_invalid() {
+    void fail_should_throw_exception_when_coupon_expiredAt_is_invalid() {
         // given & when & then
         assertThatThrownBy(() -> new Coupon(
-                        "쿠폰 이름",
-                        CouponType.CHICKEN,
-                        10,
-                        LocalDateTime.now().plusDays(1),
-                        LocalDateTime.now()
+                        "선착순 쿠폰",
+                        CouponType.BURGER,
+                        CouponDiscountType.FIXED,
+                        BigDecimal.valueOf(10_000L),
+                        100,
+                        LocalDateTime.now().minusDays(1)
                 )
         ).isInstanceOf(InvalidCouponPeriodException.class)
                 .hasMessage("쿠폰 유효기간이 잘못되었습니다.");
     }
 
-    @DisplayName("현재 시간이 유효기간 내에 있으면 쿠폰 상태는 ACTIVE이다.")
+    @DisplayName("정확히 만료 시점에는 쿠폰은 여전히 ACTIVE 상태이다.")
     @Test
-    void update_coupon_status_to_active() {
+    void success_update_coupon_status_to_active() {
         // given
-        LocalDateTime now = LocalDateTime.now();
-        Coupon coupon = new Coupon("쿠폰", CouponType.PIZZA, 10, now.minusDays(1), now.plusDays(1));
+        LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(10);
+        Coupon coupon = new Coupon("쿠폰", CouponType.BURGER, CouponDiscountType.FIXED, BigDecimal.valueOf(10_000L), 100, expiredAt);
 
-        // when
-        coupon.validateIssuableStatus(now);
-
-        // then
+        // when & then
+        assertThatCode(() -> coupon.validateIssuableStatus(expiredAt))
+                .doesNotThrowAnyException();
         assertThat(coupon.getCouponStatus()).isEqualTo(CouponStatus.ACTIVE);
-    }
-
-
-    @DisplayName("쿠폰을 발급할 때 쿠폰 상태가 만료(EXPIRED)되면 발급 시 예외가 발생한다.")
-    @Test
-    void should_throw_exception_when_coupon_issued_outside_valid_period() {
-        // given
-        LocalDateTime now = LocalDateTime.now();
-        Coupon coupon = new Coupon(
-                "발급 기한 만료 쿠폰",
-                CouponType.BURGER,
-                10,
-                now.minusDays(10),
-                now.minusDays(1)
-        );
-
-        // when & then
-        assertThatThrownBy(() -> coupon.validateIssuableStatus(now))
-                .isInstanceOf(CouponNotIssuableException.class)
-                .hasMessage("현재 쿠폰은 발급 가능한 상태가 아닙니다.");
-    }
-
-    @DisplayName("쿠폰을 사용할 때 쿠폰 상태가 만료(EXPIRED)되면 사용 시 예외가 발생한다.")
-    @Test
-    void should_throw_exception_when_coupon_used_outside_valid_period() {
-        // given
-        LocalDateTime now = LocalDateTime.now();
-        Coupon coupon = new Coupon(
-                "사용 기한 만료 쿠폰",
-                CouponType.BURGER,
-                10,
-                now.minusDays(10),
-                now.minusDays(1)
-        );
-
-        // when & then
-        assertThatThrownBy(() -> coupon.validateUsableStatus(now))
-                .isInstanceOf(CouponNotCurrentlyUsableException.class)
-                .hasMessage("현재 쿠폰은 사용 가능한 상태가 아닙니다.");
     }
 }

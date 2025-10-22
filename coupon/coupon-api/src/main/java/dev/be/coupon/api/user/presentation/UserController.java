@@ -5,7 +5,7 @@ import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.application.dto.UserSignUpResult;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpRequest;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpResponse;
-import dev.be.coupon.common.support.response.CommonResponse;
+import dev.be.coupon.common.support.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,12 +26,12 @@ public class UserController implements UserControllerDocs {
     }
 
     @PostMapping(value = "/users/signup")
-    public ResponseEntity<CommonResponse<UserSignUpResponse>> signUp(@Valid @RequestBody final UserSignUpRequest request) {
+    public ResponseEntity<ApiResponse<UserSignUpResponse>> signUp(@Valid @RequestBody final UserSignUpRequest request) {
         UserSignUpCommand command = new UserSignUpCommand(request.username(), request.password());
         UserSignUpResult result = userService.signUp(command);
         UserSignUpResponse response = new UserSignUpResponse(result.id(), result.username(), result.role());
 
         return ResponseEntity.created(URI.create("/api/users/signup/" + response.id()))
-                .body(CommonResponse.success(response));
+                .body(ApiResponse.success(response));
     }
 }

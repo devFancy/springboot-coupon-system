@@ -1,0 +1,30 @@
+@host = http://localhost:8080
+
+### 회원가입 - 사용자
+POST {{host}}/api/users/signup
+Content-Type: application/json
+
+{
+  "username": "user",
+  "password": "pass"
+}
+
+
+### 로그인 - 관리자
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin1234"
+}
+
+
+### 로그인 - 사용자
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "user",
+  "password": "pass"
+}

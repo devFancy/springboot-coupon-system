@@ -16,23 +16,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import static java.util.Objects.isNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Coupon (쿠폰 정의)
- * > 쿠폰 발급의 템플릿을 정의하고, 쿠폰의 속성 및 정책을 관리하는 도메인입니다.
+ * Coupon (쿠폰)
+ * > 쿠폰의 템플릿을 정의하고, 쿠폰의 속성 및 정책을 관리하는 도메인입니다.
  * <p>
  * | 한글명 | 영문명 | 설명 |
  * | --- | --- | --- |
  * | 쿠폰 ID | couponId | 쿠폰 정의의 고유 식별자 (UUID) |
- * | 쿠폰 이름 | couponName | 쿠폰 제목 또는 설명 |
- * | 쿠폰 타입 | couponType | `CHICKEN`, `PIZZA`, `BURGER` 등 |
- * | 발급 수량 | totalQuantity | 발급 가능한 총 수량 |
- * | 쿠폰 상태 | status | `PENDING`(대기), `ACTIVE`(사용 가능), `EXPIRED`(만료됨), `DISABLED`(비활성화) 등 |
- * | 유효 시작일 | validFrom | 사용 가능 시작일 |
- * | 유효 종료일 | validUntil | 만료일 |
+ * | 쿠폰 이름 | couponName | 쿠폰 제목 |
+ * | 쿠폰 타입 | couponType | 치킨/햄버거/피자 등 |
+ * | 쿠폰 할인 유형 | couponDiscountType  | FIXED(정액), PERCENTAGE(정률) |
+ * | 쿠폰 할인 금액 | couponDiscountValue | 할인 금액(5,000원), 할인율 |
+ * | 쿠폰 상태 | couponStatus | `PENDING`(대기), `ACTIVE`(사용 가능), `EXPIRED`(만료됨), `DISABLED`(비활성화) 등 |
+ * | 쿠폰 총 발급 수량 | totalQuantity | 발급 가능한 총 수량 |
+ * | 유효 기간일 | expiredAt | 유효 기간일 (이 시간 이후로 만료됨) |
  */
 @Table(name = "coupons")
 @Entity
@@ -45,9 +47,16 @@ public class Coupon {
     @Embedded
     private CouponName couponName;
 
-    @Column(name = "coupon_type", nullable = false, columnDefinition = "varchar(255)")
+    @Column(name = "coupon_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private CouponType couponType;
+
+    @Column(name = "coupon_discount_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CouponDiscountType couponDiscountType;
+
+    @Column(name = "coupon_discount_value", nullable = false)
+    private BigDecimal couponDiscountValue;
 
     @Column(name = "total_quantity", nullable = false)
     private int totalQuantity;
@@ -56,55 +65,57 @@ public class Coupon {
     @Enumerated(EnumType.STRING)
     private CouponStatus couponStatus; // 쿠폰 발급시 기본값으로 사용 가능(ACTIVE) 으로 설정
 
-    @Column(name = "valid_from", nullable = false)
-    private LocalDateTime validFrom;
-
-    @Column(name = "valid_until", nullable = false)
-    private LocalDateTime validUntil;
+    @Column(name = "expired_at", nullable = false)
+    private LocalDateTime expiredAt;
 
     protected Coupon() {
     }
 
     public Coupon(final String name,
                   final CouponType couponType,
+                  final CouponDiscountType couponDiscountType,
+                  final BigDecimal couponDiscountValue,
                   final int totalQuantity,
-                  final LocalDateTime validFrom,
-                  final LocalDateTime validUntil) {
-        this(UUID.randomUUID(), new CouponName(name), couponType, totalQuantity, CouponStatus.ACTIVE, validFrom, validUntil);
+                  final LocalDateTime expiredAt) {
+        this(UUID.randomUUID(), new CouponName(name), couponType, couponDiscountType, couponDiscountValue, CouponStatus.ACTIVE, totalQuantity, expiredAt);
     }
 
     public Coupon(final UUID id,
                   final CouponName couponName,
                   final CouponType couponType,
+                  final CouponDiscountType couponDiscountType,
+                  final BigDecimal couponDiscountValue,
+                  final CouponStatus couponStatus,
                   final int totalQuantity,
-                  final CouponStatus status,
-                  final LocalDateTime validFrom,
-                  final LocalDateTime validUntil) {
+                  final LocalDateTime expiredAt) {
 
-        validateCouponCreation(id, couponName, couponType, totalQuantity, status, validFrom, validUntil);
+        validateCouponCreation(id, couponName, couponType, couponDiscountType, couponDiscountValue, couponStatus, totalQuantity, expiredAt);
         validateCouponTotalQuantity(totalQuantity);
-        validateCouponValidPeriod(validFrom, validUntil);
+        validateCouponValidPeriod(expiredAt, couponStatus);
         this.id = id;
         this.couponName = couponName;
         this.couponType = couponType;
+        this.couponDiscountType = couponDiscountType;
+        this.couponDiscountValue = couponDiscountValue;
         this.totalQuantity = totalQuantity;
-        this.couponStatus = status;
-        this.validFrom = validFrom;
-        this.validUntil = validUntil;
+        this.couponStatus = couponStatus;
+        this.expiredAt = expiredAt;
     }
 
     private void validateCouponCreation(
             final UUID couponId,
             final CouponName couponName,
             final CouponType couponType,
-            final int totalQuantity,
+            final CouponDiscountType couponDiscountType,
+            final BigDecimal couponDiscountValue,
             final CouponStatus couponStatus,
-            final LocalDateTime validFrom,
-            final LocalDateTime validUntil
+            final int totalQuantity,
+            final LocalDateTime expiredAt
     ) {
         if (isNull(couponId) || isNull(couponName) || isNull(couponType)
+                || isNull(couponDiscountType) || isNull(couponDiscountValue)
                 || isNull(totalQuantity) || isNull(couponStatus)
-                || isNull(validFrom) || isNull(validUntil)) {
+                || isNull(expiredAt)) {
             throw new InvalidCouponException("쿠폰 생성에 필요한 정보가 누락되었습니다.");
         }
     }
@@ -115,9 +126,10 @@ public class Coupon {
         }
     }
 
-    private void validateCouponValidPeriod(final LocalDateTime validFrom, final LocalDateTime validUntil) {
-        if (validFrom.isAfter(validUntil)) {
-            throw new InvalidCouponPeriodException("쿠폰의 유효 시작일은 만료일보다 이전이어야 합니다.");
+    private void validateCouponValidPeriod(final LocalDateTime expiredAt, final CouponStatus status) {
+        // ACTIVE 상태로 생성하는데 만료일이 이미 과거라면 예외 발생
+        if (status == CouponStatus.ACTIVE && expiredAt.isBefore(LocalDateTime.now())) {
+            throw new InvalidCouponPeriodException("ACTIVE 상태 쿠폰의 만료일은 현재 시간보다 이후여야 합니다.");
         }
     }
 
@@ -149,17 +161,17 @@ public class Coupon {
     }
 
     /**
-     * 현재 시점을 기준으로 쿠폰 상태를 갱신합니다.
-     * <p>
-     * - 유효 시작일 ~ 유효 종료일 사이이면 ACTIVE
-     * - 유효 종료일이 지났으면 EXPIRED
-     * <p>
-     * 추후 확장 고려:
-     * - 매일 자정 등 주기적으로 실행되는 스케줄러에서 전체 쿠폰 상태 일괄 갱신
-     * - 또는 쿠폰 조회/발급 시점에 동적으로 상태 갱신
+     * 쿠폰의 상태를 현재 시간에 맞게 동기화합니다.
+     * 만료일이 지난 쿠폰을 `EXPIRED`로 처리하며, 이미 만료되었거나 비활성화된 쿠폰의 상태는 변경하지 않습니다.
      */
     private void updateStatusBasedOnDate(final LocalDateTime now) {
-        this.couponStatus = CouponStatus.decideStatus(now, validFrom, validUntil);
+        if (this.couponStatus == CouponStatus.EXPIRED || this.couponStatus == CouponStatus.DISABLED) {
+            return;
+        }
+
+        if (now.isAfter(this.expiredAt)) {
+            this.couponStatus = CouponStatus.EXPIRED;
+        }
     }
 
     @Override
@@ -186,19 +198,23 @@ public class Coupon {
         return couponType;
     }
 
-    public int getTotalQuantity() {
-        return totalQuantity;
+    public CouponDiscountType getCouponDiscountType() {
+        return couponDiscountType;
+    }
+
+    public BigDecimal getCouponDiscountValue() {
+        return couponDiscountValue;
     }
 
     public CouponStatus getCouponStatus() {
         return couponStatus;
     }
 
-    public LocalDateTime getValidFrom() {
-        return validFrom;
+    public int getTotalQuantity() {
+        return totalQuantity;
     }
 
-    public LocalDateTime getValidUntil() {
-        return validUntil;
+    public LocalDateTime getExpiredAt() {
+        return expiredAt;
     }
 }
