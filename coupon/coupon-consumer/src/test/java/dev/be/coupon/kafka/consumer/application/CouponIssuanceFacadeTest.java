@@ -1,7 +1,6 @@
 package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.Coupon;
-import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.domain.coupon.FailedIssuedCoupon;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.FailedIssuedCouponJpaRepository;

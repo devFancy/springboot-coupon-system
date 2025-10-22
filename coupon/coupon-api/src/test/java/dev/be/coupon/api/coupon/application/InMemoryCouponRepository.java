@@ -27,13 +27,4 @@ public class InMemoryCouponRepository implements CouponRepository {
     public Optional<Coupon> findById(final UUID couponId) {
         return Optional.ofNullable(coupons.get(couponId));
     }
-
-    @Override
-    public List<Coupon> findAvailableCoupons(final CouponStatus status, final LocalDateTime now) {
-        return coupons.values().stream()
-                .filter(coupon -> coupon.getCouponStatus() == status)
-                .filter(coupon -> !coupon.getValidFrom().isAfter(now))
-                .filter(coupon -> !coupon.getValidUntil().isBefore(now))
-                .collect(Collectors.toList());
-    }
 }
