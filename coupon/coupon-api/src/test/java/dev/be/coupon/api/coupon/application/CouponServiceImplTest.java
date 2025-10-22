@@ -5,6 +5,7 @@ import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
 import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.domain.coupon.CouponDiscountType;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -63,7 +65,7 @@ class CouponServiceImplTest {
     void success_issue_request() {
         // given
         final UUID userId = UUID.randomUUID();
-        final UUID couponId = createCoupon(10).getId();
+        final UUID couponId = createCoupon(100).getId();
         final CouponIssueCommand command = new CouponIssueCommand(userId, couponId);
 
         // when
@@ -73,7 +75,7 @@ class CouponServiceImplTest {
         assertThat(result).isEqualTo(CouponIssueRequestResult.SUCCESS);
     }
 
-    @DisplayName("동일한 사용자가 중복으로 쿠폰 발급을 요청하면 'DUPLICATE'를 반환한다.")
+    @DisplayName("동일한 사용자가 중복으로 쿠폰 발급을 요청하면 'DUPLICATE' 를 반환한다.")
     @Test
     void fail_issue_request_due_to_duplicate_entry() {
         // given
@@ -108,10 +110,10 @@ class CouponServiceImplTest {
 
     @DisplayName("선착순 쿠폰 이벤트로 여러명의 사용자가 동시에 요청해도 쿠폰 총 수량만 발급되도록 한다.")
     @Test
-    void issue_request_multiThreaded_success() throws InterruptedException {
+    void success_issue_request_multiThreaded_success() throws InterruptedException {
         // given
         final int totalQuantity = 100;
-        final UUID couponId = createCoupon(totalQuantity).getId();
+        final UUID couponId = createCoupon(100).getId();
 
         final int threadCount = 100;
         final int requestCount = 10000;
@@ -197,37 +199,42 @@ class CouponServiceImplTest {
 
     @DisplayName("유효 기간이 만료된 쿠폰을 사용하면 예외가 발생한다.")
     @Test
-    void fail_usage_when_coupon_is_expired() {
+    void fail_usage_when_coupon_is_expired() throws InterruptedException {
         // given
         final UUID userId = UUID.randomUUID();
-        Coupon coupon = new Coupon(
+        final LocalDateTime now = LocalDateTime.now();
+        Coupon expiredCoupon = new Coupon(
                 "만료된 쿠폰",
-                CouponType.CHICKEN,
-                1,
-                LocalDateTime.now().minusDays(10),
-                LocalDateTime.now().minusDays(1)
+                CouponType.BURGER,
+                CouponDiscountType.FIXED,
+                BigDecimal.valueOf(10_000L),
+                100,
+                now.plusSeconds(1)
         );
-        couponRepository.save(coupon);
-        issueCoupon(userId, coupon.getId());
+        couponRepository.save(expiredCoupon);
+        issueCoupon(userId, expiredCoupon.getId());
+
+        Thread.sleep(1100);
 
         // when & then
-        assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(userId, coupon.getId())))
-                .isInstanceOf(CouponNotCurrentlyUsableException.class) // Coupon 도메인에 정의된 예외
+        assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(userId, expiredCoupon.getId())))
+                .isInstanceOf(CouponNotCurrentlyUsableException.class)
                 .hasMessage("현재 쿠폰은 사용 가능한 상태가 아닙니다.");
     }
 
-    private Coupon createCoupon(int totalQuantity) {
+    private Coupon createCoupon(final int totalQuantity) {
         Coupon coupon = new Coupon(
                 "선착순 쿠폰",
-                CouponType.CHICKEN,
+                CouponType.BURGER,
+                CouponDiscountType.FIXED,
+                BigDecimal.valueOf(10_000L),
                 totalQuantity,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10)
+                LocalDateTime.now().plusDays(7)
         );
         return couponRepository.save(coupon);
     }
 
-    private void issueCoupon(UUID userId, UUID couponId) {
+    private void issueCoupon(final UUID userId, final UUID couponId) {
         IssuedCoupon issuedCoupon = new IssuedCoupon(userId, couponId);
         issuedCouponRepository.save(issuedCoupon);
     }
