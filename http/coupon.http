@@ -1,0 +1,47 @@
+@host = http://localhost:8080
+@adminAccessToken =
+@userAccessToken =
+@couponId =
+
+### 1-1 관리자 로그인 (admin/admin1234)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin1234"
+}
+
+### 1-2. 쿠폰 생성 (관리자 권한 필요) -> 액세스 토큰 관련해서 Postman에서 작업 진행해야 제대로 처리됨
+POST {{host}}/api/coupon
+Content-Type: application/json
+Authorization: Bearer {{adminAccessToken}}
+
+{
+  "couponName": "치킨 5000원 할인",
+  "couponType": "CHICKEN",
+  "couponDiscountType": "FIXED",
+  "couponDiscountValue": 5000,
+  "totalQuantity": 100,
+  "expiredAt": "2025-12-31T23:59:59"
+}
+
+
+### 2-1. 일반 사용자 로그인 (user/pass)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "user",
+  "password": "pass"
+}
+
+
+### 2-2. 쿠폰 발급 요청 (일반 사용자 권한) -> 액세스 토큰 관련해서 Postman에서 작업 진행해야 제대로 처리됨
+POST {{host}}/api/coupon/{{couponId}}/issue
+Authorization: Bearer {{userAccessToken}}
+
+
+### 2-3. 쿠폰 사용 (일반 사용자 권한) -> 액세스 토큰 관련해서 Postman에서 작업 진행해야 제대로 처리됨
+POST {{host}}/api/coupon/{{couponId}}/usage
+Authorization: Bearer {{userAccessToken}}
