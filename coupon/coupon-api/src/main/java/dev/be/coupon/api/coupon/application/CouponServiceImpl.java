@@ -64,8 +64,16 @@ public class CouponServiceImpl implements CouponService {
             throw new UnauthorizedAccessException("쿠폰 생성은 관리자만 가능합니다.");
         }
 
-        final Coupon coupon = command.toDomain();
-        return CouponCreateResult.from(couponRepository.save(coupon));
+        final Coupon coupon = new Coupon(
+                command.couponName(),
+                command.couponType(),
+                command.couponDiscountType(),
+                command.couponDiscountValue(),
+                command.totalQuantity(),
+                command.expiredAt()
+        );
+        final Coupon savedCoupon = couponRepository.save(coupon);
+        return CouponCreateResult.from(savedCoupon);
     }
 
 

@@ -5,14 +5,13 @@ import dev.be.coupon.api.auth.presentation.dto.LoginUser;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
-import dev.be.coupon.common.support.response.CommonResponse;
+import dev.be.coupon.common.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +21,11 @@ import java.util.UUID;
 
 @Tag(
         name = "쿠폰",
-        description = "쿠폰과 관련된 그룹입니다."
+        description = """
+                    쿠폰과 관련된 그룹입니다.
+                    
+                    쿠폰 생성, 쿠폰 발급, 쿠폰 사용 기능을 제공합니다.
+                """
 )
 public interface CouponControllerDocs {
 
@@ -47,11 +50,11 @@ public interface CouponControllerDocs {
             )
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "쿠폰 생성 성공"),
-            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content),
-            @ApiResponse(responseCode = "403", description = "권한 없는 사용자", content = @Content)
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "쿠폰 생성 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없는 사용자", content = @Content)
     })
-    ResponseEntity<CommonResponse<CouponCreateResponse>> create(
+    ResponseEntity<ApiResponse<CouponCreateResponse>> create(
             @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
             @RequestBody final CouponCreateRequest request
     );
@@ -59,18 +62,18 @@ public interface CouponControllerDocs {
     @Operation(
             summary = "쿠폰 발급 요청 (비동기)",
             description = """
-                        비동기 방식으로 쿠폰 발급을 요청합니다.
-                        
-                        요청은 즉시 대기열에 등록되며, 실제 발급 결과는 별도로 처리됩니다.
-                        
-                        - 202 ACCEPTED: 발급 요청 성공 (선착순 안에 포함)
-                        - 200 OK: 발급 불가 (쿠폰 소진 또는 중복 참여)
-                        """
+                    비동기 방식으로 쿠폰 발급을 요청합니다.
+                                            
+                    요청은 즉시 대기열에 등록되며, 실제 발급 결과는 별도로 처리됩니다.
+                                            
+                    - 202 ACCEPTED: 발급 요청 성공 (선착순 안에 포함)
+                    - 200 OK: 발급 불가 (쿠폰 소진 또는 중복 참여)
+                    """
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "202", description = "쿠폰 발급 요청 성공",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "202", description = "쿠폰 발급 요청 성공",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = CommonResponse.class),
+                            schema = @Schema(implementation = ApiResponse.class),
                             examples = @ExampleObject(value = """
                                     {
                                       "success": true,
@@ -78,9 +81,9 @@ public interface CouponControllerDocs {
                                       "error": null
                                     }
                                     """))),
-            @ApiResponse(responseCode = "200", description = "발급 불가 (쿠폰 소진 또는 중복 참여)",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "발급 불가 (쿠폰 소진 또는 중복 참여)",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = CommonResponse.class),
+                            schema = @Schema(implementation = ApiResponse.class),
                             examples = {
                                     @ExampleObject(name = "쿠폰 소진", value = """
                                             {
@@ -97,9 +100,9 @@ public interface CouponControllerDocs {
                                             }
                                             """)
                             })),
-            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content)
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content)
     })
-    ResponseEntity<CommonResponse<String>> issue(
+    ResponseEntity<ApiResponse<String>> issue(
             @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable final UUID couponId
     );
@@ -110,14 +113,14 @@ public interface CouponControllerDocs {
             description = "사용자는 발급받은 쿠폰을 사용할 수 있다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "쿠폰 사용 성공"),
-            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content),
-            @ApiResponse(responseCode = "404", description = "발급되지 않은 쿠폰", content = @Content)
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "쿠폰 사용 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "발급되지 않은 쿠폰", content = @Content)
     })
-    ResponseEntity<CommonResponse<CouponUsageResponse>> usage(
+    ResponseEntity<ApiResponse<CouponUsageResponse>> usage(
             @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable final UUID couponId
     );
 
-    ResponseEntity<CommonResponse<Void>> sentryTest();
+    ResponseEntity<ApiResponse<Void>> sentryTest();
 }

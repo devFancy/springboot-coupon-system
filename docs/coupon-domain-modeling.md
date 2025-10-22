@@ -1,3 +1,5 @@
+# 쿠폰 도메인 모델링
+
 ## 용어 사전 만들기
 
 > 용어 사전은 프로젝트(또는 서비스)에 참여하는 도메인 전문가, 개발자, 기획자, 디자이너 등 다양한 직군 간의 의사소통을 명확하게 하기 위한 도구입니다. 이 사전은 하위 도메인과 바운디드 컨텍스트를 기준으로 도메인 내 개념을 일관되게 설명합니다.
@@ -20,12 +22,12 @@
 
 ### 바운디드 컨텍스트
 
-| 바운디드 컨텍스트         | 설명                                                                                        |
-|-------------------|-------------------------------------------------------------------------------------------|
+| 바운디드 컨텍스트         | 설명                                                                |
+|-------------------|-------------------------------------------------------------------|
 | Auth              | 로그인 요청을 통해 Access Token을 발급하며, 해당 토큰을 기반으로 인증된 사용자를 식별하는 책임을 갖는다. |
-| User              | 회원가입                                                                                      |
-| Coupon            | 쿠폰 생성, 수량·유효기간 관리                                                                         |
-| IssuedCoupon      | 사용자에게 발급된 쿠폰 관리 (발급, 중복 방지, 사용 처리 등)                                                      |
+| User              | 회원가입                                                              |
+| Coupon            | 쿠폰 생성, 총 발급 수량 및 유효기간 관리                                          |
+| IssuedCoupon      | 사용자에게 발급된 쿠폰 관리 (발급, 중복 방지, 사용 처리 등)                              |
 
 
 ---
@@ -53,20 +55,20 @@
 | 권한     | UserRole | ADMIN 또는 USER 값. 관리자/사용자 구분용  |
 
 
-### Coupon (쿠폰 정의)
+### Coupon (쿠폰)
 
 > 쿠폰 발급의 템플릿을 정의하고, 쿠폰의 속성 및 정책을 관리하는 도메인입니다.
 
-| 한글명    | 영문명           | 설명                                                       |
-| ------ | ------------- |----------------------------------------------------------|
-| 쿠폰 ID  | couponId      | 쿠폰 정의의 고유 식별자 (UUID)                                     |
-| 쿠폰 이름  | name          | 쿠폰 제목 또는 설명                                              |
-| 쿠폰 타입  | couponType    | CHICKEN, PIZZA, BURGER 등                                 |
-| 발급 수량  | totalQuantity | 발급 가능한 총 수량                                              |
-| 유효 시작일 | validFrom     | 사용 가능 시작일                                                |
-| 유효 종료일 | validUntil    | 만료일                                                      |
-| 쿠폰 상태  | status        | PENDING(대기), ACTIVE(사용 가능), EXPIRED(만료됨), DISABLED(비활성화) |
-
+| 한글명        | 영문명                 | 설명                                                       |
+|------------|---------------------|----------------------------------------------------------|
+| 쿠폰 ID      | couponId            | 쿠폰 정의의 고유 식별자 (UUID)                                     |
+| 쿠폰 이름      | couponName          | 쿠폰 제목                                                    |
+| 쿠폰 타입      | couponType          | CHICKEN, PIZZA, BURGER 등                                 |
+| 쿠폰 할인 유형   | couponDiscountType  | FIXED(정액), PERCENTAGE(정률)                                |                            
+| 쿠폰 할인 금액   | couponDiscountValue | 	할인 금액(5,000원)                                           |
+| 쿠폰 상태      | couponStatus        | PENDING(대기), ACTIVE(사용 가능), EXPIRED(만료됨), DISABLED(비활성화) |
+| 쿠폰 총 발급 수량 | totalQuantity       | 발급 가능한 총 수량                                              |
+| 유효 기간일     | expiredAt           | 유효 기간일                                                   |
 
 ### IssuedCoupon (발급된 쿠폰)
 
@@ -83,7 +85,7 @@
 | 중복 방지 키  | userId+couponId | 복합 유니크 키로 중복 발급 방지      |
 
 
-### FailedIssuedCoupon (발급 실패 이력)
+### FailedIssuedCoupon (쿠폰 발급 실패 이력)
 
 > 쿠폰 발급 처리 도중 실패한 이력을 저장하고, 추후 재처리 스케줄러 or DLQ 에서 재시도하는 도메인입니다.
 
@@ -92,9 +94,9 @@
 | 실패 ID  | id         | 실패 이력의 고유 식별자 (UUID)                       |
 | 사용자 ID | userId     | 발급 실패가 발생한 사용자 식별자                         |
 | 쿠폰 ID  | couponId   | 발급에 실패한 쿠폰의 식별자                            |
-| 실패 일시  | failedAt   | 쿠폰 발급 실패가 발생한 시점                           |
 | 재시도 횟수 | retryCount | 해당 실패 이력에 대해 재시도한 횟수                       |
 | 해결 여부  | isResolved | 실패 건이 정상적으로 재처리되어 해결되었는지 여부 (`true` = 해결됨) |
+| 실패 일시  | failedAt   | 쿠폰 발급 실패가 발생한 시점                           |
 
 
 ---
@@ -150,13 +152,13 @@
 * 로그인
   * 로그인 시 아이디와 비밀번호가 입력해야 한다.
 
-### Coupon (쿠폰 정의)
+### Coupon (쿠폰)
 
 속성(상태)
 
-* 쿠폰에는 쿠폰 이름, 쿠폰 타입, 쿠폰 상태, 발급 수량, 유효 시작일, 유효 종료일가 있다.
-  * 쿠폰 타입에는 치킨(`CHICKEN`), 햄버거(`HAMBURGER`), 피자(`PIZZA`)가 있다.
-  * 쿠폰 상태는 `PENDING`(대기), `ACTIVE`(사용 가능), `EXPIRED`(사용됨), `DISABLED`(사용 불가)가 있다.
+* 쿠폰에는 쿠폰 이름, 쿠폰 타입, 쿠폰 할인 유형, 쿠폰 할인 금액, 쿠폰 상태, 쿠폰 총 발급 수량, 유효 기간일가 있다.
+* 쿠폰 타입에는 치킨(`CHICKEN`), 햄버거(`HAMBURGER`), 피자(`PIZZA`)가 있다.
+* 쿠폰 상태는 `PENDING`(대기), `ACTIVE`(사용 가능), `EXPIRED`(사용됨), `DISABLED`(사용 불가)가 있다.
 
 행위(기능)
 
@@ -168,7 +170,7 @@
 * 쿠폰 생성
   * 발급 가능 수량과 유효기간이 설정되어야 한다.
   * 쿠폰 발급 수량은 1 이상이야 한다.
-  * 유효 종료일이 지나면 쿠폰 상태는 `EXPIRED` 로 변경될 수 있다.
+  * 유효 기간일(expiredAt)이 지나면 쿠폰 상태는 `EXPIRED` 로 변경될 수 있다.
 
 #### 처리 흐름: 쿠폰 생성
 
@@ -211,10 +213,59 @@ sequenceDiagram
   * **중복 발급 방지**
     * 동일 사용자에게 동일 쿠폰은 1회만 발급 가능 → `userId + couponId` 유니크
   * 해당 쿠폰의 발급 수량이 초과되어서는 안된다.
+
 * 쿠폰 사용
   * 발급받지 않은 쿠폰은 사용할 수 없다.
   * 사용된 쿠폰은 재사용이 불가능하다.
   * 유효 기간이 지난 쿠폰은 사용할 수 없다.
+
+#### 처리 흐름: 쿠폰 발급
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant API Server
+  participant Redis
+  participant Kafka
+  participant Consumer Server
+  participant DB as MySQL
+
+  User->>API Server: 쿠폰 발급 요청
+
+  note over API Server, Redis: 선착순 & 중복 참여 검증
+  API Server->>Redis: 1. 중복 참여 확인 (SADD)
+  API Server->>Redis: 2. 선착순 순번 증가 (INCR)
+
+  alt 선착순 성공
+    API Server->>Kafka: [신규 토픽] 쿠폰 발급 요청 메시지 발행
+    API Server-->>User: 발급 요청 성공
+  else 선착순 마감
+    API Server-->>User: 선착순 마감 응답
+  end
+
+  note over Kafka, DB: 비동기 발급 처리
+  Consumer Server->>Kafka: 메시지 요청 (poll)
+  Kafka-->>Consumer Server: 메시지 반환
+
+  alt 발급 처리 성공
+    Consumer Server->>DB: 쿠폰 발급 정보 저장
+    note over Consumer Server, DB: (재처리였다면) 실패 이력을 'resolved'로 업데이트
+    Consumer Server->>Kafka: 처리 완료(ack)
+  else 발급 처리 실패
+    Consumer Server->>DB: [신규] 실패 이력 저장 / [재처리] 재시도 횟수 증가
+    note right of Consumer Server: ack 미전송
+  end
+
+  note over API Server, DB: 스케줄러 기반 재처리(주기적)
+  loop 5분마다
+    API Server->>DB: 미처리 및 재시도 5회 미만 실패 건 조회
+    DB-->>API Server: 실패 목록
+
+    opt 실패 건 하나 이상 존재시
+      API Server->>Kafka: [재처리 토픽]으로 실패 건 재발행
+    end
+  end
+```
 
 #### 처리 흐름: 쿠폰 사용
 
@@ -247,3 +298,20 @@ sequenceDiagram
     API Server-->>사용자 (User): 쿠폰 사용 성공 응답
     deactivate API Server
 ```
+
+
+### FailedIssuedCoupon (쿠폰 발급 실패 이력)
+
+속성(상태)
+
+* 실패 ID, 사용자 ID, 쿠폰 ID, 실패 일시(=생성일), 재시도 횟수, 해결 여부
+
+행위(기능)
+
+* 재처리 스케줄러가 해결되지 않은(isResolved = false) 실패 건을 조회한다.
+* 실패 건을 재처리(쿠폰 발급 재시도)한다.
+
+정책(제약사항)
+
+* 재시도 횟수(retryCount)가 5회를 초과하면 더 이상 재시도하지 않는다. (확장되면 관리자 또는 운영자에게 알림을 보낼 수 있다.)
+* 재처리에 성공하면 `isResolved`를 `true` 로 변경한다.

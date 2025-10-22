@@ -1,27 +1,20 @@
 package dev.be.coupon.api.coupon.application.dto;
 
 
-import dev.be.coupon.domain.coupon.Coupon;
-import dev.be.coupon.domain.coupon.CouponTypeConverter;
+import dev.be.coupon.domain.coupon.CouponDiscountType;
+import dev.be.coupon.domain.coupon.CouponType;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record CouponCreateCommand(
         UUID userId,
-        String name,
-        String type,
+        String couponName,
+        CouponType couponType,
+        CouponDiscountType couponDiscountType,
+        BigDecimal couponDiscountValue,
         int totalQuantity,
-        LocalDateTime validFrom,
-        LocalDateTime validUntil
+        LocalDateTime expiredAt
 ) {
-    public Coupon toDomain() {
-        return new Coupon(
-                name,
-                CouponTypeConverter.from(type),
-                totalQuantity,
-                validFrom,
-                validUntil
-        );
-    }
 }
