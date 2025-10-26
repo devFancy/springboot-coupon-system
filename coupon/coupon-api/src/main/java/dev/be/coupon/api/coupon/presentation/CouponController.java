@@ -8,11 +8,11 @@ import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
-import dev.be.coupon.api.auth.application.exception.UnauthorizedAccessException;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
+import dev.be.coupon.api.support.error.AuthException;
 import dev.be.coupon.api.support.error.CouponException;
 import dev.be.coupon.api.support.error.ErrorType;
 import dev.be.coupon.api.support.response.ApiResponse;
@@ -46,7 +46,7 @@ public class CouponController implements CouponControllerDocs {
             @RequestBody final CouponCreateRequest request) {
 
         if (loginUser == null || loginUser.id() == null) {
-            throw new UnauthorizedAccessException(ErrorType.AUTH_ACCESS_DENIED);
+            throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
         }
 
         CouponCreateCommand command = new CouponCreateCommand(
@@ -71,7 +71,7 @@ public class CouponController implements CouponControllerDocs {
             @PathVariable("couponId") final UUID couponId) {
 
         if (loginUser == null || loginUser.id() == null) {
-            throw new UnauthorizedAccessException(ErrorType.AUTH_ACCESS_DENIED);
+            throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
         }
 
         CouponIssueCommand command = new CouponIssueCommand(loginUser.id(), couponId);
@@ -94,7 +94,7 @@ public class CouponController implements CouponControllerDocs {
             @PathVariable final UUID couponId) {
 
         if (loginUser == null || loginUser.id() == null) {
-            throw new UnauthorizedAccessException(ErrorType.AUTH_ACCESS_DENIED);
+            throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
         }
 
         CouponUsageCommand command = new CouponUsageCommand(loginUser.id(), couponId);
