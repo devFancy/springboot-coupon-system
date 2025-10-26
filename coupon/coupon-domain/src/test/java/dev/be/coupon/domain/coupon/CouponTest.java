@@ -1,8 +1,6 @@
 package dev.be.coupon.domain.coupon;
 
-import dev.be.coupon.domain.coupon.exception.InvalidCouponException;
-import dev.be.coupon.domain.coupon.exception.InvalidCouponPeriodException;
-import dev.be.coupon.domain.coupon.exception.InvalidCouponQuantityException;
+import dev.be.coupon.domain.coupon.exception.CouponDomainException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,8 +42,8 @@ class CouponTest {
                         100,
                         LocalDateTime.now().plusDays(7)
                 )
-        ).isInstanceOf(InvalidCouponException.class)
-                .hasMessage("쿠폰 관련 부분에서 예외가 발생했습니다.");
+        ).isInstanceOf(CouponDomainException.class)
+                .hasMessage("쿠폰 이름이 존재해야 합니다.");
     }
 
     @DisplayName("쿠폰 할인 타입이 존재하지 않으면 예외가 발생한다.")
@@ -60,8 +58,8 @@ class CouponTest {
                         100,
                         LocalDateTime.now().plusDays(7)
                 )
-        ).isInstanceOf(InvalidCouponException.class)
-                .hasMessage("쿠폰 관련 부분에서 예외가 발생했습니다.");
+        ).isInstanceOf(CouponDomainException.class)
+                .hasMessage("쿠폰 생성에 필요한 정보가 누락되었습니다.");
     }
 
     @DisplayName("쿠폰 생성시 발급 가능한 총 수량이 1보다 작으면 예외가 발생한다.")
@@ -76,7 +74,7 @@ class CouponTest {
                         0,
                         LocalDateTime.now().plusDays(7)
                 )
-        ).isInstanceOf(InvalidCouponQuantityException.class)
+        ).isInstanceOf(CouponDomainException.class)
                 .hasMessage("쿠폰 발급 수량은 1 이상이야 합니다.");
     }
 
@@ -92,8 +90,8 @@ class CouponTest {
                         100,
                         LocalDateTime.now().minusDays(1)
                 )
-        ).isInstanceOf(InvalidCouponPeriodException.class)
-                .hasMessage("쿠폰 유효기간이 잘못되었습니다.");
+        ).isInstanceOf(CouponDomainException.class)
+                .hasMessage("ACTIVE 상태 쿠폰의 만료일은 현재 시간보다 이후여야 합니다.");
     }
 
     @DisplayName("정확히 만료 시점에는 쿠폰은 여전히 ACTIVE 상태이다.")
@@ -104,7 +102,7 @@ class CouponTest {
         Coupon coupon = new Coupon("쿠폰", CouponType.BURGER, CouponDiscountType.FIXED, BigDecimal.valueOf(10_000L), 100, expiredAt);
 
         // when & then
-        assertThatCode(() -> coupon.validateIssuableStatus(expiredAt))
+        assertThatCode(() -> coupon.validateStatusIsActive(expiredAt))
                 .doesNotThrowAnyException();
         assertThat(coupon.getCouponStatus()).isEqualTo(CouponStatus.ACTIVE);
     }
