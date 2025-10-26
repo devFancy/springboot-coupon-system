@@ -6,14 +6,14 @@ import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
-import dev.be.coupon.api.coupon.application.exception.CouponNotFoundException;
-import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
+import dev.be.coupon.api.support.error.AuthException;
+import dev.be.coupon.api.support.error.CouponException;
+import dev.be.coupon.api.support.error.ErrorType;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
-import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.infra.redis.CouponEntryRedisCounter;
 import dev.be.coupon.infra.redis.CouponRedisCache;
@@ -61,7 +61,7 @@ public class CouponServiceImpl implements CouponService {
             final CouponCreateCommand command) {
 
         if (!authService.isAdmin(command.userId())) {
-            throw new UnauthorizedAccessException("쿠폰 생성은 관리자만 가능합니다.");
+            throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
         }
 
         final Coupon coupon = new Coupon(
@@ -114,7 +114,7 @@ public class CouponServiceImpl implements CouponService {
 
         log.info("캐시 미스 발생. DB에서 쿠폰 정보를 조회합니다. couponId: {}", couponId);
         Coupon couponFromDb = couponRepository.findById(couponId)
-                .orElseThrow(() -> new CouponNotFoundException("ID: " + couponId + "에 해당하는 쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CouponException(ErrorType.COUPON_NOT_FOUND));
 
         couponRedisCache.save(couponFromDb);
         return couponFromDb.getTotalQuantity();
@@ -129,11 +129,11 @@ public class CouponServiceImpl implements CouponService {
         IssuedCoupon issuedCoupon = issuedCouponRepository.findByUserIdAndCouponId(userId, couponId)
                 .orElseThrow(() -> {
                     log.warn("사용자 ID:{})에게 발급된 쿠폰 정의 ID: {}이 존재하지 않습니다.", userId, couponId);
-                    return new IssuedCouponNotFoundException("발급되지 않았거나 소유하지 않은 쿠폰입니다.");
+                    return new CouponException(ErrorType.ISSUED_COUPON_NOT_FOUND);
                 });
 
         Coupon coupon = findCouponById(issuedCoupon.getCouponId());
-        coupon.validateUsableStatus(now);
+        coupon.validateStatusIsActive(now);
 
         issuedCoupon.use(now);
         issuedCouponRepository.save(issuedCoupon);
@@ -145,7 +145,8 @@ public class CouponServiceImpl implements CouponService {
     }
 
     private Coupon findCouponById(final UUID couponId) {
+        log.info("DB에서 쿠폰 정보를 조회합니다. couponId: {}", couponId);
         return couponRepository.findById(couponId)
-                .orElseThrow(() -> new CouponNotFoundException("ID: " + couponId + "에 해당하는 쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CouponException(ErrorType.COUPON_NOT_FOUND));
     }
 }

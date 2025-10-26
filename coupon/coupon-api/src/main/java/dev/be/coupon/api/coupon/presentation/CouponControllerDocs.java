@@ -5,7 +5,7 @@ import dev.be.coupon.api.auth.presentation.dto.LoginUser;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
-import dev.be.coupon.common.support.response.ApiResponse;
+import dev.be.coupon.api.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

@@ -1,6 +1,6 @@
 package dev.be.coupon.domain.user;
 
-import dev.be.coupon.domain.user.exception.InvalidUserException;
+import dev.be.coupon.domain.user.exception.UserDomainException;
 import dev.be.coupon.domain.user.infrastructure.FakePasswordHasherClient;
 import dev.be.coupon.domain.user.vo.Password;
 import dev.be.coupon.domain.user.vo.PasswordHasher;
@@ -47,8 +47,8 @@ class UserTest {
     void should_throw_exception_when_username_is_null_or_blank(final String invalidUserName) {
         // given & when & then
         assertThatThrownBy(() -> new Username(invalidUserName))
-                .isInstanceOf(InvalidUserException.class)
-                .hasMessage("사용자 관련 부분에서 예외가 발생했습니다.");
+                .isInstanceOf(UserDomainException.class)
+                .hasMessage("사용자의 이름이 존재해야 합니다.");
     }
 
     @DisplayName("사용자의 비밀번호가 존재하지 않으면 안된다")
@@ -58,8 +58,8 @@ class UserTest {
     void should_throw_exception_when_password_is_null_or_blank(final String invalidPassword) {
         // given & when & then
         assertThatThrownBy(() -> new Password(invalidPassword, passwordHasher))
-                .isInstanceOf(InvalidUserException.class)
-                .hasMessage("사용자 관련 부분에서 예외가 발생했습니다.");
+                .isInstanceOf(UserDomainException.class)
+                .hasMessage("사용자의 비밀번호가 존재해야 합니다.");
     }
 
     @DisplayName("원본 비밀번호와 해싱된 비밀번호가 일치하면 true 를 반환한다.")

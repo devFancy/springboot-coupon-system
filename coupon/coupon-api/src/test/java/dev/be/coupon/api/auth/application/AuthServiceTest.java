@@ -2,12 +2,12 @@ package dev.be.coupon.api.auth.application;
 
 import dev.be.coupon.api.auth.application.dto.AuthLoginCommand;
 import dev.be.coupon.api.auth.application.dto.AuthLoginResult;
+import dev.be.coupon.api.support.error.UserException;
 import dev.be.coupon.api.user.application.InMemoryUserRepository;
 import dev.be.coupon.api.user.application.UserService;
 import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.infrastructure.FakePasswordHasherClient;
 import dev.be.coupon.domain.user.UserRepository;
-import dev.be.coupon.domain.user.exception.InvalidUserException;
 import dev.be.coupon.domain.user.vo.PasswordHasher;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,8 +58,8 @@ class AuthServiceTest {
 
         // when & then
         assertThatThrownBy(() -> authService.login(loginCommand))
-                .isInstanceOf(InvalidUserException.class)
-                .hasMessageContaining("사용자 관련 부분에서 예외가 발생했습니다.");
+                .isInstanceOf(UserException.class)
+                .hasMessageContaining("존재하지 않는 사용자입니다.");
     }
 
     @Test
@@ -72,8 +72,8 @@ class AuthServiceTest {
 
         // when & then
         assertThatThrownBy(() -> authService.login(loginCommand))
-                .isInstanceOf(InvalidUserException.class)
-                .hasMessageContaining("사용자 관련 부분에서 예외가 발생했습니다.");
+                .isInstanceOf(UserException.class)
+                .hasMessageContaining("비밀번호가 일치하지 않습니다.");
     }
 }
 

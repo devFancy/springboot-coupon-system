@@ -4,7 +4,8 @@ import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import dev.be.coupon.infra.redis.aop.DistributedLock;
-import dev.be.coupon.kafka.consumer.application.exception.CouponNotFoundException;
+import dev.be.coupon.kafka.consumer.support.error.CouponConsumerException;
+import dev.be.coupon.kafka.consumer.support.error.ErrorType;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -37,7 +38,7 @@ public class CouponIssuanceFacade {
             couponIssuanceService.issue(message.userId(), message.couponId());
         } catch (Exception e) {
             couponIssuanceService.recordFailure(message.userId(), message.couponId());
-            throw new RuntimeException("쿠폰 발급 처리 도중 실패되었습니다. 실패된 쿠폰 발급 요청은 별도의 실패 테이블에 저장합니다.", e);
+            throw new CouponConsumerException(ErrorType.COUPON_ISSUANCE_FAILED, "쿠폰 발급 처리 도중 실패되었습니다. 실패된 쿠폰 발급 요청은 별도의 실패 테이블에 저장합니다.");
         }
     }
 
@@ -48,13 +49,13 @@ public class CouponIssuanceFacade {
             couponIssuanceService.reissue(message.userId(), message.couponId(), message.failedIssuedCouponId());
         } catch (Exception e) {
             failedCouponRetryCountIncrease.retryCountIncrease(message.failedIssuedCouponId());
-            throw new RuntimeException("쿠폰 발급 요청에 대한 재처리가 실패되었습니다.", e);
+            throw new CouponConsumerException(ErrorType.COUPON_ISSUANCE_RETRY_FAILED);
         }
     }
 
     private void validateCoupon(final UUID couponId) {
         Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new CouponNotFoundException("..."));
-        coupon.validateIssuableStatus(LocalDateTime.now());
+                .orElseThrow(() -> new CouponConsumerException(ErrorType.COUPON_NOT_FOUND));
+        coupon.validateStatusIsActive(LocalDateTime.now());
     }
 }

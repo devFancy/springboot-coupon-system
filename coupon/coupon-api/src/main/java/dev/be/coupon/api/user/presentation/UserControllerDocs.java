@@ -1,8 +1,8 @@
 package dev.be.coupon.api.user.presentation;
 
+import dev.be.coupon.api.support.response.ApiResponse;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpRequest;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpResponse;
-import dev.be.coupon.common.support.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;

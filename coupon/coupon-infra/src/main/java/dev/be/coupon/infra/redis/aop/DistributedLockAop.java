@@ -1,6 +1,5 @@
 package dev.be.coupon.infra.redis.aop;
 
-import dev.be.coupon.infra.redis.exception.DistributedLockNotAcquiredException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -69,7 +68,7 @@ public class DistributedLockAop {
 
             if (!acquired) {
                 log.warn("락 획득 실패: 키='{}'", lockName);
-                throw new DistributedLockNotAcquiredException(lockName);
+                throw new RuntimeException("락 획득에 실패했습니다. 잠시 후 다시 시도해주세요.");
             }
 
             StopWatch stopWatch = new StopWatch();
@@ -87,7 +86,7 @@ public class DistributedLockAop {
         } catch (InterruptedException e) {
             log.error("락 대기 중 인터럽트 발생: 키='{}'", lockName, e);
             Thread.currentThread().interrupt();
-            throw new DistributedLockNotAcquiredException(lockName);
+            throw new RuntimeException("일시적으로 요청이 많아 락을 획득할 수 없습니다. 잠시 후 다시 시도해주세요.");
         } finally {
             if (acquired && rLock.isHeldByCurrentThread()) {
                 try {

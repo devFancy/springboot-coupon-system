@@ -1,11 +1,11 @@
 package dev.be.coupon.api.user.application;
 
+import dev.be.coupon.api.support.error.UserException;
 import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.application.dto.UserSignUpResult;
-import dev.be.coupon.domain.user.UserRepository;
-import dev.be.coupon.domain.user.exception.InvalidUserException;
-import dev.be.coupon.domain.user.vo.PasswordHasher;
 import dev.be.coupon.api.user.infrastructure.FakePasswordHasherClient;
+import dev.be.coupon.domain.user.UserRepository;
+import dev.be.coupon.domain.user.vo.PasswordHasher;
 import org.assertj.core.api.Assertions;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +52,7 @@ class UserServiceTest {
 
         // then
         Assertions.assertThatThrownBy(() -> userService.signUp(duplicate))
-                .isInstanceOf(InvalidUserException.class)
-                .hasMessage("사용자 관련 부분에서 예외가 발생했습니다.");
+                .isInstanceOf(UserException.class)
+                .hasMessage("이미 존재하는 이름입니다.");
     }
 }
