@@ -1,6 +1,8 @@
 package dev.be.coupon.domain.coupon;
 
-import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+
 import java.util.UUID;
 
 /**
@@ -12,7 +14,7 @@ public interface FailedIssuedCouponRepository {
 
     FailedIssuedCoupon save(final FailedIssuedCoupon failedIssuedCoupon);
 
-    List<FailedIssuedCoupon> findAllByIsResolvedFalseAndRetryCountLessThan(int retryCount);
+    Slice<FailedIssuedCoupon> findAllByIsResolvedFalseAndRetryCountLessThan(int retryCount, Pageable pageable);
 
     FailedIssuedCoupon findByIdWithLock(UUID id);
 }
