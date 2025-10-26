@@ -3,7 +3,7 @@ package dev.be.coupon.api.coupon.application;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
-import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
+import dev.be.coupon.api.support.error.CouponException;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponDiscountType;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
@@ -177,7 +177,7 @@ class CouponServiceImplTest {
         // when & then
         // userB가 userA의 쿠폰을 사용하려고 할 때 예외가 발생해야 함
         assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(userB, couponId)))
-                .isInstanceOf(IssuedCouponNotFoundException.class)
+                .isInstanceOf(CouponException.class)
                 .hasMessage("발급되지 않았거나 소유하지 않은 쿠폰입니다.");
     }
 
