@@ -1,7 +1,8 @@
 package dev.be.coupon.api.auth.application.impl;
 
 import dev.be.coupon.api.auth.application.TokenProvider;
-import dev.be.coupon.api.auth.application.exception.InvalidTokenException;
+import dev.be.coupon.api.support.error.AuthException;
+import dev.be.coupon.api.support.error.ErrorType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
@@ -49,10 +50,10 @@ public class JwtTokenProvider implements TokenProvider {
                     .build()
                     .parseClaimsJws(token);
             if (claims.getBody().getExpiration().before(new Date())) { // 만료 시간이 현재 시간보다 이전 시간인지 확인하는 조건문
-                throw new InvalidTokenException("토큰이 만료되었습니다.");
+                throw new AuthException(ErrorType.AUTH_TOKEN_EXPIRED);
             }
         } catch (JwtException | IllegalArgumentException e) {
-            throw new InvalidTokenException("권한이 없습니다.");
+            throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
         }
     }
     public String getPayLoad(final String token) {

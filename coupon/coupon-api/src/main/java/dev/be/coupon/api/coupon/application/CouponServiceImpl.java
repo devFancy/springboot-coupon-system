@@ -8,12 +8,13 @@ import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
 import dev.be.coupon.api.coupon.application.exception.CouponNotFoundException;
 import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundException;
+import dev.be.coupon.api.support.error.ErrorType;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
-import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
+import dev.be.coupon.api.auth.application.exception.UnauthorizedAccessException;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.infra.redis.CouponEntryRedisCounter;
 import dev.be.coupon.infra.redis.CouponRedisCache;
@@ -61,7 +62,7 @@ public class CouponServiceImpl implements CouponService {
             final CouponCreateCommand command) {
 
         if (!authService.isAdmin(command.userId())) {
-            throw new UnauthorizedAccessException("쿠폰 생성은 관리자만 가능합니다.");
+            throw new UnauthorizedAccessException(ErrorType.AUTH_ACCESS_DENIED);
         }
 
         final Coupon coupon = new Coupon(
@@ -133,7 +134,7 @@ public class CouponServiceImpl implements CouponService {
                 });
 
         Coupon coupon = findCouponById(issuedCoupon.getCouponId());
-        coupon.validateUsableStatus(now);
+        coupon.validateStatusIsActive(now);
 
         issuedCoupon.use(now);
         issuedCouponRepository.save(issuedCoupon);

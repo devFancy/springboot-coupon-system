@@ -3,10 +3,11 @@ package dev.be.coupon.api.auth.application;
 
 import dev.be.coupon.api.auth.application.dto.AuthLoginCommand;
 import dev.be.coupon.api.auth.application.dto.AuthLoginResult;
+import dev.be.coupon.api.support.error.ErrorType;
+import dev.be.coupon.api.support.error.UserException;
 import dev.be.coupon.domain.auth.AuthAccessToken;
 import dev.be.coupon.domain.user.User;
 import dev.be.coupon.domain.user.UserRepository;
-import dev.be.coupon.domain.user.exception.InvalidUserException;
 import dev.be.coupon.domain.user.vo.PasswordHasher;
 import dev.be.coupon.domain.user.vo.Username;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class AuthService {
         final User savedUser = findUserByUsername(new Username(command.username()));
 
         if (!savedUser.isPasswordMatched(command.password(), passwordHasher)) {
-            throw new InvalidUserException("비밀번호가 일치하지 않습니다");
+            throw new UserException(ErrorType.USER_PASSWORD_MISMATCH);
         }
 
         return AuthLoginResult.from(savedUser);  // accessToken 나중에 추가
@@ -43,7 +44,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public User findUserByUsername(final Username username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new InvalidUserException("존재하지 않는 사용자입니다"));
+                .orElseThrow(() -> new UserException(ErrorType.USER_NOT_FOUND));
     }
 
     public String generateAccessToken(final UUID userId) {

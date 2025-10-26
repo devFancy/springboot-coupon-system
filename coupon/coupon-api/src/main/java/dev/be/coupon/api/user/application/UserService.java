@@ -1,10 +1,11 @@
 package dev.be.coupon.api.user.application;
 
+import dev.be.coupon.api.support.error.ErrorType;
+import dev.be.coupon.api.support.error.UserException;
 import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.application.dto.UserSignUpResult;
 import dev.be.coupon.domain.user.User;
 import dev.be.coupon.domain.user.UserRepository;
-import dev.be.coupon.domain.user.exception.InvalidUserException;
 import dev.be.coupon.domain.user.vo.PasswordHasher;
 import dev.be.coupon.domain.user.vo.Username;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class UserService {
 
     public UserSignUpResult signUp(final UserSignUpCommand command) {
         if (userRepository.existsByUsername(new Username(command.username()))) {
-            throw new InvalidUserException("이미 존재하는 사용자 이름입니다.");
+            throw new UserException(ErrorType.USER_NAME_DUPLICATED);
         }
 
         final User user = new User(command.username(), command.password(), passwordHasher);

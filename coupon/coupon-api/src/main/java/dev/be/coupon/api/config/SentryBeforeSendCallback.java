@@ -1,8 +1,8 @@
 package dev.be.coupon.api.config;
 
 
-import dev.be.coupon.common.support.error.CouponException;
-import dev.be.coupon.common.support.error.ErrorType;
+import dev.be.coupon.api.support.error.CouponException;
+import dev.be.coupon.api.support.error.ErrorType;
 import io.sentry.Hint;
 import io.sentry.SentryEvent;
 import io.sentry.SentryOptions;
