@@ -35,7 +35,7 @@ public class CouponIssuanceServiceImpl implements CouponIssuanceService {
         }
         IssuedCoupon issuedCoupon = new IssuedCoupon(userId, couponId);
         issuedCouponRepository.save(issuedCoupon);
-        log.info("쿠폰 발급 DB 저장 완료: {}", issuedCoupon);
+        log.info("[CouponIssuanceServiceImpl_issue] 쿠폰 발급 DB 저장 완료: {}", issuedCoupon);
     }
 
     @Override
@@ -44,14 +44,14 @@ public class CouponIssuanceServiceImpl implements CouponIssuanceService {
         // 1. 쿠폰 발급 저장
         if (!issuedCouponRepository.existsByUserIdAndCouponId(userId, couponId)) {
             issuedCouponRepository.save(new IssuedCoupon(userId, couponId));
-            log.info("쿠폰 발급 DB 저장 완료");
+            log.info("[CouponIssuanceServiceImpl_reissue] 쿠폰 발급 DB 저장 완료");
         }
 
         // 2. 실패 이력 업데이트
         FailedIssuedCoupon failedCoupon = failedIssuedCouponRepository.findByIdWithLock(failedIssuedCouponId);
         if (failedCoupon != null) {
             failedCoupon.markResolved();
-            log.info("실패 이력에 '해결됨'으로 업데이트");
+            log.info("[CouponIssuanceServiceImpl_reissue] 쿠폰 발급 실패 이력에 '해결됨'으로 업데이트");
         }
     }
 
