@@ -113,7 +113,7 @@ sequenceDiagram
 
 * Layered Architecture: Controller, Service, Repository 계층을 명확히 분리하는 계층형 아키텍처를 기반으로 설계되었습니다. 
 
-> [용어 사전 및 도메인 모델링 관련 문서](https://github.com/devFancy/springboot-coupon-system/blob/main/docs/domain-glossary-and-modeling.md)
+> [쿠폰 도메인 모델링 문서](https://github.com/devFancy/springboot-coupon-system/blob/main/docs/coupon-domain-modeling.md)
 
 * Multi-Module: 도메인(coupon-domain), 인프라(coupon-infra), 애플리케이션(coupon-api, coupon-consumer) 등 각 모듈이 명확한 책임을 갖도록 멀티 모듈 구조로 프로젝트를 구성하여 응집도를 높였습니다.
 
