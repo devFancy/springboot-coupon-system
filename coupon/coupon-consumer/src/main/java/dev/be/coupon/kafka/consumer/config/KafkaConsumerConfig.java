@@ -9,9 +9,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.listener.RecordInterceptor;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.util.backoff.ExponentialBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,10 +67,40 @@ public class KafkaConsumerConfig {
         return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
     }
 
+    /**
+     *  Note: Kafka 리스너 예외 발생 시 'Exponential Backoff' 재시도 및 DLQ 전송 핸들러
+     *  [동작]
+     *  - 1. Exponential Backoff (최대 5회) 정책에 따라 메시지 재시도를 수행합니다.
+     *  - 2. 5회 재시도 모두 실패 시, DeadLetterPublishingRecoverer 를 사용하여
+     *  - 메시지를 '(DLQ)'으로 전송하여 데이터 유실을 방지합니다.
+     *  [TODO]
+     *  - 현재는 운영자가 DLQ에 메시지가 쌓이는지 모니터링하고, 장애 복구 후 수동 조치하는 방식
+     *  - 이 DLQ를 소비하여 자동으로 처리하는 별도의 스케줄러(배치)를 만들 수 있음.
+     */
+    @Bean
+    public DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, Object> kafkaTemplate) {
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
+                (record, exception) -> new org.apache.kafka.common.TopicPartition(
+                        record.topic() + "-db-down-dlq", // e.g. "coupon-issue-db-down-dlq"
+                        record.partition()
+                ));
+
+        // - initialInterval: 2초(2000L)부터 시작
+        // - multiplier: 2.0배씩 간격 증가 (2s -> 4s -> 8s -> 16s -> 32s)
+        // - maxAttempts: 최대 5번 재시도
+        ExponentialBackOff backOff = new ExponentialBackOff(2000L, 2.0);
+        backOff.setMaxAttempts(5);
+
+        // backOff으로 재시도 횟수만큼 실행하고, 그래도 실패하면 recoverer(DLQ) 실행
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
+        return errorHandler;
+    }
+
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, CouponIssueMessage> kafkaListenerContainerFactory(
             ConsumerFactory<String, CouponIssueMessage> consumerFactory,
-            RecordInterceptor<String, CouponIssueMessage> mdcRecordInterceptor
+            RecordInterceptor<String, CouponIssueMessage> mdcRecordInterceptor,
+            DefaultErrorHandler kafkaErrorHandler
     ) {
         ConcurrentKafkaListenerContainerFactory<String, CouponIssueMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
@@ -75,6 +109,8 @@ public class KafkaConsumerConfig {
         factory.setConcurrency(3); // 토픽의 파티션 수와 일치시켜 병렬 처리 성능을 최적화합니다.
 
         factory.setRecordInterceptor(mdcRecordInterceptor);
+
+        factory.setCommonErrorHandler(kafkaErrorHandler);
         return factory;
     }
 }
