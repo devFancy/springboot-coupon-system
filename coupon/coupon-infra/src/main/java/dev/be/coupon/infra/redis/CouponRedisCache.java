@@ -39,7 +39,7 @@ public class CouponRedisCache {
             redisTemplate.opsForValue().set(key, jsonValue, Duration.ofHours(12));
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize coupon to JSON: {}", coupon, e);
-            throw new RuntimeException("쿠폰 객체를 캐시에 저장하는 데 실패했습니다.", e);
+            throw new RuntimeException("쿠폰을 캐시에 저장하는 데 실패했습니다.", e);
         }
     }
 

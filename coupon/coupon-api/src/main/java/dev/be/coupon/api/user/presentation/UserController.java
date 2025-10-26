@@ -1,11 +1,11 @@
 package dev.be.coupon.api.user.presentation;
 
+import dev.be.coupon.api.support.response.ApiResponse;
 import dev.be.coupon.api.user.application.UserService;
 import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.application.dto.UserSignUpResult;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpRequest;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpResponse;
-import dev.be.coupon.common.support.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

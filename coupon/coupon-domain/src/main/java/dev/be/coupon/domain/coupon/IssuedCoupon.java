@@ -1,6 +1,6 @@
 package dev.be.coupon.domain.coupon;
 
-import dev.be.coupon.domain.coupon.exception.CouponAlreadyUsedException;
+import dev.be.coupon.domain.coupon.exception.CouponDomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -83,7 +83,7 @@ public class IssuedCoupon {
 
     public void use(final LocalDateTime usedAt) {
         if (this.used) {
-            throw new CouponAlreadyUsedException("이미 사용된 쿠폰입니다.");
+            throw new CouponDomainException("이미 사용된 쿠폰입니다.");
         }
         this.used = true;
         this.usedAt = usedAt;
@@ -95,7 +95,7 @@ public class IssuedCoupon {
             final UUID couponId,
             final LocalDateTime issuedAt) {
         if (isNull(id) || isNull(userId) || isNull(couponId) || isNull(issuedAt)) {
-            throw new IllegalArgumentException("발급된 쿠폰 생성에 필요한 정보가 누락되었습니다.");
+            throw new CouponDomainException("발급된 쿠폰 생성에 필요한 정보가 누락되었습니다.");
         }
     }
 

@@ -1,6 +1,6 @@
 package dev.be.coupon.domain.coupon.vo;
 
-import dev.be.coupon.domain.coupon.exception.InvalidCouponException;
+import dev.be.coupon.domain.coupon.exception.CouponDomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import static java.util.Objects.isNull;
@@ -23,7 +23,7 @@ public class CouponName {
 
     private void validate(final  String value) {
         if (isNull(value) || value.isBlank()) {
-            throw new InvalidCouponException("쿠폰 이름이 존재해야 합니다.");
+            throw new CouponDomainException("쿠폰 이름이 존재해야 합니다.");
         }
     }
 

@@ -2,21 +2,21 @@ package dev.be.coupon.api.coupon.presentation;
 
 import dev.be.coupon.api.auth.presentation.AuthenticationPrincipal;
 import dev.be.coupon.api.auth.presentation.dto.LoginUser;
+import dev.be.coupon.api.coupon.application.CouponService;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
-import dev.be.coupon.api.coupon.application.CouponService;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
-import dev.be.coupon.common.support.error.CouponException;
-import dev.be.coupon.common.support.error.ErrorType;
-import dev.be.coupon.common.support.response.ApiResponse;
+import dev.be.coupon.api.support.error.AuthException;
+import dev.be.coupon.api.support.error.CouponException;
+import dev.be.coupon.api.support.error.ErrorType;
+import dev.be.coupon.api.support.response.ApiResponse;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
-import dev.be.coupon.domain.coupon.exception.UnauthorizedAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,7 +46,7 @@ public class CouponController implements CouponControllerDocs {
             @RequestBody final CouponCreateRequest request) {
 
         if (loginUser == null || loginUser.id() == null) {
-            throw new UnauthorizedAccessException("로그인된 사용자만 쿠폰을 생성할 수 있습니다.");
+            throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
         }
 
         CouponCreateCommand command = new CouponCreateCommand(
@@ -71,7 +71,7 @@ public class CouponController implements CouponControllerDocs {
             @PathVariable("couponId") final UUID couponId) {
 
         if (loginUser == null || loginUser.id() == null) {
-            throw new UnauthorizedAccessException("로그인된 사용자만 쿠폰을 발급받을 수 있습니다.");
+            throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
         }
 
         CouponIssueCommand command = new CouponIssueCommand(loginUser.id(), couponId);
@@ -94,7 +94,7 @@ public class CouponController implements CouponControllerDocs {
             @PathVariable final UUID couponId) {
 
         if (loginUser == null || loginUser.id() == null) {
-            throw new UnauthorizedAccessException("로그인된 사용자만 쿠폰을 사용할 수 있습니다.");
+            throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
         }
 
         CouponUsageCommand command = new CouponUsageCommand(loginUser.id(), couponId);

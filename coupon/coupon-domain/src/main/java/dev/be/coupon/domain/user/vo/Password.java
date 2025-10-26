@@ -1,6 +1,6 @@
 package dev.be.coupon.domain.user.vo;
 
-import dev.be.coupon.domain.user.exception.InvalidUserException;
+import dev.be.coupon.domain.user.exception.UserDomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import static java.util.Objects.isNull;
@@ -38,7 +38,7 @@ public class Password {
 
     private void validate(final String value) {
         if (isNull(value) || value.isBlank()) {
-            throw new InvalidUserException("사용자의 비밀번호가 존재해야 합니다.");
+            throw new UserDomainException("사용자의 비밀번호가 존재해야 합니다.");
         }
     }
 

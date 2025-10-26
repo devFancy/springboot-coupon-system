@@ -1,7 +1,8 @@
 package dev.be.coupon.api.auth.presentation;
 
 import dev.be.coupon.api.auth.presentation.exception.EmptyAuthorizationHeaderException;
-import dev.be.coupon.api.auth.application.exception.InvalidTokenException;
+import dev.be.coupon.api.support.error.AuthException;
+import dev.be.coupon.api.support.error.ErrorType;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 
@@ -23,7 +24,7 @@ public class AuthorizationExtractor {
 
     private static void validationAuthorizationFormat(final String authorizationHeader) {
         if(!authorizationHeader.toLowerCase().startsWith(BEARER_TYPE.toLowerCase())) {
-            throw new InvalidTokenException("token 형식이 올바르지 않습니다.");
+            throw new AuthException(ErrorType.AUTH_INVALID_TOKEN);
         }
     }
 }

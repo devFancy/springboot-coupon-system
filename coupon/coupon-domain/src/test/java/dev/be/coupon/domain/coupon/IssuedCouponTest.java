@@ -1,6 +1,6 @@
 package dev.be.coupon.domain.coupon;
 
-import dev.be.coupon.domain.coupon.exception.CouponAlreadyUsedException;
+import dev.be.coupon.domain.coupon.exception.CouponDomainException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -37,7 +37,7 @@ class IssuedCouponTest {
 
         // when & then
         assertThatThrownBy(() -> new IssuedCoupon(id, null, couponId, false, issuedAt, null))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(CouponDomainException.class)
                 .hasMessage("발급된 쿠폰 생성에 필요한 정보가 누락되었습니다.");
     }
 
@@ -61,7 +61,7 @@ class IssuedCouponTest {
         coupon.use(usedAt);
 
         assertThatThrownBy(() -> coupon.use(LocalDateTime.now().plusMinutes(1)))
-                .isInstanceOf(CouponAlreadyUsedException.class)
+                .isInstanceOf(CouponDomainException.class)
                 .hasMessage("이미 사용된 쿠폰입니다.");
     }
 }

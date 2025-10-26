@@ -6,7 +6,6 @@ dependencies {
     implementation project(":coupon:coupon-infra")
     implementation project(":support:logging")
     implementation project(":support:monitoring")
-    implementation project(":support:common")
 
     // spring boot
     implementation 'org.springframework.boot:spring-boot-starter-web'

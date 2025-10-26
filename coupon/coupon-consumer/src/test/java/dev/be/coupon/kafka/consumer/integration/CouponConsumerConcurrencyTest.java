@@ -1,6 +1,8 @@
 package dev.be.coupon.kafka.consumer.integration;
 
 import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.domain.coupon.CouponDiscountType;
+import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
@@ -15,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -77,13 +80,14 @@ public class CouponConsumerConcurrencyTest {
     }
 
 
-    private Coupon createCoupon(int totalQuantity) {
+    private Coupon createCoupon(final int totalQuantity) {
         Coupon coupon = new Coupon(
-                "선착순 쿠폰 테스트",
-                CouponType.CHICKEN,
+                "선착순 쿠폰",
+                CouponType.BURGER,
+                CouponDiscountType.FIXED,
+                BigDecimal.valueOf(10_000L),
                 totalQuantity,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10)
+                LocalDateTime.now().plusDays(7)
         );
         return couponRepository.save(coupon);
     }
