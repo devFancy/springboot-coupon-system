@@ -1,6 +1,8 @@
 package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.domain.coupon.CouponDiscountType;
+import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.domain.coupon.FailedIssuedCoupon;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.FailedIssuedCouponJpaRepository;
@@ -21,6 +23,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -161,10 +164,11 @@ class CouponIssuanceFacadeTest {
     private Coupon createCoupon(int totalQuantity) {
         Coupon coupon = new Coupon(
                 "선착순 쿠폰",
-                CouponType.CHICKEN,
+                CouponType.BURGER,
+                CouponDiscountType.FIXED,
+                BigDecimal.valueOf(10_000L),
                 totalQuantity,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10)
+                LocalDateTime.now().plusDays(7)
         );
         return couponRepository.save(coupon);
     }
