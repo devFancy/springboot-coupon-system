@@ -7,10 +7,10 @@ import dev.be.coupon.api.coupon.application.exception.IssuedCouponNotFoundExcept
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponDiscountType;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
+import dev.be.coupon.domain.coupon.CouponStatus;
 import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
-import dev.be.coupon.domain.coupon.exception.CouponAlreadyUsedException;
-import dev.be.coupon.domain.coupon.exception.CouponNotCurrentlyUsableException;
+import dev.be.coupon.domain.coupon.exception.CouponDomainException;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -193,7 +193,7 @@ class CouponServiceImplTest {
 
         // when & then
         assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(userId, couponId)))
-                .isInstanceOf(CouponAlreadyUsedException.class)
+                .isInstanceOf(CouponDomainException.class)
                 .hasMessage("이미 사용된 쿠폰입니다.");
     }
 
@@ -214,12 +214,12 @@ class CouponServiceImplTest {
         couponRepository.save(expiredCoupon);
         issueCoupon(userId, expiredCoupon.getId());
 
-        Thread.sleep(1100);
+        Thread.sleep(1001);
 
         // when & then
         assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(userId, expiredCoupon.getId())))
-                .isInstanceOf(CouponNotCurrentlyUsableException.class)
-                .hasMessage("현재 쿠폰은 사용 가능한 상태가 아닙니다.");
+                .isInstanceOf(CouponDomainException.class)
+                .hasMessage("쿠폰 상태가 활성 상태가 아닙니다. 현재 상태: " + CouponStatus.EXPIRED);
     }
 
     private Coupon createCoupon(final int totalQuantity) {
