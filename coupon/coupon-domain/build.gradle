@@ -1,7 +1,6 @@
 jar.enabled = true
 
 dependencies {
-    implementation project(":support:common")
     implementation 'org.springframework:spring-context'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
