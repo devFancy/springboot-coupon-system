@@ -1,6 +1,8 @@
 package dev.be.coupon.kafka.consumer.integration;
 
 import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.domain.coupon.CouponDiscountType;
+import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
@@ -15,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +68,7 @@ public class TracingContextPropagationIntegrationTest {
         MDC.put("spanId", spanId);
 
         try {
-            Coupon coupon = createCoupon();
+            Coupon coupon = createCoupon(100);
             UUID userId = UUID.randomUUID();
 
             // when
@@ -86,15 +89,15 @@ public class TracingContextPropagationIntegrationTest {
         }
     }
 
-    private Coupon createCoupon() {
+    private Coupon createCoupon(final int totalQuantity) {
         Coupon coupon = new Coupon(
                 "선착순 쿠폰",
                 CouponType.BURGER,
-                10,
-                LocalDateTime.now().minusDays(1),
-                LocalDateTime.now().plusDays(10)
+                CouponDiscountType.FIXED,
+                BigDecimal.valueOf(10_000L),
+                totalQuantity,
+                LocalDateTime.now().plusDays(7)
         );
-
         return couponJpaRepository.save(coupon);
     }
 }

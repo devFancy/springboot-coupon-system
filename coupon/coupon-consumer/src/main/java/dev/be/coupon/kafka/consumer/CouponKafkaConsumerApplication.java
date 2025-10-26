@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 		"dev.be.coupon.kafka.consumer",
 		"dev.be.coupon.domain.coupon",
 		"dev.be.coupon.infra",
-		"dev.be.coupon.common",
 		"dev.be.coupon.logging"
 })
 @EnableJpaRepositories(basePackages = {
