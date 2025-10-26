@@ -41,6 +41,6 @@ public class SwaggerConfig {
         return new Info()
                 .title("[Coupon] Server API")
                 .description("[Coupon] Server API 명세서입니다.")
-                .version("1.4.4");
+                .version("1.4.5");
     }
 }
