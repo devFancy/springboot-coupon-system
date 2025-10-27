@@ -72,15 +72,14 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 
 ```markdown
 coupon/
-├── coupon-api # (1) 사용자 요청 접수 (Controller, Service)
-├── coupon-consumer # (2) 비동기 발급 처리 (Kafka Consumer)
+├── coupon-api # (1) 사용자 요청 접수
+├── coupon-consumer # (2) 비동기 발급 처리
 ├── coupon-infra # 인프라 모듈 (JPA, Redis, Kafka)
 ├── coupon-domain # 도메인 모델 (Entity, Repository Interfaces)
 
 support/
 ├── logging # 공통 로그 필터 및 분산 추적
 ├── monitoring # Prometheus, Grafana, K6, Promtail, Loki 구성
-└── common # 공통 예외 처리, 응답 구조 등
 ```
 
 
@@ -101,11 +100,6 @@ support/
 * 해결 (Kafka): Redis를 통과한 '유효한' 요청조차도 수천 건에 달할 수 있습니다.
   Kafka를 버퍼(Buffer) 기반 큐로 사용하여 API 서버의 빠른 응답과 Consumer의 느린 DB 저장 속도 차이를 분리했습니다.
   이로 인해 DB 장애가 발생하더라도 사용자 요청은 정상적으로 접수(ack)될 수 있습니다.
-
-> 왜 모든 API를 POST로 설계했는가?
-
-* 본 시스템의 API(쿠폰 발급, 사용)는 리소스의 상태를 조회(GET)하거나 수정(PUT/PATCH)하는 것이 아닌, 명령(Command)을 실행하는 행위에 가깝습니다.
-
 
 ---
 
