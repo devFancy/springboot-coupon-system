@@ -233,30 +233,44 @@ sequenceDiagram
   User->>API Server: 쿠폰 발급 요청
 
   note over API Server, Redis: 선착순 & 중복 참여 검증
-  API Server->>Redis: 1. 중복 참여 확인 (SADD)
-  API Server->>Redis: 2. 선착순 순번 증가 (INCR)
+  API Server->>Redis: 중복 확인 & 순번 증가
 
   alt 선착순 성공
-    API Server->>Kafka: [신규 토픽] 쿠폰 발급 요청 메시지 발행
-    API Server-->>User: 발급 요청 성공
+    API Server->>Kafka: [신규 토픽] 발급 요청 발행
+    API Server-->>User: 발급 요청 접수 완료
   else 선착순 마감
     API Server-->>User: 선착순 마감 응답
   end
 
-  note over Kafka, DB: 비동기 발급 처리
-  Consumer Server->>Kafka: 메시지 요청 (poll)
-  Kafka-->>Consumer Server: 메시지 반환
+  note over Kafka, DB: 비동기 발급 처리 (핵심 흐름)
+  Consumer Server->>Kafka: 메시지 가져오기 (poll)
+  Kafka-->>Consumer Server: 메시지 전달
+
+  Consumer Server->>DB: (분산 락 시도) & 쿠폰 발급 처리 시도
 
   alt 발급 처리 성공
-    Consumer Server->>DB: 쿠폰 발급 정보 저장
-    note over Consumer Server, DB: (재처리였다면) 실패 이력을 'resolved'로 업데이트
-    Consumer Server->>Kafka: 처리 완료(ack)
-  else 발급 처리 실패
-    Consumer Server->>DB: [신규] 실패 이력 저장 / [재처리] 재시도 횟수 증가
-    note right of Consumer Server: ack 미전송
+    Consumer Server->>DB: 쿠폰 발급 정보 저장 (Commit)
+    note right of Consumer Server: 성공: 메시지 처리 완료
+    Consumer Server->>Kafka: 처리 완료 (ack)
+
+  else 비즈니스 오류 (e.g. 쿠폰 없음, 만료)
+    note right of Consumer Server: 최종 실패: 재시도 불필요
+    Consumer Server->>Kafka: 처리 완료 (ack, 메시지 폐기)
+
+  else 인프라 오류 (e.g. DB 락, DB 다운)
+    note right of Consumer Server: 재시도 필요: 실패 처리 분기
+    alt 실패 기록 성공 (DB 정상)
+      Consumer Server->>DB: 실패 이력 저장 (Commit)
+      Consumer Server->>Kafka: 처리 완료 (ack)
+      note right of Consumer Server: 1차 재시도: 스케줄러가 담당
+    else 실패 기록 실패 (DB 다운)
+      note right of Consumer Server: 2차 재시도: Kafka ErrorHandler 담당 (최대 5회)
+      note right of Consumer Server: 최종 실패 시 DLQ 전송
+      Consumer Server->>Kafka: 처리 실패 (ack 안 함 -> ErrorHandler 작동)
+    end
   end
 
-  note over API Server, DB: 스케줄러 기반 재처리(주기적)
+  note over API Server, DB: 스케줄러 기반 재처리(주기적) - API 서버에서 실행
   loop 5분마다
     API Server->>DB: 미처리 및 재시도 5회 미만 실패 건 조회
     DB-->>API Server: 실패 목록
