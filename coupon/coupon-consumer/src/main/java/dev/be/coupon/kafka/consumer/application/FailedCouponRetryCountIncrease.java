@@ -25,11 +25,11 @@ public class FailedCouponRetryCountIncrease {
         FailedIssuedCoupon failedCoupon = failedIssuedCouponRepository.findByIdWithLock(failedIssuedCouponId);
 
         if (failedCoupon == null) {
-            log.warn("이미 처리되었거나 존재하지 않는 실패 이력입니다. ID: {}", failedIssuedCouponId);
+            log.warn("[FailedCouponRetryCountIncrease] 이미 처리되었거나 존재하지 않는 실패 이력입니다. ID: {}", failedIssuedCouponId);
             return;
         }
 
         failedCoupon.increaseRetryCount();
-        log.info("재시도 횟수 증가 완료. ID: {}, retryCount: {}", failedIssuedCouponId, failedCoupon.getRetryCount());
+        log.info("[FailedCouponRetryCountIncrease] 재시도 횟수 증가 완료. ID: {}, retryCount: {}", failedIssuedCouponId, failedCoupon.getRetryCount());
     }
 }

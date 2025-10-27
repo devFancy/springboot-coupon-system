@@ -26,4 +26,11 @@ public class KafkaTopicConfig {
                 .replicas(1)
                 .build();
     }
+    @Bean
+    public NewTopic couponIssueDbDownDqlTopic(@Value("${kafka.topic.coupon-issue}") final String issueTopic) {
+        return TopicBuilder.name(issueTopic + "-db-down-dlq")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
 }
