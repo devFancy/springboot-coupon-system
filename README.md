@@ -38,64 +38,17 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 
 ## 3. System Architecture
 
-### 아키텍처 다이어그램 및 처리 흐름
+![](/docs/image/coupon-Issue-System-Architecture.png)
 
-본 아키텍처는 API 서버(요청 접수)와 Consumer 서버(발급 처리)의 역할을 명확히 분리하여 병목을 해소하고, 확장성과 안정성을 확보한 구조입니다.
-
-
-```mermaid
-sequenceDiagram
-  actor User
-  participant API Server
-  participant Redis
-  participant Kafka
-  participant Consumer Server
-  participant DB as MySQL
-
-  User->>API Server: 쿠폰 발급 요청
-
-  note over API Server, Redis: 선착순 & 중복 참여 검증
-  API Server->>Redis: 1. 중복 참여 확인 (SADD)
-  API Server->>Redis: 2. 선착순 순번 증가 (INCR)
-
-  alt 선착순 성공
-    API Server->>Kafka: [신규 토픽] 쿠폰 발급 요청 메시지 발행
-    API Server-->>User: 발급 요청 성공
-  else 선착순 마감
-    API Server-->>User: 선착순 마감 응답
-  end
-
-  note over Kafka, DB: 비동기 발급 처리
-  Consumer Server->>Kafka: 메시지 요청 (poll)
-  Kafka-->>Consumer Server: 메시지 반환
-
-  alt 발급 처리 성공
-    Consumer Server->>DB: 쿠폰 발급 정보 저장
-    note over Consumer Server, DB: (재처리였다면) 실패 이력을 'resolved'로 업데이트
-    Consumer Server->>Kafka: 처리 완료(ack)
-  else 발급 처리 실패
-    Consumer Server->>DB: [신규] 실패 이력 저장 / [재처리] 재시도 횟수 증가
-    note right of Consumer Server: ack 미전송
-  end
-
-  note over API Server, DB: 스케줄러 기반 재처리(주기적)
-  loop 5분마다
-    API Server->>DB: 미처리 및 재시도 5회 미만 실패 건 조회
-    DB-->>API Server: 실패 목록
-
-    opt 실패 건 하나 이상 존재시
-      API Server->>Kafka: [재처리 토픽]으로 실패 건 재발행
-    end
-  end
-```
+본 아키텍처는 API 서버(요청 접수)와 Consumer 서버(발급 처리)의 역할을 명확히 분리하여 병목을 해소하고, 확장성과 안정성을 고려한 구조입니다.
 
 ### 쿠폰 발급 2-Stage 처리 흐름
 
-위 아키텍처의 실제 처리 흐름은 다음과 같은 2단계로 이루어집니다.
+쿠폰 발급에 대한 처리 흐름은 다음과 같은 두 단계로 이루어집니다.
 
 > Stage 1: API 서버 (선착순 판별 및 Kafka 발행)
 
-* 선착순 및 중복 검증 (Redis): DB 접근 시 발생하는 락 경합(Lock Contention)을 피하기 위해, In-Memory 데이터 저장소인 Redis를 '문지기' 역할로 활용합니다.
+* 중복 참여 및 선착순 검증 (Redis): DB 접근 시 발생하는 락 경합(Lock Contention)을 피하기 위해, In-Memory 데이터 저장소인 Redis를 '문지기' 역할로 활용합니다.
 
   * SADD: 중복 참여자인지 확인 (Set 자료구조, O(1))
 
@@ -113,7 +66,7 @@ sequenceDiagram
 
 * Layered Architecture: Controller, Service, Repository 계층을 명확히 분리하는 계층형 아키텍처를 기반으로 설계되었습니다. 
 
-> [쿠폰 도메인 모델링 문서](https://github.com/devFancy/springboot-coupon-system/blob/main/docs/coupon-domain-modeling.md)
+> 용어사전 및 도메인 모델링에 대한 자세한 내용은 [쿠폰 도메인 모델링 문서](https://github.com/devFancy/springboot-coupon-system/blob/main/docs/coupon-domain-modeling.md)에서 확인하실 수 있습니다.
 
 * Multi-Module: 도메인(coupon-domain), 인프라(coupon-infra), 애플리케이션(coupon-api, coupon-consumer) 등 각 모듈이 명확한 책임을 갖도록 멀티 모듈 구조로 프로젝트를 구성하여 응집도를 높였습니다.
 
