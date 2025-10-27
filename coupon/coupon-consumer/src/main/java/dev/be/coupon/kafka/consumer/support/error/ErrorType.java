@@ -10,8 +10,8 @@ public enum ErrorType {
 
     // Coupon(쿠폰)
     COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorCode.E3000, "존재하지 않는 쿠폰입니다.", LogLevel.INFO),
-    COUPON_ISSUANCE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.E3001, "쿠폰 발급 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.", LogLevel.ERROR),
-    COUPON_ISSUANCE_RETRY_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.E3002, "쿠폰 발급 요청에 대한 재처리가 실패되었습니다.", LogLevel.ERROR);
+    COUPON_ISSUANCE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.E3001, "쿠폰 발급 처리 중 DB 장애로 실패 기록조차 실패. Kafka 재시도 필요", LogLevel.ERROR),
+    COUPON_ISSUANCE_RETRY_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.E3002, "쿠폰 발급 처리 중 DB 장애로 재처리 실패. Kafka 재시도 필요", LogLevel.ERROR);
 
     private final HttpStatus status;
     private final ErrorCode code;
