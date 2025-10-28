@@ -157,13 +157,14 @@ support/
 
 애플리케이션 실행 후, `http://localhost:8080/service-docs.html` 에서 전체 API 명세 및 테스트를 직접 수행할 수 있습니다.
 
-| Method | Endpoint                       | 설명             |
-|--------|--------------------------------|----------------|
-| POST   | `/api/users/signup`            | 사용자 회원가입       |
-| POST   | `/api/auth/login`              | 로그인 후 JWT 발급   |
-| POST   | `/api/coupon/`                 | 쿠폰 생성 (관리자)    |
-| POST   | `/api/coupon/{couponId}/issue` | 쿠폰 발급 요청 (사용자) |
-| POST   | `/api/coupon/{couponId}/usage` | 쿠폰 사용 처리 (사용자) |
+| Method | Endpoint                       | 설명               |
+|--------|--------------------------------|------------------|
+| POST   | `/api/users/signup`            | 사용자 회원가입         |
+| POST   | `/api/auth/login`              | 로그인 후 JWT 발급     |
+| POST   | `/api/coupon/`                 | 쿠폰 생성 (관리자)      |
+| POST   | `/api/coupon/{couponId}/issue` | 쿠폰 발급 요청 (사용자)   |
+| GET    | `/api/coupon/owned-coupons`    | 내 쿠폰 목록 조회 (사용자) | 
+| POST   | `/api/coupon/{couponId}/usage` | 쿠폰 사용 처리 (사용자)   |
 
 
 ---
