@@ -1,6 +1,6 @@
 package dev.be.coupon.api.user.presentation;
 
-import dev.be.coupon.api.support.response.ApiResponse;
+import dev.be.coupon.api.support.response.ApiResultResponse;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpRequest;
 import dev.be.coupon.api.user.presentation.dto.UserSignUpResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,7 +26,7 @@ public interface UserControllerDocs {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
     })
-    ResponseEntity<ApiResponse<UserSignUpResponse>> signUp(
+    ResponseEntity<ApiResultResponse<UserSignUpResponse>> signUp(
             @RequestBody final UserSignUpRequest request
     );
 }
