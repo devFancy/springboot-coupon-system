@@ -6,6 +6,7 @@ import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
+import dev.be.coupon.api.coupon.application.dto.OwnedCouponFindResult;
 import dev.be.coupon.api.support.error.AuthException;
 import dev.be.coupon.api.support.error.CouponException;
 import dev.be.coupon.api.support.error.ErrorType;
@@ -24,7 +25,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -118,6 +125,46 @@ public class CouponServiceImpl implements CouponService {
 
         couponRedisCache.save(couponFromDb);
         return couponFromDb.getTotalQuantity();
+    }
+
+    @Transactional(readOnly = true)
+    public List<OwnedCouponFindResult> getOwnedCoupons(final UUID userId) {
+        final List<IssuedCoupon> issuedCoupons = issuedCouponRepository.findAllByUserId(userId);
+        if (issuedCoupons.isEmpty()) return Collections.emptyList();
+
+        final Set<UUID> couponIds = issuedCoupons.stream()
+                .map(IssuedCoupon::getCouponId)
+                .collect(Collectors.toSet());
+
+        final Map<UUID, Coupon> couponMap = couponRepository.findAllById(couponIds).stream()
+                .collect(Collectors.toMap(Coupon::getId, c -> c));
+
+        return issuedCoupons.stream()
+                .map(issuedCoupon -> {
+                    Coupon coupon = couponMap.get(issuedCoupon.getCouponId());
+
+                    if (coupon == null) {
+                        log.warn("[CouponServiceImpl_getOwnedCoupons] 발급된 쿠폰(ID: {})이 있으나, 원본 쿠폰(ID: {})을 찾을 수 없습니다.",
+                                issuedCoupon.getId(), issuedCoupon.getCouponId());
+                        return null;
+                    }
+
+                    return new OwnedCouponFindResult(
+                            issuedCoupon.getId(),
+                            issuedCoupon.getUserId(),
+                            issuedCoupon.isUsed(),
+                            issuedCoupon.getIssuedAt(),
+                            issuedCoupon.getUsedAt(),
+                            coupon.getId(),
+                            coupon.getCouponName().getName(),
+                            coupon.getCouponType(),
+                            coupon.getCouponDiscountType(),
+                            coupon.getCouponDiscountValue(),
+                            coupon.getCouponStatus()
+                    );
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Transactional
