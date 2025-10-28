@@ -54,11 +54,11 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 
   * INCR: 선착순 수량을 카운트 (Atomic 연산, O(1))
 
-* 비동기 발행 (Kafka): Redis 검증을 통과한 요청은 즉시 Kafka 토픽에 메시지를 발행됩니다. API 서버는 DB 트랜잭션을 기다리지 않고 사용자에게 `요청 성공` 응답을 즉시 반환하여, DB 부하와 관계없이 높은 TPS를 유지합니다.
+* 비동기 발행 (Kafka): Redis 검증을 통과한 요청은 즉시 Kafka 토픽에 메시지를 발행합니다. API 서버는 DB 트랜잭션을 기다리지 않고 사용자에게 `요청 성공` 응답을 즉시 반환하여, DB 부하와 관계없이 높은 TPS를 유지합니다.
 
 > Stage 2: Consumer 서버 (최종 발급 처리 및 정합성 보장)
 
-* 안정적인 DB 저장: Kafka 컨슈머는 자신의 처리 속도(처리량)에 맞춰 메시지를 폴링(poll)하여 최종 쿠폰 발급 데이터를 DB에 저장합니다.
+* DB 저장: Kafka 컨슈머는 자신의 처리 속도(처리량)에 맞춰 메시지를 수신받아 최종 쿠폰 발급 데이터를 DB에 저장합니다.
 
 * 최종 동시성 제어 (Redisson 분산 락): Kafka의 `Exactly-Once` 보장 설정에도 불구하고, 재처리 로직 등으로 인해 동일 메시지가 중복 소비될 가능성에 대비합니다. DB 저장 전 Redisson 분산 락을 획득하여 불필요한 DB 트랜잭션 비용을 줄이고, DB의 유니크 제약 조건과 함께 데이터 정합성을 이중으로 보장합니다.
 
@@ -157,13 +157,14 @@ support/
 
 애플리케이션 실행 후, `http://localhost:8080/service-docs.html` 에서 전체 API 명세 및 테스트를 직접 수행할 수 있습니다.
 
-| Method | Endpoint                       | 설명             |
-|--------|--------------------------------|----------------|
-| POST   | `/api/users/signup`            | 사용자 회원가입       |
-| POST   | `/api/auth/login`              | 로그인 후 JWT 발급   |
-| POST   | `/api/coupon/`                 | 쿠폰 생성 (관리자)    |
-| POST   | `/api/coupon/{couponId}/issue` | 쿠폰 발급 요청 (사용자) |
-| POST   | `/api/coupon/{couponId}/usage` | 쿠폰 사용 처리 (사용자) |
+| Method | Endpoint                       | 설명               |
+|--------|--------------------------------|------------------|
+| POST   | `/api/users/signup`            | 사용자 회원가입         |
+| POST   | `/api/auth/login`              | 로그인 후 JWT 발급     |
+| POST   | `/api/coupon/`                 | 쿠폰 생성 (관리자)      |
+| POST   | `/api/coupon/{couponId}/issue` | 쿠폰 발급 요청 (사용자)   |
+| GET    | `/api/coupon/owned-coupons`    | 내 쿠폰 목록 조회 (사용자) | 
+| POST   | `/api/coupon/{couponId}/usage` | 쿠폰 사용 처리 (사용자)   |
 
 
 ---

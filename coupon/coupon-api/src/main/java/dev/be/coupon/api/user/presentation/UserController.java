@@ -1,6 +1,6 @@
 package dev.be.coupon.api.user.presentation;
 
-import dev.be.coupon.api.support.response.ApiResponse;
+import dev.be.coupon.api.support.response.ApiResultResponse;
 import dev.be.coupon.api.user.application.UserService;
 import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.application.dto.UserSignUpResult;
@@ -26,12 +26,12 @@ public class UserController implements UserControllerDocs {
     }
 
     @PostMapping(value = "/users/signup")
-    public ResponseEntity<ApiResponse<UserSignUpResponse>> signUp(@Valid @RequestBody final UserSignUpRequest request) {
+    public ResponseEntity<ApiResultResponse<UserSignUpResponse>> signUp(@Valid @RequestBody final UserSignUpRequest request) {
         UserSignUpCommand command = new UserSignUpCommand(request.username(), request.password());
         UserSignUpResult result = userService.signUp(command);
         UserSignUpResponse response = new UserSignUpResponse(result.id(), result.username(), result.role());
 
         return ResponseEntity.created(URI.create("/api/users/signup/" + response.id()))
-                .body(ApiResponse.success(response));
+                .body(ApiResultResponse.success(response));
     }
 }

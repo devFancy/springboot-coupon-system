@@ -1,5 +1,6 @@
 package dev.be.coupon.domain.coupon;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,8 +14,11 @@ public interface IssuedCouponRepository {
     boolean existsByUserIdAndCouponId(final UUID userId, final UUID couponId);
 
     int countByCouponId(final UUID couponId);
+
     IssuedCoupon save(final IssuedCoupon issuedCoupon);
 
     // 쿠폰 사용 시, 특정 사용자의 특정 쿠폰 정의 ID에 해당하는 발급 쿠폰 조회
     Optional<IssuedCoupon> findByUserIdAndCouponId(final UUID userId, final UUID couponId);
+
+    List<IssuedCoupon> findAllByUserId(final UUID userId);
 }
