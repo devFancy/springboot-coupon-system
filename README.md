@@ -38,7 +38,7 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 
 ## 3. System Architecture
 
-![](/docs/image/coupon-Issue-System-Architecture.png)
+![](/docs/image/Coupon-Issue-System-Architecture.png)
 
 본 아키텍처는 API 서버(요청 접수)와 Consumer 서버(발급 처리)의 역할을 명확히 분리하여 병목을 해소하고, 확장성과 안정성을 고려한 구조입니다.
 
@@ -54,7 +54,7 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 
   * INCR: 선착순 수량을 카운트 (Atomic 연산, O(1))
 
-* 비동기 발행 (Kafka): Redis 검증을 통과한 요청은 즉시 Kafka 토픽으로 발행됩니다. API 서버는 DB 트랜잭션을 기다리지 않고 사용자에게 `요청 성공` 응답을 즉시 반환하여, DB 부하와 관계없이 높은 TPS를 유지합니다.
+* 비동기 발행 (Kafka): Redis 검증을 통과한 요청은 즉시 Kafka 토픽에 메시지를 발행됩니다. API 서버는 DB 트랜잭션을 기다리지 않고 사용자에게 `요청 성공` 응답을 즉시 반환하여, DB 부하와 관계없이 높은 TPS를 유지합니다.
 
 > Stage 2: Consumer 서버 (최종 발급 처리 및 정합성 보장)
 
