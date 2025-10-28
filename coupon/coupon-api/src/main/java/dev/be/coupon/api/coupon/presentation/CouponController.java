@@ -8,14 +8,16 @@ import dev.be.coupon.api.coupon.application.dto.CouponCreateResult;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
+import dev.be.coupon.api.coupon.application.dto.OwnedCouponFindResult;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponCreateResponse;
 import dev.be.coupon.api.coupon.presentation.dto.CouponIssueRequest;
 import dev.be.coupon.api.coupon.presentation.dto.CouponUsageResponse;
+import dev.be.coupon.api.coupon.presentation.dto.OwnedCouponResponse;
 import dev.be.coupon.api.support.error.AuthException;
 import dev.be.coupon.api.support.error.CouponException;
 import dev.be.coupon.api.support.error.ErrorType;
-import dev.be.coupon.api.support.response.ApiResponse;
+import dev.be.coupon.api.support.response.ApiResultResponse;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +29,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequestMapping("/api/coupon")
 @RestController
@@ -41,7 +45,7 @@ public class CouponController implements CouponControllerDocs {
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<CouponCreateResponse>> create(
+    public ResponseEntity<ApiResultResponse<CouponCreateResponse>> create(
             @AuthenticationPrincipal final LoginUser loginUser,
             @RequestBody final CouponCreateRequest request) {
 
@@ -61,12 +65,12 @@ public class CouponController implements CouponControllerDocs {
 
         CouponCreateResult result = couponService.create(command);
         return ResponseEntity.created(URI.create("/api/coupon/" + result.id()))
-                .body(ApiResponse.success(CouponCreateResponse.from(result)));
+                .body(ApiResultResponse.success(CouponCreateResponse.from(result)));
     }
 
     @Override
     @PostMapping(value = "/{couponId}/issue")
-    public ResponseEntity<ApiResponse<String>> issue(
+    public ResponseEntity<ApiResultResponse<String>> issue(
             @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable("couponId") final UUID couponId) {
 
@@ -79,7 +83,7 @@ public class CouponController implements CouponControllerDocs {
     }
 
     @PostMapping(value = "/{couponId}/issue/test")
-    public ResponseEntity<ApiResponse<String>> issue(
+    public ResponseEntity<ApiResultResponse<String>> issue(
             @RequestBody final CouponIssueRequest request,
             @PathVariable("couponId") final UUID couponId) {
 
@@ -88,8 +92,24 @@ public class CouponController implements CouponControllerDocs {
     }
 
     @Override
+    @GetMapping(value = "/owned-coupons")
+    public ResponseEntity<ApiResultResponse<List<OwnedCouponResponse>>> getOwnedCoupons(
+            @AuthenticationPrincipal final LoginUser loginUser) {
+
+        if (loginUser == null || loginUser.id() == null) {
+            throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
+        }
+
+        List<OwnedCouponFindResult> findResults = couponService.getOwnedCoupons(loginUser.id());
+        List<OwnedCouponResponse> responses = findResults.stream()
+                .map(OwnedCouponResponse::from)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok().body(ApiResultResponse.success(responses));
+    }
+
+    @Override
     @PostMapping(value = "/{couponId}/usage")
-    public ResponseEntity<ApiResponse<CouponUsageResponse>> usage(
+    public ResponseEntity<ApiResultResponse<CouponUsageResponse>> usage(
             @AuthenticationPrincipal final LoginUser loginUser,
             @PathVariable final UUID couponId) {
 
@@ -99,25 +119,25 @@ public class CouponController implements CouponControllerDocs {
 
         CouponUsageCommand command = new CouponUsageCommand(loginUser.id(), couponId);
         CouponUsageResult result = couponService.usage(command);
-        return ResponseEntity.ok().body(ApiResponse.success(CouponUsageResponse.from(result)));
+        return ResponseEntity.ok().body(ApiResultResponse.success(CouponUsageResponse.from(result)));
     }
 
-    private ResponseEntity<ApiResponse<String>> getCommonResponseResponseEntity(CouponIssueCommand command) {
+    private ResponseEntity<ApiResultResponse<String>> getCommonResponseResponseEntity(CouponIssueCommand command) {
         CouponIssueRequestResult result = couponService.issue(command);
 
         return switch (result) {
             case SUCCESS -> ResponseEntity.status(HttpStatus.ACCEPTED)
-                    .body(ApiResponse.success("쿠폰 발급 요청이 성공적으로 접수되었습니다. 잠시 후 쿠폰함에서 확인해주세요."));
+                    .body(ApiResultResponse.success("쿠폰 발급 요청이 성공적으로 접수되었습니다. 잠시 후 쿠폰함에서 확인해주세요."));
             case SOLD_OUT -> ResponseEntity.status(HttpStatus.OK)
-                    .body(ApiResponse.success("아쉽지만, 쿠폰이 모두 소진되었습니다."));
+                    .body(ApiResultResponse.success("아쉽지만, 쿠폰이 모두 소진되었습니다."));
             case DUPLICATE -> ResponseEntity.status(HttpStatus.OK)
-                    .body(ApiResponse.success("이미 참여하셨습니다."));
+                    .body(ApiResultResponse.success("이미 참여하셨습니다."));
         };
     }
 
     @Override
     @GetMapping("/sentry-test")
-    public ResponseEntity<ApiResponse<Void>> sentryTest() {
+    public ResponseEntity<ApiResultResponse<Void>> sentryTest() {
         throw new CouponException(ErrorType.SENTRY_ERROR);
     }
 }

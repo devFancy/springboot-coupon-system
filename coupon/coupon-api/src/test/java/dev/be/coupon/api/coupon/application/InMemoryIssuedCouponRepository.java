@@ -4,10 +4,12 @@ package dev.be.coupon.api.coupon.application;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class InMemoryIssuedCouponRepository implements IssuedCouponRepository {
 
@@ -37,5 +39,12 @@ public class InMemoryIssuedCouponRepository implements IssuedCouponRepository {
         return issuedCoupons.values().stream()
                 .filter(ic -> ic.getUserId().equals(userId) && ic.getCouponId().equals(couponId))
                 .findFirst();
+    }
+
+    @Override
+    public List<IssuedCoupon> findAllByUserId(final UUID userId) {
+        return issuedCoupons.values().stream()
+                .filter(ic -> ic.getUserId().equals(userId))
+                .collect(Collectors.toList());
     }
 }

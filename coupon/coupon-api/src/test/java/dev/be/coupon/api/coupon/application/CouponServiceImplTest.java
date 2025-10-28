@@ -3,6 +3,7 @@ package dev.be.coupon.api.coupon.application;
 import dev.be.coupon.api.coupon.application.dto.CouponIssueCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageCommand;
 import dev.be.coupon.api.coupon.application.dto.CouponUsageResult;
+import dev.be.coupon.api.coupon.application.dto.OwnedCouponFindResult;
 import dev.be.coupon.api.support.error.CouponException;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponDiscountType;
@@ -15,6 +16,7 @@ import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -145,6 +148,68 @@ class CouponServiceImplTest {
         // then
         assertThat(successCount.get()).isEqualTo(100);
         assertThat(soldOutCount.get()).isEqualTo(requestCount - totalQuantity);
+    }
+
+    @DisplayName("사용자가 발급받은 쿠폰이 1개 이상 있을 떄, 쿠폰 목록을 리스트로 반환한다.")
+    @Test
+    void success_should_return_all_coupons_for_a_user() {
+        // given
+        final UUID userId = UUID.randomUUID();
+
+        // 1. 사용한 쿠폰
+        final Coupon coupon1 = createCoupon(10);
+        final IssuedCoupon issuedCoupon1 = new IssuedCoupon(userId, coupon1.getId());
+        issuedCoupon1.use(LocalDateTime.now().minusDays(1));
+        issuedCouponRepository.save(issuedCoupon1);
+
+        // 2. 미사용한 쿠폰
+        final Coupon coupon2 = createCoupon(10);
+        issueCoupon(userId, coupon2.getId());
+
+        // when
+        List<OwnedCouponFindResult> results = couponServiceImpl.getOwnedCoupons(userId);
+
+        // then
+        assertThat(results).hasSize(2);
+        assertThat(results).extracting("couponId", "used")
+                .containsExactlyInAnyOrder(
+                        tuple(coupon1.getId(), true),
+                        tuple(coupon2.getId(), false)
+                );
+    }
+
+    @DisplayName("[성공] 사용자가 발급받은 쿠폰이 없으면, 빈 리스트를 반환한다.")
+    @Test
+    void success_should_return_empty_list_when_user_has_no_coupons() {
+        // given
+        final UUID userId = UUID.randomUUID();
+
+        // when
+        List<OwnedCouponFindResult> results = couponServiceImpl.getOwnedCoupons(userId);
+
+        // then
+        assertThat(results).isEmpty();
+    }
+
+    @DisplayName("발급된 쿠폰의 원본 쿠폰이 삭제된 경우 해당 쿠폰을 제외하고 반환한다.")
+    @Test
+    void fail_should_filter_out_coupons_with_missing_definitions() {
+        // given
+        final UUID userId = UUID.randomUUID();
+
+        final Coupon coupon = createCoupon(10);
+        issueCoupon(userId, coupon.getId());
+
+        final Coupon deletedCoupon = createCoupon(10);
+        issueCoupon(userId, deletedCoupon.getId());
+        couponRepository.delete(deletedCoupon);
+
+        // when
+        List<OwnedCouponFindResult> results = couponServiceImpl.getOwnedCoupons(userId);
+
+        // then
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).couponId()).isEqualTo(coupon.getId());
     }
 
     @DisplayName("사용자가 발급된 쿠폰을 사용하면 사용 처리된다.")
