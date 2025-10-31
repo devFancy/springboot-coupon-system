@@ -1,7 +1,7 @@
 {
   "id": null,
   "uid": "coupon-consumer-prometheus",
-  "title": "Coupon Consumer - Prometheus Dashboard",
+  "title": "Coupon Consumer - Dashboard",
   "editable": true,
   "timezone": "browser",
   "schemaVersion": 36,
@@ -226,6 +226,65 @@
         "w": 12,
         "x": 12,
         "y": 16
+      }
+    },
+    {
+      "type": "graph",
+      "title": "DB Active Connections (HikariCP) - PORT: 8083",
+      "id": 8,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{instance=\"host.docker.internal:8083\"}",
+          "refId": "A",
+          "legendFormat": "{{pool}} Active"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Count",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "type": "graph",
+      "title": "DB Pending Connections (HikariCP) - PORT: 8083",
+      "id": 9,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_pending{instance=\"host.docker.internal:8083\"}",
+          "refId": "A",
+          "legendFormat": "{{pool}} Pending"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Count",
+          "min": 0,
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
       }
     }
   ],
