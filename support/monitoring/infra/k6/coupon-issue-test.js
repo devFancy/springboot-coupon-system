@@ -10,12 +10,6 @@ import {sleep} from 'k6';
 // };
 
 export const options = {
-    ext: {
-        influxdb: {
-            // k6가 InfluxDB로 데이터를 보내는 주기를 5초로 설정합니다.
-            pushInterval: '5s',
-        },
-    },
     scenarios: {
         warmup_then_load: {
             executor: 'ramping-vus',

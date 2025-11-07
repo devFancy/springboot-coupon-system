@@ -37,11 +37,12 @@ export default function (data) {
     const token = data.token;
 
     const createPayload = JSON.stringify({
-        name: "치킨 쿠폰",
-        type: "CHICKEN",
-        totalQuantity: 500,
-        validFrom: new Date().toISOString(),
-        validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7일 후
+        couponName: "치킨 5000원 할인 쿠폰",
+        couponType: "CHICKEN",
+        couponDiscountType: "FIXED",
+        couponDiscountValue: 5000,
+        totalQuantity: 100000, // default: 500
+        expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7일 후
     });
 
     const createHeaders = {

@@ -9,12 +9,13 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import static java.util.Objects.isNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
+
+import static java.util.Objects.isNull;
 
 /**
  * Coupon (쿠폰)
@@ -42,11 +43,11 @@ public class Coupon {
     @Embedded
     private CouponName couponName;
 
-    @Column(name = "coupon_type", nullable = false)
+    @Column(name = "coupon_type", nullable = false, columnDefinition = "varchar(255)")
     @Enumerated(EnumType.STRING)
     private CouponType couponType;
 
-    @Column(name = "coupon_discount_type", nullable = false)
+    @Column(name = "coupon_discount_type", nullable = false, columnDefinition = "varchar(255)")
     @Enumerated(EnumType.STRING)
     private CouponDiscountType couponDiscountType;
 
