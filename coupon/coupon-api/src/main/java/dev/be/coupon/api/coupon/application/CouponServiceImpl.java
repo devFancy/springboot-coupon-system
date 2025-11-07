@@ -100,7 +100,7 @@ public class CouponServiceImpl implements CouponService {
         // 2. 선착순 보장 (Redis INCR 활용)
         long entryOrder = couponEntryRedisCounter.increment(couponId);
         if (entryOrder > totalQuantity) {
-            log.warn("선착순 마감(절대 순번 기준) - userId: {}, entryOrder: {}, totalQuantity: {}", userId, entryOrder, totalQuantity);
+            log.info("선착순 마감(절대 순번 기준) - userId: {}, entryOrder: {}, totalQuantity: {}", userId, entryOrder, totalQuantity);
             couponRedisDuplicateValidate.remove(couponId, userId);
             return CouponIssueRequestResult.SOLD_OUT;
         }
@@ -144,7 +144,7 @@ public class CouponServiceImpl implements CouponService {
                     Coupon coupon = couponMap.get(issuedCoupon.getCouponId());
 
                     if (coupon == null) {
-                        log.warn("[CouponServiceImpl_getOwnedCoupons] 발급된 쿠폰(ID: {})이 있으나, 원본 쿠폰(ID: {})을 찾을 수 없습니다.",
+                        log.info("[CouponServiceImpl_getOwnedCoupons] 발급된 쿠폰(ID: {})이 있으나, 원본 쿠폰(ID: {})을 찾을 수 없습니다.",
                                 issuedCoupon.getId(), issuedCoupon.getCouponId());
                         return null;
                     }
@@ -175,7 +175,7 @@ public class CouponServiceImpl implements CouponService {
 
         IssuedCoupon issuedCoupon = issuedCouponRepository.findByUserIdAndCouponId(userId, couponId)
                 .orElseThrow(() -> {
-                    log.warn("사용자 ID:{})에게 발급된 쿠폰 정의 ID: {}이 존재하지 않습니다.", userId, couponId);
+                    log.info("사용자 ID:{})에게 발급된 쿠폰 정의 ID: {}이 존재하지 않습니다.", userId, couponId);
                     return new CouponException(ErrorType.ISSUED_COUPON_NOT_FOUND);
                 });
 
