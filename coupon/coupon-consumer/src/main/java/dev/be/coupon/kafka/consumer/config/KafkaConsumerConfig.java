@@ -43,8 +43,8 @@ public class KafkaConsumerConfig {
         // 1. 신뢰성 관련 설정
         // 1-1) 오프셋 수동 커밋 설정 -> 메시지 처리 완료 후 애플리케이션이 직접 커밋 시점을 제어하여, 메시지 유실을 방지.
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        // 1-2) 새로운 컨슈머 그룹이 처음 토픽을 읽을 때, 가장 오래된 메시지부터 읽도록 설정
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        // 1-2) 가장 최신 메시지, 즉 컨슈머가 실행된 이후에 들어오는 메시지부터 읽기 시작한다.
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 
         // 2. 안정성 관련 설정
         // 2-1) 컨슈머가 브로커(그룹 코디네이터)에게 하트비트를 보내지 않고 버틸 수 있는 최대 시간(기본값: 10,000 ms = 10초)
@@ -92,8 +92,7 @@ public class KafkaConsumerConfig {
         backOff.setMaxAttempts(5);
 
         // backOff으로 재시도 횟수만큼 실행하고, 그래도 실패하면 recoverer(DLQ) 실행
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
-        return errorHandler;
+        return new DefaultErrorHandler(recoverer, backOff);
     }
 
     @Bean
