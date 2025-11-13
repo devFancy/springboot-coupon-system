@@ -27,6 +27,11 @@ spring:
     listener:
       ack-mode: manual
 
+redisson:
+  rate-limiter:
+    coupon-issue:
+      tps: 300
+
 kafka:
   topic:
     coupon-issue: coupon_issue
