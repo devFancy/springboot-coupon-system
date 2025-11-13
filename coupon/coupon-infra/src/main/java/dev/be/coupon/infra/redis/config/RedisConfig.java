@@ -28,7 +28,7 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}")
     private int redisPort;
 
-    @Value("${radisson.rate-limiter.coupon-issue.tps:100}")
+    @Value("${redisson.rate-limiter.coupon-issue.tps:100}")
     private long totalMaxTps;
 
     private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
