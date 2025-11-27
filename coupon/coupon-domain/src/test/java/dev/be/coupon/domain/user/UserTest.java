@@ -5,15 +5,19 @@ import dev.be.coupon.domain.user.infrastructure.FakePasswordHasherClient;
 import dev.be.coupon.domain.user.vo.Password;
 import dev.be.coupon.domain.user.vo.PasswordHasher;
 import dev.be.coupon.domain.user.vo.Username;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import static dev.be.coupon.domain.user.UserFixtures.관리자;
+import static dev.be.coupon.domain.user.UserFixtures.사용자;
+import static dev.be.coupon.domain.user.UserFixtures.이름이_없는_사용자;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UserTest {
 
@@ -32,7 +36,7 @@ class UserTest {
         final String password = "password1";
 
         // when
-        final User user = new User(username, password, passwordHasher);
+        final User user = 사용자(username, password, passwordHasher);
 
         // then
         assertThat(user.getId()).isNotNull();
@@ -40,7 +44,17 @@ class UserTest {
         assertThat(passwordHasher.matches(password, user.getPassword())).isTrue();
     }
 
-    @DisplayName("사용자의 이름이 존재하지 않으면 안된다")
+    @DisplayName("관리자 권한을 부여하면 UserRole이 ADMIN이 된다.")
+    @Test
+    void create_admin_user() {
+        // given & when
+        User admin = 관리자(passwordHasher);
+
+        // then
+        assertThat(admin.getUserRole()).isEqualTo(UserRole.ADMIN);
+    }
+
+    @DisplayName("사용자의 이름이 존재하지 않으면 예외가 발생한다.")
     @ParameterizedTest(name = "사용자의 이름: {0}")
     @NullAndEmptySource
     @ValueSource(strings = {"", " ", "   "})
@@ -51,7 +65,16 @@ class UserTest {
                 .hasMessage("사용자의 이름이 존재해야 합니다.");
     }
 
-    @DisplayName("사용자의 비밀번호가 존재하지 않으면 안된다")
+    @DisplayName("사용자 생성 시 이름이 없으면 예외가 발생한다.")
+    @Test
+    void fail_create_user_invalid_name() {
+        // given & when & then
+        assertThatThrownBy(() -> 이름이_없는_사용자(passwordHasher))
+                .isInstanceOf(UserDomainException.class)
+                .hasMessage("사용자의 이름이 존재해야 합니다.");
+    }
+
+    @DisplayName("사용자의 비밀번호가 존재하지 않으면 예외가 발생한다.")
     @ParameterizedTest(name = "사용자의 비밀번호: {0}")
     @NullAndEmptySource
     @ValueSource(strings = {"", " ", "   "})

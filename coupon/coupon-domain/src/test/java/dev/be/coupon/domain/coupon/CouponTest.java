@@ -1,14 +1,20 @@
 package dev.be.coupon.domain.coupon;
 
 import dev.be.coupon.domain.coupon.exception.CouponDomainException;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import static dev.be.coupon.domain.coupon.CouponFixtures.만료된_쿠폰;
+import static dev.be.coupon.domain.coupon.CouponFixtures.정상_쿠폰;
+import static dev.be.coupon.domain.coupon.CouponFixtures.쿠폰_이름이_존재하지_않음;
+import static dev.be.coupon.domain.coupon.CouponFixtures.쿠폰_총_발급_수량이_0보다_작은경우;
+import static dev.be.coupon.domain.coupon.CouponFixtures.쿠폰_할인_유형이_존재하지_않음;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CouponTest {
 
@@ -16,14 +22,7 @@ class CouponTest {
     @Test
     void success_create_coupon() {
         // given & when
-        Coupon coupon = new Coupon(
-                "선착순 쿠폰",
-                CouponType.BURGER,
-                CouponDiscountType.FIXED,
-                BigDecimal.valueOf(10_000L),
-                100,
-                LocalDateTime.now().plusDays(7)
-        );
+        Coupon coupon = 정상_쿠폰();
 
         // then
         assertThat(coupon.getId()).isNotNull();
@@ -34,14 +33,7 @@ class CouponTest {
     @Test
     void fail_should_throw_exception_when_coupon_name_is_null() {
         // given & when & then
-        assertThatThrownBy(() -> new Coupon(
-                        null,
-                        CouponType.BURGER,
-                        CouponDiscountType.FIXED,
-                        BigDecimal.valueOf(10_000L),
-                        100,
-                        LocalDateTime.now().plusDays(7)
-                )
+        assertThatThrownBy(() -> 쿠폰_이름이_존재하지_않음()
         ).isInstanceOf(CouponDomainException.class)
                 .hasMessage("쿠폰 이름이 존재해야 합니다.");
     }
@@ -50,14 +42,7 @@ class CouponTest {
     @Test
     void fail_should_throw_exception_when_coupon_discount_type_is_null() {
         // given & when & then
-        assertThatThrownBy(() -> new Coupon(
-                        "선착순 쿠폰",
-                        CouponType.BURGER,
-                        null,
-                        BigDecimal.valueOf(10_000L),
-                        100,
-                        LocalDateTime.now().plusDays(7)
-                )
+        assertThatThrownBy(() -> 쿠폰_할인_유형이_존재하지_않음()
         ).isInstanceOf(CouponDomainException.class)
                 .hasMessage("쿠폰 생성에 필요한 정보가 누락되었습니다.");
     }
@@ -66,14 +51,7 @@ class CouponTest {
     @Test
     void fail_should_throw_exception_when_coupon_totalQuantity_less_then_1() {
         // given & when & then
-        assertThatThrownBy(() -> new Coupon(
-                        "선착순 쿠폰",
-                        CouponType.BURGER,
-                        CouponDiscountType.FIXED,
-                        BigDecimal.valueOf(10_000L),
-                        0,
-                        LocalDateTime.now().plusDays(7)
-                )
+        assertThatThrownBy(() -> 쿠폰_총_발급_수량이_0보다_작은경우()
         ).isInstanceOf(CouponDomainException.class)
                 .hasMessage("쿠폰 발급 수량은 1 이상이야 합니다.");
     }
@@ -82,14 +60,7 @@ class CouponTest {
     @Test
     void fail_should_throw_exception_when_coupon_expiredAt_is_invalid() {
         // given & when & then
-        assertThatThrownBy(() -> new Coupon(
-                        "선착순 쿠폰",
-                        CouponType.BURGER,
-                        CouponDiscountType.FIXED,
-                        BigDecimal.valueOf(10_000L),
-                        100,
-                        LocalDateTime.now().minusDays(1)
-                )
+        assertThatThrownBy(() -> 만료된_쿠폰()
         ).isInstanceOf(CouponDomainException.class)
                 .hasMessage("ACTIVE 상태 쿠폰의 만료일은 현재 시간보다 이후여야 합니다.");
     }
@@ -99,7 +70,12 @@ class CouponTest {
     void success_update_coupon_status_to_active() {
         // given
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(10);
-        Coupon coupon = new Coupon("쿠폰", CouponType.BURGER, CouponDiscountType.FIXED, BigDecimal.valueOf(10_000L), 100, expiredAt);
+        Coupon coupon = new Coupon(
+                "쿠폰",
+                CouponType.BURGER,
+                CouponDiscountType.FIXED, BigDecimal.valueOf(10_000L),
+                100,
+                expiredAt);
 
         // when & then
         assertThatCode(() -> coupon.validateStatusIsActive(expiredAt))
