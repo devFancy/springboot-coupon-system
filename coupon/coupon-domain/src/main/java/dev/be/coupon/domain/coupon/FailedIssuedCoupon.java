@@ -1,5 +1,6 @@
 package dev.be.coupon.domain.coupon;
 
+import dev.be.coupon.domain.coupon.exception.CouponDomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -8,6 +9,8 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
+
+import static java.util.Objects.isNull;
 
 /**
  * FailedIssuedCoupon (쿠폰 발급 실패 이력)
@@ -52,6 +55,9 @@ public class FailedIssuedCoupon {
     }
 
     public FailedIssuedCoupon(final UUID userId, final UUID couponId) {
+        if (isNull(userId) || isNull(couponId)) {
+            throw new CouponDomainException("쿠폰 생성에 필요한 정보가 누락되었습니다.");
+        }
         this.id = UUID.randomUUID();
         this.userId = userId;
         this.couponId = couponId;
