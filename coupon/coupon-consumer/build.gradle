@@ -18,20 +18,17 @@ dependencies {
 	// kafka
 	implementation 'org.springframework.kafka:spring-kafka'
 
-	// test
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation("org.springframework.kafka:spring-kafka-test")
-
 	// jackson
 	implementation 'com.fasterxml.jackson.core:jackson-core:2.15.3'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
 
-	// db - mysql
+	// mysql
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
 	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testImplementation(testFixtures(project(":coupon:coupon-domain")))
 }
 
 tasks.withType(Test).configureEach {
