@@ -14,9 +14,6 @@ import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.exception.CouponDomainException;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.tuple;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,6 +30,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static dev.be.coupon.domain.coupon.CouponFixtures.정상_쿠폰;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * CouponServiceImplTest 주의사항:
@@ -288,14 +290,7 @@ class CouponServiceImplTest {
     }
 
     private Coupon createCoupon(final int totalQuantity) {
-        Coupon coupon = new Coupon(
-                "선착순 쿠폰",
-                CouponType.BURGER,
-                CouponDiscountType.FIXED,
-                BigDecimal.valueOf(10_000L),
-                totalQuantity,
-                LocalDateTime.now().plusDays(7)
-        );
+        Coupon coupon = 정상_쿠폰(totalQuantity);
         return couponRepository.save(coupon);
     }
 
