@@ -9,16 +9,12 @@ dependencies {
 
     // spring boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-    // spring data jpa
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     // spring security
     implementation 'org.springframework.security:spring-security-crypto'
 
-    // h2, mysql
-    runtimeOnly 'com.h2database:h2'
+    // mysql
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     // flyway
@@ -44,18 +40,19 @@ dependencies {
     // jackson
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
-    // awaitility - 비동기 처리
-    testImplementation ("org.awaitility:awaitility:${awaitilityVersion}")
-
     // sentry
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${property("sentryVersion")}"
 
+    // test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation ("org.awaitility:awaitility:${awaitilityVersion}")
+    testImplementation(testFixtures(project(":coupon:coupon-domain")))
 }
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
 }
 
-compileJava {
-    options.compilerArgs << '-parameters'
+tasks.withType(JavaCompile) {
+    options.compilerArgs += '-parameters'
 }
