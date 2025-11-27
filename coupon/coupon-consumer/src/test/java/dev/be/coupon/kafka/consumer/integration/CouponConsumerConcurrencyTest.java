@@ -1,13 +1,9 @@
 package dev.be.coupon.kafka.consumer.integration;
 
 import dev.be.coupon.domain.coupon.Coupon;
-import dev.be.coupon.domain.coupon.CouponDiscountType;
-import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,13 +13,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import static dev.be.coupon.domain.coupon.CouponFixtures.정상_쿠폰;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -81,14 +79,7 @@ public class CouponConsumerConcurrencyTest {
 
 
     private Coupon createCoupon(final int totalQuantity) {
-        Coupon coupon = new Coupon(
-                "선착순 쿠폰",
-                CouponType.BURGER,
-                CouponDiscountType.FIXED,
-                BigDecimal.valueOf(10_000L),
-                totalQuantity,
-                LocalDateTime.now().plusDays(7)
-        );
+        Coupon coupon = 정상_쿠폰(totalQuantity);
         return couponRepository.save(coupon);
     }
 }
