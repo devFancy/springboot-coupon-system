@@ -7,42 +7,46 @@ import io.sentry.Hint;
 import io.sentry.SentryEvent;
 import io.sentry.SentryOptions;
 import io.sentry.protocol.SentryException;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.logging.LogLevel;
 import org.springframework.stereotype.Component;
+
+
+/**
+ * NOTE: Sentry로 전송되는 이벤트를 전처리하는 콜백이다.
+ * - 중요도가 낮은(INFO) 비즈니스 예외는 Sentry로 전송하지 않는다.
+ * - ErrorCode를 태그로 주입하여, 대시보드에서 정밀한 검색 및 알림 설정을 지원한다.
+ */
 @Component
 public class SentryBeforeSendCallback implements SentryOptions.BeforeSendCallback {
     private static final String ERROR_CODE_TAG = "errorCode";
     private final Logger log = LoggerFactory.getLogger(SentryBeforeSendCallback.class);
 
     @Override
-    public SentryEvent execute(SentryEvent event, Hint hint) {
+    public SentryEvent execute(@NotNull SentryEvent event, @NotNull Hint hint) {
 
         if (event.getExceptions() != null && !event.getExceptions().isEmpty()) {
             SentryException sentryException = event.getExceptions().get(0);
-
-            String exceptionType = sentryException.getType();
-            String exceptionValue = sentryException.getValue();
-
-            log.debug("Sentry Exception Type: {}, Value: {}", exceptionType, exceptionValue);
+            log.debug("Sentry Exception Type: {}, Value: {}", sentryException.getType(), sentryException.getValue());
         }
 
-        // hint 객체에서 원본 예외(Throwable)를 가져옵니다.
         Throwable throwable = event.getThrowable();
 
-        // 발생한 예외가 우리가 정의한 CouponException 타입인지 확인합니다.
-        if (throwable instanceof CouponException) {
-            CouponException couponException = (CouponException) throwable;
-
-            // CouponException에서 ErrorType을 가져옵니다.
+        // 커스텀 예외(CouponException)인 경우에만 전처리 로직 수행
+        if (throwable instanceof CouponException couponException) {
             ErrorType errorType = couponException.getErrorType();
-            // ErrorType과 그 안의 ErrorCode가 null이 아닌지 확인 후, ErrorCode의 이름(e.g., "E400", "E500")을 태그로 설정합니다.
-            if (errorType != null && errorType.getCode() != null) {
-                event.setTag(ERROR_CODE_TAG, errorType.getCode().name());
+
+            if (errorType != null) {
+                if (errorType.getLogLevel() == LogLevel.INFO) {
+                    return null;
+                }
+                if (errorType.getCode() != null) {
+                    event.setTag(ERROR_CODE_TAG, errorType.getCode().name());
+                }
             }
         }
         return event;
     }
 }
-
-
