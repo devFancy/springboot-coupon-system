@@ -19,10 +19,6 @@ scrape_configs:
     static_configs:
       - targets: [ 'redis-exporter:9121' ]
 
-  - job_name: 'burrow-exporter'
-    static_configs:
-      - targets: [ 'burrow-exporter:9098' ]
-
 # Spring Boot 애플리케이션들의 메트릭 엔드포인트(/actuator/prometheus)를 모듈별로 다른 포트에서 노출하도록 설정
 # 각 모듈의 application.yml 또는 profile 설정에서 management.server.port 값을 개별 지정
 # prometheus.yml 에서는 모듈별 job_name을 나누고, 해당 포트에 맞게 scrape 대상을 추가해야 함
