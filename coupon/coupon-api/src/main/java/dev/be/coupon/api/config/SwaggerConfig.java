@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,6 +14,12 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
 
     public static final String AUTHORIZATION = "Authorization";
+
+    private final BuildProperties buildProperties;
+
+    public SwaggerConfig(final BuildProperties buildProperties) {
+        this.buildProperties = buildProperties;
+    }
 
     @Bean
     public OpenAPI openAPI() {
@@ -41,6 +48,6 @@ public class SwaggerConfig {
         return new Info()
                 .title("[Coupon] Server API")
                 .description("[Coupon] Server API 명세서입니다.")
-                .version("1.4.7");
+                .version(buildProperties.getVersion());
     }
 }

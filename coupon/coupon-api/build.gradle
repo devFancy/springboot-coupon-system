@@ -62,3 +62,7 @@ processResources {
         expand(applicationVersion: applicationVersion)
     }
 }
+
+springBoot {
+    buildInfo()
+}
