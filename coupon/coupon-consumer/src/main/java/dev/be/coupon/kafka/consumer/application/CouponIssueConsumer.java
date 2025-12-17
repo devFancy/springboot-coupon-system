@@ -47,7 +47,7 @@ public class CouponIssueConsumer {
 
     @KafkaListener(topics = "${kafka.topic.coupon-issue-retry}", groupId = "group_1")
     public void listenerRetry(final CouponIssueMessage message,
-                         final Acknowledgment ack) {
+                              final Acknowledgment ack) {
         rateLimiter.acquire(1);
 
         log.info("[CouponIssueConsumer_listenerRetry] 재시도 발급 처리 메시지 수신: userId={}, couponId={}", message.userId(), message.couponId());

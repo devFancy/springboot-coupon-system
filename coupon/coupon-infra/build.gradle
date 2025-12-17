@@ -9,7 +9,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // redis - redisson
-    implementation ("org.redisson:redisson-spring-boot-starter:${redissonVersion}")
+    implementation("org.redisson:redisson-spring-boot-starter:${redissonVersion}")
 
     // kafka
     implementation 'org.springframework.kafka:spring-kafka'
@@ -20,7 +20,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     // awaitility
-    testImplementation ("org.awaitility:awaitility:${awaitilityVersion}")
+    testImplementation("org.awaitility:awaitility:${awaitilityVersion}")
 }
 
 tasks.withType(Test).configureEach {

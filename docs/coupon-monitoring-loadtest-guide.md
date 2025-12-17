@@ -1,6 +1,8 @@
 # Spring Boot 기반 쿠폰 발급 시스템의 부하 테스트 및 모니터링 구성 가이드
 
-> 자세한 내용은 [3편. Prometheus와 Grafana로 Spring Boot 기반 모니터링 대시보드 구축하기](https://devfancy.github.io/SpringBoot-Monitoring-Prometheus-Grafana/)을 참고해 주시기 바랍니다.
+> 자세한
+> 내용은 [3편. Prometheus와 Grafana로 Spring Boot 기반 모니터링 대시보드 구축하기](https://devfancy.github.io/SpringBoot-Monitoring-Prometheus-Grafana/)
+> 을 참고해 주시기 바랍니다.
 
 ## 전체 시각화
 

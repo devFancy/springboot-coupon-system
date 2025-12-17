@@ -3,22 +3,22 @@ spring:
     url: jdbc:mysql://localhost:3306/couponDB
     username: root
     password: 1234
-  flyway:
-    enabled: false
-    locations: classpath:db/migration
   jpa:
-    open-in-view: false # OSIV 기능을 비활성화합니다.
+    open-in-view: false
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
         format_sql: true
         show_sql: true
-  # sprig boot 3.x
+  flyway:
+    enabled: false
+
   data:
     redis:
       host: localhost
       port: 6379
+
   kafka:
     producer:
       bootstrap-servers: localhost:9092
@@ -48,4 +48,4 @@ security:
     token:
       secret-key: coupon@dPtnfwjdasdkkasjdnvxcu32ad128znczSs2n42dbashdyasdbav2Clvyx9vsnasd
       access:
-        expire-length : 3600000 # 1시간
+        expire-length: 3600000 # 1시간

@@ -1,5 +1,5 @@
 alter table coupons
-    drop
+drop
 column valid_from,
     drop
 column valid_until,

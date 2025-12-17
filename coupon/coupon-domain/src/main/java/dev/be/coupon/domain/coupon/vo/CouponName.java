@@ -3,6 +3,7 @@ package dev.be.coupon.domain.coupon.vo;
 import dev.be.coupon.domain.coupon.exception.CouponDomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+
 import static java.util.Objects.isNull;
 
 import java.util.Objects;
@@ -21,7 +22,7 @@ public class CouponName {
         this.name = name;
     }
 
-    private void validate(final  String value) {
+    private void validate(final String value) {
         if (isNull(value) || value.isBlank()) {
             throw new CouponDomainException("쿠폰 이름이 존재해야 합니다.");
         }

@@ -43,6 +43,7 @@ public class JwtTokenProvider implements TokenProvider {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
+
     public void validateToken(final String token) {
         try {
             Jws<Claims> claims = Jwts.parserBuilder()
@@ -56,6 +57,7 @@ public class JwtTokenProvider implements TokenProvider {
             throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
         }
     }
+
     public String getPayLoad(final String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key)

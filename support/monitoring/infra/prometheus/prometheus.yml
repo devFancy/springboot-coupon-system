@@ -7,17 +7,21 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: ['host.docker.internal:8082']
+      - targets: [ 'host.docker.internal:8082' ]
 
   - job_name: 'coupon-consumer'
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: ['host.docker.internal:8083']
+      - targets: [ 'host.docker.internal:8083' ]
 
   - job_name: 'redis-exporter'
     static_configs:
-      - targets: [ 'redis-exporter:9121' ] # redis-exporter 서비스 이름과 내부 포트 사용
+      - targets: [ 'redis-exporter:9121' ]
+
+  - job_name: 'burrow-exporter'
+    static_configs:
+      - targets: [ 'burrow-exporter:9098' ]
 
 # Spring Boot 애플리케이션들의 메트릭 엔드포인트(/actuator/prometheus)를 모듈별로 다른 포트에서 노출하도록 설정
 # 각 모듈의 application.yml 또는 profile 설정에서 management.server.port 값을 개별 지정

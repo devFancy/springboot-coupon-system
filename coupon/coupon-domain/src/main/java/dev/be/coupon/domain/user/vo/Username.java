@@ -3,6 +3,7 @@ package dev.be.coupon.domain.user.vo;
 import dev.be.coupon.domain.user.exception.UserDomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+
 import static java.util.Objects.isNull;
 
 import java.util.Objects;
@@ -21,7 +22,7 @@ public class Username {
         this.username = username;
     }
 
-    private void validate(final  String value) {
+    private void validate(final String value) {
         if (isNull(value) || value.isBlank()) {
             throw new UserDomainException("사용자의 이름이 존재해야 합니다.");
         }
