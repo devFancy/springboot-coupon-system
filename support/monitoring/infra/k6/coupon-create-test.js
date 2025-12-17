@@ -41,7 +41,7 @@ export default function (data) {
         couponType: "CHICKEN",
         couponDiscountType: "FIXED",
         couponDiscountValue: 5000,
-        totalQuantity: 100000, // default: 500
+        totalQuantity: 500,
         expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7일 후
     });
 

@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
 import static java.util.Objects.isNull;
 
 import java.time.LocalDateTime;
@@ -30,7 +31,7 @@ import java.util.UUID;
 /**
  * 도메인 모듈(coupon-domain)에 위치하며,
  * coupon-api, coupon-consumer 모듈에서 함께 사용됩니다.
- *
+ * <p>
  * 중복 발급 방지를 위해 userId + couponId 조합에 대해 유니크 제약 조건이 적용됩니다.
  */
 @Table(name = "issued_coupons",

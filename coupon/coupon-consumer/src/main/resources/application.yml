@@ -9,21 +9,19 @@ spring:
       - logging.yml
   web.resources.add-mappings: false
 
+server:
+  tomcat:
+    max-connections: 20000
+    threads:
+      max: 600
+      min-spare: 100
+
 management:
   server:
     port: 8083
   metrics:
     enable:
       kafka: true
-
-server:
-  tomcat:
-    max-connections: 10000
-    accept-count: 2000
-    connection-timeout: 10000
-    threads:
-      max: 500
-      min-spare: 100
 
 ---
 spring.config.activate.on-profile: local
