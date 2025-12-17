@@ -16,14 +16,12 @@ export const options = {
             startVUs: 0,
             stages: [
                 {duration: '1m', target: 1000},
-                // {duration: '9m', target: 1000},
-                {duration: '1m', target: 2000},
-                {duration: '1m', target: 3000},
-                {duration: '1m', target: 4000},
-                {duration: '1m', target: 5000},
-                {duration: '1m', target: 6000},
-                { duration: '1m', target: 8000 },
-                { duration: '2m', target: 10000 },
+                {duration: '9m', target: 1000},
+                // {duration: '1m', target: 2000},
+                // {duration: '2m', target: 4000},
+                // {duration: '2m', target: 6000},
+                // { duration: '2m', target: 8000 },
+                // { duration: '2m', target: 10000 },
                 // { duration: '5m', target: 10000 },
             ],
         },
@@ -35,7 +33,7 @@ export const options = {
     },
 };
 
-const couponId = '138be4d5-9acd-4f55-a378-3895e5d64c0a'; // 쿠폰 ID
+const couponId = '09e058d4-ebd6-482b-b82f-ea917119f509'; // 쿠폰 ID
 
 export default function () {
     sleep(1);

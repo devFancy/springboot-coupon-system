@@ -3,6 +3,7 @@ package dev.be.coupon.domain.user.vo;
 import dev.be.coupon.domain.user.exception.UserDomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+
 import static java.util.Objects.isNull;
 
 import java.util.Objects;

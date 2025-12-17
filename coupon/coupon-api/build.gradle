@@ -18,21 +18,21 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     // flyway
-    implementation ("org.flywaydb:flyway-core:${flywayVersion}")
-    implementation ("org.flywaydb:flyway-mysql:${flywayVersion}")
+    implementation("org.flywaydb:flyway-core:${flywayVersion}")
+    implementation("org.flywaydb:flyway-mysql:${flywayVersion}")
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${swaggerVersion}")
 
     // jwt
-    implementation ("io.jsonwebtoken:jjwt-api:${jwtVersion}")
-    runtimeOnly ("io.jsonwebtoken:jjwt-impl:${jwtVersion}")
-    runtimeOnly ("io.jsonwebtoken:jjwt-jackson:${jwtVersion}")
+    implementation("io.jsonwebtoken:jjwt-api:${jwtVersion}")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:${jwtVersion}")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:${jwtVersion}")
 
     // redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // redis - redisson
-    implementation ("org.redisson:redisson-spring-boot-starter:${redissonVersion}")
+    implementation("org.redisson:redisson-spring-boot-starter:${redissonVersion}")
 
     // kafka
     implementation 'org.springframework.kafka:spring-kafka'
@@ -45,7 +45,7 @@ dependencies {
 
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation ("org.awaitility:awaitility:${awaitilityVersion}")
+    testImplementation("org.awaitility:awaitility:${awaitilityVersion}")
     testImplementation(testFixtures(project(":coupon:coupon-domain")))
 }
 
@@ -53,6 +53,16 @@ tasks.withType(Test).configureEach {
     useJUnitPlatform()
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += '-parameters'
+}
+
+processResources {
+    filesMatching('**/application.yml') {
+        expand(applicationVersion: applicationVersion)
+    }
+}
+
+springBoot {
+    buildInfo()
 }

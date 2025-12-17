@@ -68,14 +68,14 @@ public class KafkaConsumerConfig {
     }
 
     /**
-     *  Note: Kafka 리스너 예외 발생 시 'Exponential Backoff' 재시도 및 DLQ 전송 핸들러
-     *  [동작]
-     *  - 1. Exponential Backoff (최대 5회) 정책에 따라 메시지 재시도를 수행합니다.
-     *  - 2. 5회 재시도 모두 실패 시, DeadLetterPublishingRecoverer 를 사용하여
-     *  - 메시지를 '(DLQ)'으로 전송하여 데이터 유실을 방지합니다.
-     *  [TODO]
-     *  - 현재는 운영자가 DLQ에 메시지가 쌓이는지 모니터링하고, 장애 복구 후 수동 조치하는 방식
-     *  - 이 DLQ를 소비하여 자동으로 처리하는 별도의 스케줄러(배치)를 만들 수 있음.
+     * Note: Kafka 리스너 예외 발생 시 'Exponential Backoff' 재시도 및 DLQ 전송 핸들러
+     * [동작]
+     * - 1. Exponential Backoff (최대 5회) 정책에 따라 메시지 재시도를 수행합니다.
+     * - 2. 5회 재시도 모두 실패 시, DeadLetterPublishingRecoverer 를 사용하여
+     * - 메시지를 '(DLQ)'으로 전송하여 데이터 유실을 방지합니다.
+     * [TODO]
+     * - 현재는 운영자가 DLQ에 메시지가 쌓이는지 모니터링하고, 장애 복구 후 수동 조치하는 방식
+     * - 이 DLQ를 소비하여 자동으로 처리하는 별도의 스케줄러(배치)를 만들 수 있음.
      */
     @Bean
     public DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, Object> kafkaTemplate) {

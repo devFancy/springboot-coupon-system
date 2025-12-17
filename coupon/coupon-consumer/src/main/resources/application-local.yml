@@ -4,18 +4,19 @@ spring:
     username: root
     password: 1234
   jpa:
-    open-in-view: false # OSIV 기능을 비활성화합니다.
+    open-in-view: false
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
         format_sql: true
         show_sql: true
-  # sprig boot 3.x
+
   data:
     redis:
       host: localhost
       port: 6379
+
   kafka:
     producer:
       bootstrap-servers: localhost:9092, localhost:9093

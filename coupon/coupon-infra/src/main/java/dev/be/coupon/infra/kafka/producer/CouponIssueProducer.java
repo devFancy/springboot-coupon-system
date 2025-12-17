@@ -52,7 +52,7 @@ public class CouponIssueProducer {
         sendAndWaitForCompletion(retryRecord, payload);
     }
 
-    private void sendAndWaitForCompletion (final ProducerRecord<String, Object> record, final CouponIssueMessage payload) {
+    private void sendAndWaitForCompletion(final ProducerRecord<String, Object> record, final CouponIssueMessage payload) {
         kafkaTemplate.send(record).whenComplete((result, ex) -> {
             if (ex != null) {
                 log.error("메시지 전송 실패. Record: {}", record, ex);

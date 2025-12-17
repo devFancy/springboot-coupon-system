@@ -19,7 +19,6 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
-    private final String RATE_LIMITER = "coupon_issuance_rate_limiter";
     private static final String REDISSON_HOST_PREFIX = "redis://";
 
     @Value("${spring.data.redis.host}")
@@ -77,6 +76,7 @@ public class RedisConfig {
         log.info("[RedisConfig] RRateLimiter Bean 생성 시도 (Total TPS: {})", totalMaxTps);
 
         // NOTE: 모든 Consumer가 공유할 Redis 키 이름
+        final String RATE_LIMITER = "coupon_issuance_rate_limiter";
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(RATE_LIMITER);
 
         // NOTE: RateType.OVERALL : 모든 Consumer 인스턴스가 이 TPS를 공유 (필수)
