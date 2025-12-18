@@ -1,27 +1,29 @@
-# Coupon System Design
+# 선착순 이벤트를 보장하는 쿠폰 발급 시스템
 
-## 1. Project Overview
+## Project Overview
 
-본 프로젝트는 선착순 이벤트와 같이 대규모 동시 요청이 집중되는 상황에서 안정적인 쿠폰 발급을 목표로 설계된 시스템입니다.
+본 프로젝트는 이커머스 선착순 이벤트와 같이 단시간에 트래픽이 급증하는 상황에서도 안정적으로 쿠폰을 발급하기 위해 설계되었습니다.
 
-RDBMS의 커넥션 풀 한계와 락(Lock) 경합으로 인한 병목 현상 없이, 수천 TPS(Transactions Per Second) 수준의 트래픽을 처리하기 위해 Redis의 원자적 연산과 Kafka 메시지 큐를 활용한 비동기 아키텍처를 구현했습니다.
+RDBMS의 락으로 인한 성능 저하 문제를 해결하기 위해 Redis를 활용한 트래픽 제어와 Kafka 기반의 비동기 처리를 도입했습니다.
+
+이를 통해 사용자의 요청 대기 시간을 최소화하면서도, 백엔드 시스템의 데이터 정합성을 보장합니다.
 
 ### 주요 해결 과제
 
-* 트래픽 처리: 10,000명 이상의 동시 사용자를 가정하고, DB에 직접적인 부하를 주지 않으면서 초당 4,000건 이상의 요청을 처리합니다.
+* 트래픽 처리: 순간적인 대규모 트래픽 발생 시에도 DB 서버가 다운되지 않도록 부하를 격리합니다.
 
-* 데이터 정합성: Race Condition을 방지하고 정확한 쿠폰 수량 관리를 통해 데이터 무결성을 확보합니다. (선착순/중복 발급 제어)
+* 동시성 제어: 분산 환경에서 발생할 수 있는 Race Condition(동시성 이슈)을 제어하여, 정확한 수량(Exactly Once)의 쿠폰만 발급합니다.
 
-* 낮은 응답 시간 (Latency): 비동기 처리를 통해 사용자 API의 응답 속도를 50ms 미만으로 유지합니다.
+* 낮은 응답 시간: 복잡한 트랜잭션 처리를 뒤로 미루고 사용자에게는 빠른 응답 속도를 보장합니다.
 
-* 안정적인 장애 처리: 특정 컴포넌트(DB, Consumer)의 장애가 전체 시스템의 장애로 전파되지 않도록 격리하고, 데이터 유실 없는 재처리(Retry) 로직을 구현합니다.
+* 장애 허용: 일부 시스템(Consumer, DB) 장애 발생 시에도 사용자 요청이 유실되지 않도록 재처리 메커니즘을 구축합니다.
 
 
 ---
 
-## 2. Key Achievements & Metrics
+## Key Achievements & Metrics
 
-부하 테스트 도구(K6)를 사용하여 가상 유저 10,000명 시나리오로 테스트를 수행했습니다.
+로컬 개발 환경에서 부하 테스트 도구(K6)를 사용하여 가상 유저 10,000명 시나리오로 테스트를 수행했습니다.
 
 API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 구간에서 5xx 에러율 0%를 달성했습니다.
 
@@ -36,7 +38,7 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 
 ---
 
-## 3. System Architecture
+## System Architecture
 
 ![](/docs/image/Coupon-Issue-System-Architecture.png)
 
@@ -48,19 +50,19 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 
 > Stage 1: API 서버 (선착순 판별 및 Kafka 발행)
 
-* 중복 참여 및 선착순 검증 (Redis): DB 접근 시 발생하는 락 경합(Lock Contention)을 피하기 위해, In-Memory 데이터 저장소인 Redis를 '문지기' 역할로 활용합니다.
+* 중복 참여 및 선착순 검증 (Redis): DB 접근 시 발생하는 락 경합을 피하기 위해, In-Memory 저장소인 Redis를 활용했습니다.
 
-  * SADD: 중복 참여자인지 확인 (Set 자료구조, O(1))
+  * SADD: 중복 참여자인지 확인 (O(1))
 
-  * INCR: 선착순 수량을 카운트 (Atomic 연산, O(1))
+  * INCR: 선착순 수량을 카운트 (O(1))
 
-* 비동기 발행 (Kafka): Redis 검증을 통과한 요청은 즉시 Kafka 토픽에 메시지를 발행합니다. API 서버는 DB 트랜잭션을 기다리지 않고 사용자에게 `요청 접수` 응답을 반환하여, DB 부하와 관계없이 높은 TPS를 유지합니다.
+* 비동기 발행 (Kafka): Redis 검증을 통과한 요청은 즉시 Kafka 토픽에 메시지를 발행합니다. 이후 API 서버는 DB 트랜잭션을 기다리지 않고 사용자에게 `요청 접수` 응답을 반환합니다.
 
 > Stage 2: Consumer 서버 (최종 발급 처리 및 정합성 보장)
 
-* DB 저장: Kafka 컨슈머는 자신의 처리 속도(처리량)에 맞춰 메시지를 수신받아 최종 쿠폰 발급 데이터를 DB에 저장합니다.
+* Consumer는 DB가 처리할 수 있는 속도로 메시지를 가져와 최종적으로 쿠폰 발급 데이터를 DB에 저장합니다.
 
-* 최종 동시성 제어 (Redisson 분산 락): Kafka의 `Exactly-Once` 보장 설정에도 불구하고, 재처리 로직 등으로 인해 동일 메시지가 중복 소비될 가능성에 대비합니다. DB 저장 전 Redisson 분산 락을 획득하여 불필요한 DB 트랜잭션 비용을 줄이고, DB의 유니크 제약 조건과 함께 데이터 정합성을 이중으로 보장합니다.
+  * 분산 락: 서버가 다중 인스턴스로 확장되는 환경에서도 데이터 정합성을 유지하기 위해, DB 트랜잭션 진입 전 분산 락을 획득해서 동시성을 제어합니다.
 
 ### 설계 구조
 
@@ -73,7 +75,7 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 ```markdown
 coupon/
 ├── coupon-api # (1) 사용자 요청 접수
-├── coupon-consumer # (2) 비동기 발급 처리
+├── coupon-consumer # (2) 쿠폰 발급 처리
 ├── coupon-infra # 인프라 모듈 (JPA, Redis, Kafka)
 ├── coupon-domain # 도메인 모델 (Entity, Repository Interfaces)
 
@@ -82,28 +84,9 @@ support/
 ├── monitoring # Prometheus, Grafana, K6, Promtail, Loki 구성
 ```
 
-
 ---
 
-## 4. Core Technical Decisions
-
-이 시스템을 설계하며 가장 중요하게 고려했던 기술적 결정과 그 이유를 설명합니다.
-
-> 왜 Kafka와 Redis를 사용했는가?
-
-* 문제점: 10,000명의 동시 요청이 발생하면, 100개 내외의 커넥션 풀을 가진 RDBMS는 즉시 병목 상태가 됩니다.
-  단순한 쿼리도 수천 개의 동시 트랜잭션이 몰리면 락 경합으로 인해 시스템 전체가 마비됩니다.
-
-* 해결(Redis): `INCR` (Atomic Counter)와 `SADD` (Set) 같은 Redis의 원자적 연산은 초당 수만 건의 요청을 락 없이(single-threaded) 처리할 수 있습니다.
-  이를 통해 DB 앞단에서 1차적으로 선착순과 중복을 빠르게 판별할 수 있었습니다.
-
-* 해결 (Kafka): Redis를 통과한 '유효한' 요청조차도 수천 건에 달할 수 있습니다.
-  Kafka를 버퍼(Buffer) 기반 큐로 사용하여 API 서버의 빠른 응답과 Consumer의 느린 DB 저장 속도 차이를 분리했습니다.
-  이로 인해 DB 장애가 발생하더라도 사용자 요청은 정상적으로 접수(ack)될 수 있습니다.
-
----
-
-## 5. Observability
+## Observability
 
 분산 시스템 환경에서는 요청이 여러 컴포넌트(API, Kafka, Consumer)에 걸쳐 있어 장애 추적이 어렵습니다.
 
@@ -131,29 +114,29 @@ support/
 
 ---
 
-## 6. Tech Stack
+## Tech Stack
 
-| **Category**    | **Tech**                         | **Description**                |
-|-----------------|----------------------------------|--------------------------------|
-| Backend         | Java 17, Spring Boot 3.x         |                                |
-| ORM             | Spring Data JPA                  |                                |
-| Data Store      | MySQL 8.x                        | 쿠폰 발급 내역 등 데이터 영속화             |
-| In-Memory Store | Redis                            | 선착순/중복 발급 제어                   |
-| Messaging       | Kafka                            | 비동기 요청 처리를 위한 메시지 큐            |
-| Concurrency     | Redisson                         | Consumer 단의 최종 정합성 보장을 위한 분산 락 |
-| Observability   | [Metrics] Prometheus, Grafana    | 실시간 성능 지표 모니터링 및 대시보드          |
-|                 | [Tracing] Micrometer Tracing     | MSA 환경 분산 추적                   |
-|                 | [Error] Sentry                   | 애플리케이션 에러 및 예외 수집/알림           |
-|                 | [Logging] Grafana Loki, Promtail | 중앙화된 로그 수집 및 검색                |
-| DB Migration    | Flyway                           | SQL 기반의 안정적인 DB 스키마 버전 관리      |
-| API Docs        | Swagger (Springdoc OpenAPI)      | API 명세 자동화 및 테스트 UI            |
-| Testing         | K6, JUnit 5, Mockito             | 부하 테스트 및 단위/통합 테스트             |
-| DevOps          | Docker Compose                   | 로컬 개발 환경 구성                    |
+| **Category**    | **Tech**                         | **Description**                 |
+|-----------------|----------------------------------|---------------------------------|
+| Backend         | Java 17, Spring Boot 3.x         |                                 |
+| ORM             | Spring Data JPA                  |                                 |
+| Data Store      | MySQL 8.x                        | 쿠폰 발급 내역 등 데이터 영속화              |
+| In-Memory Store | Redis                            | 선착순/중복 발급 제어                    |
+| Messaging       | Kafka                            | 대용량 트래픽 처리를 위한 메시지 브로커 (비동기 처리) |
+| Concurrency     | Redisson                         | Consumer 단의 최종 정합성 보장을 위한 분산 락  |
+| Observability   | [Metrics] Prometheus, Grafana    | 실시간 성능 지표 모니터링 및 대시보드           |
+|                 | [Tracing] Micrometer Tracing     | MSA 환경 분산 추적                    |
+|                 | [Error] Sentry                   | 애플리케이션 에러 및 예외 수집/알림            |
+|                 | [Logging] Grafana Loki, Promtail | 중앙화된 로그 수집 및 검색                 |
+| DB Migration    | Flyway                           | SQL 기반의 안정적인 DB 스키마 버전 관리       |
+| API Docs        | Swagger (Springdoc OpenAPI)      | API 명세 자동화 및 테스트 UI             |
+| Testing         | K6, JUnit 5, Mockito             | 부하 테스트 및 단위/통합 테스트              |
+| DevOps          | Docker Compose                   | 개발 환경 구성                        |
 
 
 ---
 
-## 7. API Specification
+## API Specification
 
 애플리케이션 실행 후, `http://localhost:8080/service-docs.html` 에서 전체 API 명세 및 테스트를 직접 수행할 수 있습니다.
 
@@ -169,7 +152,7 @@ support/
 
 ---
 
-## 8. Testing Strategy
+## Testing Strategy
 
 높은 동시성 환경에서의 안정성을 코드 레벨에서 증명하기 위해, 실제 운영과 유사한 시나리오를 기반으로 각 서버의 역할과 책임에 맞는 테스트 전략을 적용했습니다.
 
@@ -210,7 +193,7 @@ support/
 
 ---
 
-## 9. How to Run
+## How to Run
 
 [1] 프로젝트 빌드 (Build Project)
 
