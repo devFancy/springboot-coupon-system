@@ -29,7 +29,7 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 
 > Monitoring Results: Coupon API Server
 
-![](/docs/image/coupon-issue-api-v2-tps.png)
+![](/docs/image/coupon-issue-api-tps.png)
 
 * TPS (req/s): Max 4,700 (`coupon-api` 기준)
 
@@ -40,7 +40,7 @@ API 서버는 DB 병목 현상 없이 최대 4,700 TPS를 기록했으며, 전 �
 
 ## System Architecture
 
-![](/docs/image/Coupon-Issue-System-Architecture.png)
+![](/docs/image/coupon-issue-system-architecture.png)
 
 본 아키텍처는 API 서버(요청 접수)와 Consumer 서버(발급 처리)의 역할을 명확히 분리하여 병목을 해소하고, 확장성과 안정성을 고려한 구조입니다.
 
