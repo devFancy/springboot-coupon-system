@@ -32,7 +32,7 @@ public class RedisConfig {
 
     private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
 
-    @Bean(destroyMethod = "shutdown") // 애플리케이션 종료 시 RedissonClient 자원 해제
+    @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         Config config = new Config();
         config.useSingleServer()
@@ -75,7 +75,6 @@ public class RedisConfig {
     public RRateLimiter couponConsumerRateLimiter(RedissonClient redissonClient) {
         log.info("[RedisConfig] RRateLimiter Bean 생성 시도 (Total TPS: {})", totalMaxTps);
 
-        // NOTE: 모든 Consumer가 공유할 Redis 키 이름
         final String RATE_LIMITER = "coupon_issuance_rate_limiter";
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(RATE_LIMITER);
 

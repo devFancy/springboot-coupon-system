@@ -29,9 +29,7 @@ public class CouponRedisCache {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Coupon 객체를 JSON 문자열로 직렬화하여 Redis에 저장합니다.
-     */
+    // NOTE: Coupon 객체를 JSON 문자열로 직렬화하여 Redis에 저장합니다.
     public void save(final Coupon coupon) {
         String key = COUPON_KEY_PREFIX + coupon.getId();
         try {
@@ -43,9 +41,7 @@ public class CouponRedisCache {
         }
     }
 
-    /**
-     * 쿠폰 ID를 사용하여 Redis에서 쿠폰 정보를 조회합니다.
-     */
+    // NOTE:쿠폰 ID를 사용하여 Redis에서 쿠폰 정보를 조회합니다.
     public Optional<Coupon> getCouponById(final UUID couponId) {
         String key = COUPON_KEY_PREFIX + couponId;
         String jsonValue = redisTemplate.opsForValue().get(key);

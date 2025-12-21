@@ -7,33 +7,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import static java.util.Objects.isNull;
-
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
-/**
- * IssuedCoupon (발급된 쿠폰)
- * > 사용자에게 발급된 쿠폰을 관리하며, 발급, 중복 방지, 사용 처리 등의 비즈니스 로직을 포함하는 도메인입니다.
- * <p>
- * | 한글명 | 영문명 | 설명 |
- * | --- | --- | --- |
- * | 발급 쿠폰 ID | issuedCouponId | 사용자에게 발급된 쿠폰의 고유 식별자 |
- * | 사용자 ID | userId | 해당 쿠폰을 발급받은 사용자 |
- * | 쿠폰 ID | couponId | 어떤 쿠폰이 발급되었는지 참조 |
- * | 발급일 | issuedAt | 쿠폰이 발급된 시점 |
- * | 사용 여부 | used | 쿠폰이 사용되었는지 여부 (boolean) |
- * | 사용일 | usedAt | 쿠폰 사용 시점 |
- * | 중복 방지 키 | userId+couponId | 복합 유니크 키로 중복 발급 방지 |
- */
+import static java.util.Objects.isNull;
 
-/**
- * 도메인 모듈(coupon-domain)에 위치하며,
- * coupon-api, coupon-consumer 모듈에서 함께 사용됩니다.
- * <p>
- * 중복 발급 방지를 위해 userId + couponId 조합에 대해 유니크 제약 조건이 적용됩니다.
- */
 @Table(name = "issued_coupons",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "coupon_id"})

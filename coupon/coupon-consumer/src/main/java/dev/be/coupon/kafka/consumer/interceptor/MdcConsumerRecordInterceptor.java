@@ -29,7 +29,7 @@ public class MdcConsumerRecordInterceptor implements RecordInterceptor<String, C
             String globalTraceId = new String(header.value(), StandardCharsets.UTF_8);
             MDC.put(GLOBAL_TRACE_ID_KEY, globalTraceId);
             if (log.isDebugEnabled()) {
-                log.debug("[MdcConsumerRecordInterceptor] MDC 컨텍스트 설정 [{}]: {}", GLOBAL_TRACE_ID_KEY, globalTraceId);
+                log.debug("[intercept] MDC 컨텍스트 설정 [{}]: {}", GLOBAL_TRACE_ID_KEY, globalTraceId);
             }
         }
         return record;

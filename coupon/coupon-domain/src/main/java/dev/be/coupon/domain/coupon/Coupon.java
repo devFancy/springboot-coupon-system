@@ -17,21 +17,6 @@ import java.util.UUID;
 
 import static java.util.Objects.isNull;
 
-/**
- * Coupon (쿠폰)
- * > 쿠폰의 템플릿을 정의하고, 쿠폰의 속성 및 정책을 관리하는 도메인입니다.
- * <p>
- * | 한글명 | 영문명 | 설명 |
- * | --- | --- | --- |
- * | 쿠폰 ID | couponId | 쿠폰 정의의 고유 식별자 (UUID) |
- * | 쿠폰 이름 | couponName | 쿠폰 제목 |
- * | 쿠폰 타입 | couponType | 치킨/햄버거/피자 등 |
- * | 쿠폰 할인 유형 | couponDiscountType  | FIXED(정액), PERCENTAGE(정률) |
- * | 쿠폰 할인 금액 | couponDiscountValue | 할인 금액(5,000원), 할인율 |
- * | 쿠폰 상태 | couponStatus | `PENDING`(대기), `ACTIVE`(사용 가능), `EXPIRED`(만료됨), `DISABLED`(비활성화) 등 |
- * | 쿠폰 총 발급 수량 | totalQuantity | 발급 가능한 총 수량 |
- * | 유효 기간일 | expiredAt | 유효 기간일 (이 시간 이후로 만료됨) |
- */
 @Table(name = "coupons")
 @Entity
 public class Coupon {
@@ -59,7 +44,7 @@ public class Coupon {
 
     @Column(name = "coupon_status", nullable = false, columnDefinition = "varchar(255)")
     @Enumerated(EnumType.STRING)
-    private CouponStatus couponStatus; // 쿠폰 발급시 기본값으로 사용 가능(ACTIVE) 으로 설정
+    private CouponStatus couponStatus;
 
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
@@ -123,7 +108,6 @@ public class Coupon {
     }
 
     private void validateCouponValidPeriod(final LocalDateTime expiredAt, final CouponStatus status) {
-        // ACTIVE 상태로 생성하는데 만료일이 이미 과거라면 예외 발생
         if (status == CouponStatus.ACTIVE && expiredAt.isBefore(LocalDateTime.now())) {
             throw new CouponDomainException("ACTIVE 상태 쿠폰의 만료일은 현재 시간보다 이후여야 합니다.");
         }
@@ -132,14 +116,10 @@ public class Coupon {
     public void validateStatusIsActive(final LocalDateTime now) {
         updateStatusBasedOnDate(now);
         if (this.couponStatus != CouponStatus.ACTIVE) {
-            throw new CouponDomainException("쿠폰 상태가 활성 상태가 아닙니다. 현재 상태: " + this.couponStatus);
+            throw new CouponDomainException("쿠폰이 현재 사용 가능한 상태가 아닙니다. 현재 상태: " + this.couponStatus);
         }
     }
 
-    /**
-     * 쿠폰의 상태를 현재 시간에 맞게 동기화합니다.
-     * 만료일이 지난 쿠폰을 `EXPIRED`로 처리하며, 이미 만료되었거나 비활성화된 쿠폰의 상태는 변경하지 않습니다.
-     */
     private void updateStatusBasedOnDate(final LocalDateTime now) {
         if (this.couponStatus == CouponStatus.EXPIRED || this.couponStatus == CouponStatus.DISABLED) {
             return;
