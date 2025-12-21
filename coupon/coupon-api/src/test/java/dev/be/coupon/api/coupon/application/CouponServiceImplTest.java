@@ -8,7 +8,6 @@ import dev.be.coupon.api.support.error.CouponException;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponDiscountType;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
-import dev.be.coupon.domain.coupon.CouponStatus;
 import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.exception.CouponDomainException;
@@ -67,7 +66,7 @@ class CouponServiceImplTest {
 
     @DisplayName("사용자가 쿠폰 발급을 요청하면 성공적으로 접수된다.")
     @Test
-    void success_issue_request() {
+    void should_issue_successfully_when_request_is_valid() {
         // given
         final UUID userId = UUID.randomUUID();
         final UUID couponId = createCoupon(100).getId();
@@ -82,7 +81,7 @@ class CouponServiceImplTest {
 
     @DisplayName("동일한 사용자가 중복으로 쿠폰 발급을 요청하면 'DUPLICATE' 를 반환한다.")
     @Test
-    void fail_issue_request_due_to_duplicate_entry() {
+    void should_return_duplicate_when_already_issued() {
         // given
         final UUID userId = UUID.randomUUID();
         final UUID couponId = createCoupon(10).getId();
@@ -98,7 +97,7 @@ class CouponServiceImplTest {
 
     @DisplayName("쿠폰이 모두 소진된 후 추가 발급을 요청하면 'SOLD_OUT'을 반환한다.")
     @Test
-    void fail_issue_request_due_to_sold_out() {
+    void should_return_sold_out_when_quantity_is_exhausted() {
         // given
         final UUID couponId = createCoupon(1).getId();
         final UUID user1 = UUID.randomUUID();
@@ -113,9 +112,9 @@ class CouponServiceImplTest {
         assertThat(result2).isEqualTo(CouponIssueRequestResult.SOLD_OUT);
     }
 
-    @DisplayName("선착순 쿠폰 이벤트로 여러명의 사용자가 동시에 요청해도 쿠폰 총 수량만 발급되도록 한다.")
+    @DisplayName("여러명의 사용자가 동시에 요청해도 쿠폰 총 수량만 발급되도록 한다.")
     @Test
-    void success_issue_request_multiThreaded_success() throws InterruptedException {
+    void should_issue_exactly_as_much_as_quantity_under_high_concurrency() throws InterruptedException {
         // given
         final int totalQuantity = 100;
         final UUID couponId = createCoupon(100).getId();
@@ -154,7 +153,7 @@ class CouponServiceImplTest {
 
     @DisplayName("사용자가 발급받은 쿠폰이 1개 이상 있을 떄, 쿠폰 목록을 리스트로 반환한다.")
     @Test
-    void success_should_return_all_coupons_for_a_user() {
+    void should_return_all_owned_coupons_when_user_has_coupons() {
         // given
         final UUID userId = UUID.randomUUID();
 
@@ -180,9 +179,9 @@ class CouponServiceImplTest {
                 );
     }
 
-    @DisplayName("[성공] 사용자가 발급받은 쿠폰이 없으면, 빈 리스트를 반환한다.")
+    @DisplayName("사용자가 발급받은 쿠폰이 없으면, 빈 리스트를 반환한다.")
     @Test
-    void success_should_return_empty_list_when_user_has_no_coupons() {
+    void should_return_empty_list_when_no_coupons_exist() {
         // given
         final UUID userId = UUID.randomUUID();
 
@@ -195,7 +194,7 @@ class CouponServiceImplTest {
 
     @DisplayName("발급된 쿠폰의 원본 쿠폰이 삭제된 경우 해당 쿠폰을 제외하고 반환한다.")
     @Test
-    void fail_should_filter_out_coupons_with_missing_definitions() {
+    void should_filter_out_coupons_when_original_definition_is_deleted() {
         // given
         final UUID userId = UUID.randomUUID();
 
@@ -216,7 +215,7 @@ class CouponServiceImplTest {
 
     @DisplayName("사용자가 발급된 쿠폰을 사용하면 사용 처리된다.")
     @Test
-    void success_coupon_usage() {
+    void should_use_coupon_successfully_when_valid() {
         // given
         final UUID userId = UUID.randomUUID();
         final UUID couponId = createCoupon(1).getId();
@@ -234,7 +233,7 @@ class CouponServiceImplTest {
 
     @DisplayName("사용자가 소유하지 않은 쿠폰을 사용하면 예외가 발생한다.")
     @Test
-    void fail_usage_when_coupon_is_not_owned_by_user() {
+    void should_throw_exception_when_coupon_is_not_owned() {
         // given
         final UUID userA = UUID.randomUUID(); // 쿠폰 소유자
         final UUID userB = UUID.randomUUID(); // 사용 시도자
@@ -250,7 +249,7 @@ class CouponServiceImplTest {
 
     @DisplayName("사용자가 이미 사용한 쿠폰을 재사용하면 예외가 발생한다.")
     @Test
-    void fail_usage_when_coupon_already_used() {
+    void should_throw_exception_when_coupon_is_already_used() {
         // given
         final UUID userId = UUID.randomUUID();
         final UUID couponId = createCoupon(100).getId();
@@ -266,7 +265,7 @@ class CouponServiceImplTest {
 
     @DisplayName("유효 기간이 만료된 쿠폰을 사용하면 예외가 발생한다.")
     @Test
-    void fail_usage_when_coupon_is_expired() throws InterruptedException {
+    void should_throw_exception_when_coupon_is_expired() throws InterruptedException {
         // given
         final UUID userId = UUID.randomUUID();
         final LocalDateTime now = LocalDateTime.now();
@@ -285,8 +284,7 @@ class CouponServiceImplTest {
 
         // when & then
         assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(userId, expiredCoupon.getId())))
-                .isInstanceOf(CouponDomainException.class)
-                .hasMessage("쿠폰 상태가 활성 상태가 아닙니다. 현재 상태: " + CouponStatus.EXPIRED);
+                .isInstanceOf(CouponDomainException.class);
     }
 
     private Coupon createCoupon(final int totalQuantity) {

@@ -9,15 +9,14 @@ import dev.be.coupon.api.user.application.dto.UserSignUpCommand;
 import dev.be.coupon.api.user.infrastructure.FakePasswordHasherClient;
 import dev.be.coupon.domain.user.UserRepository;
 import dev.be.coupon.domain.user.vo.PasswordHasher;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ActiveProfiles;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ActiveProfiles("test")
 class AuthServiceTest {
@@ -37,7 +36,7 @@ class AuthServiceTest {
 
     @DisplayName("아이디와 비밀번호를 입력하면 정상적으로 로그인을 성공한다.")
     @Test
-    void success_login() {
+    void should_login_successfully_when_credentials_are_valid() {
         // given
         UserSignUpCommand signUpCommand = new UserSignUpCommand("user1", "password1234");
         userService.signUp(signUpCommand);
@@ -54,7 +53,7 @@ class AuthServiceTest {
 
     @DisplayName("존재하지 않는 아이디와 비밀번호를 입력하면 예외가 발생한다.")
     @Test
-    void login_should_throw_exception_when_user_not_found() {
+    void should_throw_exception_when_user_not_found() {
         // given
         AuthLoginCommand loginCommand = new AuthLoginCommand("nonexistentUser", "password1234");
 
@@ -66,7 +65,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("로그인할 때 비밀번호가 일치하지 않으면 예외가 발생한다.")
-    void login_should_throw_exception_when_password_is_incorrect() {
+    void should_throw_exception_when_password_is_incorrect() {
         // given
         userService.signUp(new UserSignUpCommand("user1", "password1234"));
 

@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class IssuedCouponTest {
     @DisplayName("발급된 쿠폰을 생성할 수 있다.")
     @Test
-    void success_create_issue_coupon_success() {
+    void should_create_issued_coupon_successfully() {
         // given
         final UUID userId = UUID.randomUUID();
         final UUID couponId = UUID.randomUUID();
@@ -33,7 +33,7 @@ class IssuedCouponTest {
 
     @DisplayName("사용자 ID가 없으면 발급된 쿠폰을 생성할 수 없다.")
     @Test
-    void fail_should_throw_exception_when_userId_is_null() {
+    void should_throw_exception_when_user_id_is_null() {
         // given
         // when & then
         assertThatThrownBy(() -> 사용자ID가_없는_쿠폰())
@@ -43,7 +43,7 @@ class IssuedCouponTest {
 
     @DisplayName("발급된 쿠폰을 사용 처리할 수 있다.")
     @Test
-    void success_use_issued_coupon() {
+    void should_mark_as_used_when_using_coupon() {
         final IssuedCoupon coupon = 발급된_쿠폰(UUID.randomUUID(), UUID.randomUUID());
         final LocalDateTime usedAt = LocalDateTime.now();
 
@@ -55,7 +55,7 @@ class IssuedCouponTest {
 
     @DisplayName("이미 사용된 쿠폰은 다시 사용할 수 없다.")
     @Test
-    void fail_should_throw_exception_when_reusing_coupon() {
+    void should_throw_exception_when_already_used_coupon_is_reused() {
         final IssuedCoupon coupon = 사용된_쿠폰();
 
         assertThatThrownBy(() -> coupon.use(LocalDateTime.now().plusMinutes(1)))

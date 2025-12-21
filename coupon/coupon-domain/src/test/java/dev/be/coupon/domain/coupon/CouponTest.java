@@ -20,7 +20,7 @@ class CouponTest {
 
     @DisplayName("쿠폰을 생성한다.")
     @Test
-    void success_create_coupon() {
+    void should_create_coupon_successfully() {
         // given & when
         Coupon coupon = 정상_쿠폰();
 
@@ -31,7 +31,7 @@ class CouponTest {
 
     @DisplayName("쿠폰 이름이 존재하지 않으면 예외가 발생한다.")
     @Test
-    void fail_should_throw_exception_when_coupon_name_is_null() {
+    void should_throw_exception_when_name_is_null() {
         // given & when & then
         assertThatThrownBy(() -> 쿠폰_이름이_존재하지_않음()
         ).isInstanceOf(CouponDomainException.class)
@@ -40,7 +40,7 @@ class CouponTest {
 
     @DisplayName("쿠폰 할인 타입이 존재하지 않으면 예외가 발생한다.")
     @Test
-    void fail_should_throw_exception_when_coupon_discount_type_is_null() {
+    void should_throw_exception_when_discount_type_is_null() {
         // given & when & then
         assertThatThrownBy(() -> 쿠폰_할인_유형이_존재하지_않음()
         ).isInstanceOf(CouponDomainException.class)
@@ -49,7 +49,7 @@ class CouponTest {
 
     @DisplayName("쿠폰 생성시 발급 가능한 총 수량이 1보다 작으면 예외가 발생한다.")
     @Test
-    void fail_should_throw_exception_when_coupon_totalQuantity_less_then_1() {
+    void should_throw_exception_when_total_quantity_is_less_than_one() {
         // given & when & then
         assertThatThrownBy(() -> 쿠폰_총_발급_수량이_0보다_작은경우()
         ).isInstanceOf(CouponDomainException.class)
@@ -58,7 +58,7 @@ class CouponTest {
 
     @DisplayName("쿠폰 유효기간을 올바르게 설정하지 않으면 예외가 발생한다.")
     @Test
-    void fail_should_throw_exception_when_coupon_expiredAt_is_invalid() {
+    void should_throw_exception_when_expired_at_is_past() {
         // given & when & then
         assertThatThrownBy(() -> 만료된_쿠폰()
         ).isInstanceOf(CouponDomainException.class)
@@ -67,7 +67,7 @@ class CouponTest {
 
     @DisplayName("정확히 만료 시점에는 쿠폰은 여전히 ACTIVE 상태이다.")
     @Test
-    void success_update_coupon_status_to_active() {
+    void should_be_active_status_at_exact_expiration_time() {
         // given
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(10);
         Coupon coupon = new Coupon(

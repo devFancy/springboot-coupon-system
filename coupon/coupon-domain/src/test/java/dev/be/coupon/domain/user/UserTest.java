@@ -30,7 +30,7 @@ class UserTest {
 
     @DisplayName("사용자의 이름과 비밀번호를 입력하면 사용자가 생성된다.")
     @Test
-    void create_user() {
+    void should_create_user_with_hashed_password() {
         // given
         final String username = "username1";
         final String password = "password1";
@@ -46,7 +46,7 @@ class UserTest {
 
     @DisplayName("관리자 권한을 부여하면 UserRole이 ADMIN이 된다.")
     @Test
-    void create_admin_user() {
+    void should_have_admin_role_when_admin_created() {
         // given & when
         User admin = 관리자(passwordHasher);
 
@@ -67,7 +67,7 @@ class UserTest {
 
     @DisplayName("사용자 생성 시 이름이 없으면 예외가 발생한다.")
     @Test
-    void fail_create_user_invalid_name() {
+    void should_throw_exception_when_creating_user_with_invalid_name() {
         // given & when & then
         assertThatThrownBy(() -> 이름이_없는_사용자(passwordHasher))
                 .isInstanceOf(UserDomainException.class)
