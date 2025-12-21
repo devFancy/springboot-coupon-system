@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS failed_issued_coupons;

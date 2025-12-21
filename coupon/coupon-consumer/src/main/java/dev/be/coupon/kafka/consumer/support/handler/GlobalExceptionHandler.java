@@ -16,7 +16,7 @@ public class GlobalExceptionHandler {
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     @ExceptionHandler(CouponConsumerException.class)
-    public ResponseEntity<ApiResultResponse<?>> handleCouponConsumerException(CouponConsumerException e) {
+    public ResponseEntity<ApiResultResponse<?>> handleCouponConsumerException(final CouponConsumerException e) {
         switch (e.getErrorType().getLogLevel()) {
             case ERROR -> log.error("CouponConsumerException: {}", e.getMessage(), e);
             case WARN -> log.warn("CouponConsumerException: {}", e.getMessage(), e);
@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResultResponse<?>> handleException(Exception e) {
+    public ResponseEntity<ApiResultResponse<?>> handleException(final Exception e) {
         log.error("Exception : {}", e.getMessage(), e);
         return new ResponseEntity<>(ApiResultResponse.error(ErrorType.DEFAULT_ERROR), ErrorType.DEFAULT_ERROR.getStatus());
     }

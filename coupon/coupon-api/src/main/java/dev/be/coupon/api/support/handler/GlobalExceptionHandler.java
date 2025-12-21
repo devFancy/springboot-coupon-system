@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     @ExceptionHandler(AuthException.class)
-    public ResponseEntity<ApiResultResponse<?>> handleAuthException(AuthException e) {
+    public ResponseEntity<ApiResultResponse<?>> handleAuthException(final AuthException e) {
         switch (e.getErrorType().getLogLevel()) {
             case ERROR -> log.error("AuthException: {}", e.getMessage(), e);
             case WARN -> log.warn("AuthException: {}", e.getMessage(), e);
@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UserException.class)
-    public ResponseEntity<ApiResultResponse<?>> handleUserException(UserException e) {
+    public ResponseEntity<ApiResultResponse<?>> handleUserException(final UserException e) {
         switch (e.getErrorType().getLogLevel()) {
             case ERROR -> log.error("UserException: {}", e.getMessage(), e);
             case WARN -> log.warn("UserException: {}", e.getMessage(), e);
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(CouponException.class)
-    public ResponseEntity<ApiResultResponse<?>> handleCouponApiException(CouponException e) {
+    public ResponseEntity<ApiResultResponse<?>> handleCouponApiException(final CouponException e) {
         switch (e.getErrorType().getLogLevel()) {
             case ERROR -> log.error("CouponException: {}", e.getMessage(), e);
             case WARN -> log.warn("CouponException: {}", e.getMessage(), e);
@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResultResponse<?>> handleException(Exception e) {
+    public ResponseEntity<ApiResultResponse<?>> handleException(final Exception e) {
         log.error("Exception : {}", e.getMessage(), e);
         return new ResponseEntity<>(ApiResultResponse.error(ErrorType.DEFAULT_ERROR), ErrorType.DEFAULT_ERROR.getStatus());
     }
