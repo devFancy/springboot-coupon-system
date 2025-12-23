@@ -19,15 +19,19 @@ spring:
       port: 6379
 
   kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      concurrency: 1
+      ack-mode: MANUAL
     producer:
       bootstrap-servers: localhost:9092
     consumer:
       bootstrap-servers: localhost:9092
+      auto-offset-reset: earliest
 
 kafka:
   topic:
-    coupon-issue: coupon_issue_test
-    coupon-issue-retry: coupon_issue_retry_test
+    coupon-issue: coupon-issue-test
 
 springdoc:
   swagger-ui:
