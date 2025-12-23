@@ -15,7 +15,7 @@ scrape_configs:
           - localhost
         labels:
           job: coupon-logs
-          app: {애플리케이션 서버 로그 폴더명} # e.g. coupon-api, coupon-consumer
+          app: {애플리케이션_서버_로그_폴더명} # e.g. coupon-api, coupon-consumer
           __path__: /var/logs/*.json.log
 
     pipeline_stages:
