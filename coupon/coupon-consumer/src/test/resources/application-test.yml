@@ -10,19 +10,27 @@ spring:
       hibernate:
         format_sql: true
         show_sql: true
-  # sprig boot 3.x
+
   data:
     redis:
       host: localhost
       port: 6379
+
   kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      concurrency: 1
+      ack-mode: MANUAL
     producer:
-      bootstrap-servers: localhost:9092, localhost:9093
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      bootstrap-servers: localhost:9092
     consumer:
-      bootstrap-servers: localhost:9092, localhost:9093
+      bootstrap-servers: localhost:9092
+      auto-offset-reset: earliest
+      backoff:
+        initial-interval: 100
+        multiplier: 1.0
+        max-attempts: 5
+
 kafka:
   topic:
-    coupon-issue: coupon_issue_test
-    coupon-issue-retry: coupon_issue_retry_test
+    coupon-issue: coupon-issue-test

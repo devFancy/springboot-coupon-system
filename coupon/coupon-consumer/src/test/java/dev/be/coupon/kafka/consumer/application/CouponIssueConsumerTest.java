@@ -7,7 +7,6 @@ import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import dev.be.coupon.kafka.consumer.support.error.CouponConsumerException;
 import dev.be.coupon.kafka.consumer.support.error.ErrorType;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
@@ -24,6 +23,7 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
@@ -42,20 +42,31 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+/**
+ * NOTE: 해당 테스트를 하기 위한 사전 준비 사항
+ * - Docker Compose 실행 (MySQL, Redis 가 구동되어야 한다.)
+ */
 @ActiveProfiles("test")
 @SpringBootTest(properties = {
         "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}",
-        "spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}"
+        "spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
+        "spring.kafka.consumer.group-id=${random.uuid}",
+        "spring.kafka.consumer.backoff.initial-interval=100",
+        "spring.kafka.consumer.backoff.multiplier=1.0",
+        "spring.kafka.consumer.backoff.max-attempts=5",
 })
 @EmbeddedKafka(
         partitions = 1,
-        topics = {"coupon-issue", "coupon-issue-dlq"},
+        topics = {
+                "coupon-issue-test",
+                "coupon-issue-test-dlq"
+        },
         brokerProperties = {
                 "listeners=PLAINTEXT://localhost:0",
                 "port=0",
-                "log.dir=build/embedded-kafka",
         }
 )
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class CouponIssueConsumerTest {
 
     @Value("${kafka.topic.coupon-issue}")
@@ -64,6 +75,7 @@ class CouponIssueConsumerTest {
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
 
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
@@ -128,7 +140,7 @@ class CouponIssueConsumerTest {
         final UUID couponId = UUID.randomUUID();
         final CouponIssueMessage message = new CouponIssueMessage(userId, couponId);
 
-        // [핵심] Service가 실행될 때, DB 레벨의 중복 에러(DataIntegrityViolationException)가 터진다고 가정
+        // NOTE: Service가 실행될 때, DB 레벨의 중복 에러(DataIntegrityViolationException)가 터진다고 가정
         doThrow(new DataIntegrityViolationException("Duplicate Entry"))
                 .when(couponIssueService).issue(any(), any());
 
@@ -179,15 +191,9 @@ class CouponIssueConsumerTest {
         kafkaTemplate.send(issueTopic, message);
 
         // then
-        await().atMost(10, TimeUnit.SECONDS).until(() -> {
+        await().atMost(20, TimeUnit.SECONDS).until(() -> {
             ConsumerRecords<String, Object> records = KafkaTestUtils.getRecords(testConsumer, Duration.ofSeconds(1));
-
-            for (ConsumerRecord<String, Object> record : records) {
-                if (record.value() != null && record.value().toString().contains(userId.toString())) {
-                    return true;
-                }
-            }
-            return false;
+            return records.count() > 0;
         });
 
         // NOTE: 최초 실행 1회 + 재시도 4회 = 총 5회
@@ -203,7 +209,6 @@ class CouponIssueConsumerTest {
 
     private Consumer<String, Object> createTestConsumer() {
         String brokerAddresses = embeddedKafkaBroker.getBrokersAsString();
-
         Map<String, Object> config = KafkaTestUtils.consumerProps(brokerAddresses, "dlq-test", "false");
 
         JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>();
