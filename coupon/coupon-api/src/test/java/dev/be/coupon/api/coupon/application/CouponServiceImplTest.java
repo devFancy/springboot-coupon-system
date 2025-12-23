@@ -323,7 +323,7 @@ class CouponServiceImplTest {
 
         // when & then
         assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(userId, expiredCoupon.getId())))
-                .isInstanceOf(CouponDomainException.class);
+                .isInstanceOf(CouponException.class);
     }
 
     private Coupon createCoupon(final int totalQuantity) {

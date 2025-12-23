@@ -63,7 +63,7 @@ public interface CouponControllerDocs {
     );
 
     @Operation(
-            summary = "쿠폰 발급 요청 (비동기)",
+            summary = "쿠폰 발급 요청 ",
             description = """
                     비동기 방식으로 쿠폰 발급을 요청합니다.
                                             
@@ -137,7 +137,7 @@ public interface CouponControllerDocs {
     })
     ResponseEntity<ApiResultResponse<CouponUsageResponse>> usage(
             @Parameter(hidden = true) @AuthenticationPrincipal final LoginUser loginUser,
-            @PathVariable final UUID couponId
+            @PathVariable("couponId") final UUID couponId
     );
 
     ResponseEntity<ApiResultResponse<Void>> sentryTest();

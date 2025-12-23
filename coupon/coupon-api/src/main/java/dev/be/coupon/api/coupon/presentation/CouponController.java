@@ -111,7 +111,7 @@ public class CouponController implements CouponControllerDocs {
     @PostMapping(value = "/{couponId}/usage")
     public ResponseEntity<ApiResultResponse<CouponUsageResponse>> usage(
             @AuthenticationPrincipal final LoginUser loginUser,
-            @PathVariable final UUID couponId) {
+            @PathVariable("couponId") final UUID couponId) {
 
         if (loginUser == null || loginUser.id() == null) {
             throw new AuthException(ErrorType.AUTH_ACCESS_DENIED);
@@ -122,7 +122,7 @@ public class CouponController implements CouponControllerDocs {
         return ResponseEntity.ok().body(ApiResultResponse.success(CouponUsageResponse.from(result)));
     }
 
-    private ResponseEntity<ApiResultResponse<String>> getCommonResponseResponseEntity(CouponIssueCommand command) {
+    private ResponseEntity<ApiResultResponse<String>> getCommonResponseResponseEntity(final CouponIssueCommand command) {
         CouponIssueRequestResult result = couponService.issue(command);
 
         return switch (result) {
