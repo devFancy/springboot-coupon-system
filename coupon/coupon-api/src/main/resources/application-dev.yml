@@ -1,42 +1,47 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/couponDB
+    url: jdbc:mysql://<DB_서버_IP>:3306/couponDB
     username: root
     password: 1234
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 1000
+      keepalive-time: 30000
+      validation-timeout: 900
+      max-lifetime: 600000
+      pool-name: coupon-db-pool
+      data-source-properties:
+        socketTimeout: 2500
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
-        format_sql: true
-        show_sql: true
+        format_sql: false
+        show_sql: false
   flyway:
     enabled: true
     locations: classpath:db/migration
 
   data:
     redis:
-      host: localhost
+      host: <인프라_서버_IP>
       port: 6379
 
   kafka:
+    bootstrap-servers: <인프라_서버_IP>:9092
     producer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: <인프라_서버_IP>:9092
     consumer:
-      bootstrap-servers: localhost:9092
-    listener:
-      ack-mode: manual
-
-redisson:
-  rate-limiter:
-    coupon-issue:
-      tps: 300
+      bootstrap-servers: <인프라_서버_IP>:9092
 
 kafka:
   topic:
-    coupon-issue: coupon_issue
-    coupon-issue-retry: coupon_issue_retry
+    coupon-issue: coupon-issue
 
 springdoc:
   swagger-ui:

@@ -3,6 +3,9 @@ spring:
     url: jdbc:mysql://localhost:3306/couponDB
     username: root
     password: 1234
+    hikari:
+      maximum-pool-size: 5
+      pool-name: coupon-db-pool
   jpa:
     open-in-view: false
     hibernate:
@@ -18,17 +21,25 @@ spring:
       port: 6379
 
   kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      concurrency: 3
+      ack-mode: manual
     producer:
-      bootstrap-servers: localhost:9092, localhost:9093
+      bootstrap-servers: localhost:9092
     consumer:
-      bootstrap-servers: localhost:9092, localhost:9093
+      bootstrap-servers: localhost:9092
+      auto-offset-reset: earliest
+      backoff:
+        initial-interval: 2000
+        multiplier: 2.0
+        max-attempts: 5
 
 redisson:
   rate-limiter:
     coupon-issue:
-      tps: 300
+      tps: 100
 
 kafka:
   topic:
-    coupon-issue: coupon_issue
-    coupon-issue-retry: coupon_issue_retry
+    coupon-issue: coupon-issue

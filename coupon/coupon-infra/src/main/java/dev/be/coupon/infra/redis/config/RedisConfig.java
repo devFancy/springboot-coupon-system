@@ -55,7 +55,7 @@ public class RedisConfig {
 
     @Primary
     @Bean
-    public RedisTemplate<String, String> couponRedisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, String> couponRedisTemplate(final RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
@@ -72,8 +72,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RRateLimiter couponConsumerRateLimiter(RedissonClient redissonClient) {
-        log.info("[RedisConfig] RRateLimiter Bean 생성 시도 (Total TPS: {})", totalMaxTps);
+    public RRateLimiter couponConsumerRateLimiter(final RedissonClient redissonClient) {
+        log.info("[RedisConfig] RRateLimiter Bean 생성 시도 (RateLimiter Total TPS: {})", totalMaxTps);
 
         final String RATE_LIMITER = "coupon_issuance_rate_limiter";
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(RATE_LIMITER);

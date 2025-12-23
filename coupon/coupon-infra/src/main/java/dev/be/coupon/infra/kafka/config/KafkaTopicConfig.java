@@ -2,36 +2,51 @@ package dev.be.coupon.infra.kafka.config;
 
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.TopicConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
+/**
+ * NOTE:
+ * - partitions: 파티션 수 >= 전체 컨슈머 수
+ * - replica: 운영 환경에서는 장애 허용과 고가용성을 위해 3 이상으로 설정합니다.
+ * - config - MIN_IN_SYNC_REPLICAS_CONFIG: 운영 환경에서는 최소 2개 이상의 리플리카에 데이터가 복제되었을 때만 성공으로 간주하여 데이터 유실을 방지합니다.
+ */
 @Configuration
 public class KafkaTopicConfig {
 
+    private final Logger log = LoggerFactory.getLogger(KafkaTopicConfig.class);
     @Bean
     public NewTopic couponIssueTopic(@Value("${kafka.topic.coupon-issue}") final String topic) {
+        final int partitions = 30;
+        final int replicas = 1;
+
+        log.info("[KafkaTopicConfig] Creating Topic: {}, Partitions: {}, Replicas: {}",
+                topic, partitions, replicas);
+
         return TopicBuilder.name(topic)
-                .partitions(3) // 파티션 수 >= 전체 컨슈머 수 (컨슈머가 파티션보다 많으면 나머지는 놉니다)
-                .replicas(1) // 운영 환경에서는 장애 허용과 고가용성을 위해 3 이상으로 설정, 각 파티션마다 1개의 리더와 2개의 팔로워로 구성됨
-                .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "1") // 운영 환경에서는 최소 2개 이상의 리플리카(리더, 팔로워)에 데이터가 복제되었을 때만 쓰기 성공(ack)으로 간주하여 데이터 유실 방지
+                .partitions(partitions)
+                .replicas(replicas)
+                .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "1")
                 .build();
     }
 
     @Bean
-    public NewTopic couponIssueRetryTopic(@Value("${kafka.topic.coupon-issue-retry}") final String topic) {
-        return TopicBuilder.name(topic)
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
+    public NewTopic couponIssueDlqTopic(@Value("${kafka.topic.coupon-issue}") final String topic) {
+        final String dlqTopicName = topic + "-dlq";
+        final int partitions = 3;
+        final int replicas = 1;
 
-    @Bean
-    public NewTopic couponIssueDbDownDqlTopic(@Value("${kafka.topic.coupon-issue}") final String issueTopic) {
-        return TopicBuilder.name(issueTopic + "-db-down-dlq")
-                .partitions(1)
-                .replicas(1)
+        log.info("[KafkaTopicConfig] Creating DLQ Topic: {}, Partitions: {}, Replicas: {}",
+                dlqTopicName, partitions, replicas);
+
+        return TopicBuilder.name(dlqTopicName)
+                .partitions(partitions)
+                .replicas(replicas)
+                .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "1")
                 .build();
     }
 }
