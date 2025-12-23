@@ -1,5 +1,5 @@
 import http from 'k6/http';
-import { check } from 'k6';
+import {check} from 'k6';
 
 export const options = {
     vus: 1,
@@ -13,7 +13,7 @@ export function setup() {
         password: 'admin1234',
     });
 
-    const loginHeaders = { 'Content-Type': 'application/json' };
+    const loginHeaders = {'Content-Type': 'application/json'};
 
     // API Server url (e.g. localhost -> 192.168.x.x)
     const loginRes = http.post('http://localhost:8080/api/auth/login', loginPayload, {
@@ -30,7 +30,7 @@ export function setup() {
     const parsed = JSON.parse(loginRes.body);
     const token = parsed.data.accessToken;
 
-    return { token };
+    return {token};
 }
 
 export default function (data) {

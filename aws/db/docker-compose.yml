@@ -1,0 +1,21 @@
+# NOTE: DB 전용 컨테이너 - t3.small 기준
+version: "3.8"
+services:
+  mysql:
+    image: mysql:8.0.34
+    container_name: mysql
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+      - TZ=Asia/Seoul
+    command:
+      - --innodb-buffer-pool-size=1G
+      - --innodb-log-file-size=256M
+      - --innodb-flush-log-at-trx-commit=2
+      - --max-connections=100
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/coupon/mysql/initdb.d:/docker-entrypoint-initdb.d

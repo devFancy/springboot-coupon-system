@@ -1,0 +1,121 @@
+# NOTE: 하나의 인스턴스 서버에 애플리케이션, 인프라, 모니터링 관련 컨테이너를 모두 띄울 경우 - AWS EC2 t3.medium 기준(vCPU 2, Memory 4GB)
+version: "3.8"
+services:
+  mysql:
+    image: mysql:8.0.34
+    container_name: mysql
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+    command: --innodb-buffer-pool-size=256M
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/coupon/mysql/initdb.d:/docker-entrypoint-initdb.d
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    environment:
+      - TZ=Asia/Seoul
+    # 내부 인스턴스 주소 접근하기 위한 옵션
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - TZ=Asia/Seoul
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/loki/loki-config.yml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    environment:
+      - TZ=Asia/Seoul
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/promtail/promtail-config.yml:/etc/promtail/config.yaml
+      - /home/ubuntu/springboot-coupon-system/logs:/var/logs
+    ports:
+      - "9080:9080"
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+    environment:
+      - TZ=Asia/Seoul
+
+  influxdb:
+    image: influxdb:1.8.10
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - TZ=Asia/Seoul
+      - INFLUXDB_DB=k6
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin1234
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_OPTS: "-Xmx256m -Xms256m"
+
+  redis:
+    image: redis:7.0.15
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.59.0
+    container_name: redis-exporter
+    restart: always
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    depends_on:
+      - redis
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://15.164.104.162:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: "-Xmx400m -Xms400m"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - zookeeper
