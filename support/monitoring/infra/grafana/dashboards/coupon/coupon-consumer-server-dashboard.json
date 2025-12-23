@@ -6,22 +6,51 @@
   "timezone": "browser",
   "schemaVersion": 36,
   "version": 3,
-  "refresh": "5s",
+  "refresh": "3s",
   "time": {
     "from": "now-5m",
     "to": "now"
   },
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "coupon-prometheus",
+        "definition": "label_values(jvm_memory_used_bytes, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "instance",
+        "options": [],
+        "query": "label_values(jvm_memory_used_bytes, instance)",
+        "refresh": 1,
+        "regex": "/.*:8[01]83/",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
   "panels": [
     {
       "type": "timeseries",
-      "title": "Kafka Listener Processed Count",
+      "title": "Kafka Listener Processed Count (Individual & Total)",
       "id": 1,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "sum(rate(spring_kafka_listener_seconds_count{instance=\"host.docker.internal:8083\"}[1m])) by (listener_id)",
+          "expr": "sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\"}[1m])) by (listener_id, instance)",
           "refId": "A",
-          "legendFormat": "{{listener_id}} Processed Count"
+          "legendFormat": "{{instance}}"
+        },
+        {
+          "expr": "sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\"}[1m]))",
+          "refId": "B",
+          "legendFormat": "Total TPS"
         }
       ],
       "yaxes": [
@@ -29,9 +58,6 @@
           "format": "ops",
           "label": "Messages / sec",
           "show": true
-        },
-        {
-          "show": false
         }
       ],
       "gridPos": {
@@ -43,29 +69,20 @@
     },
     {
       "type": "stat",
-      "title": "Consumer Lag Count (issue)",
+      "title": "Consumer Lag Count (Issue Topic)",
       "id": 2,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "sum(spring_kafka_listener_records_lag{group=\"group_1\", topic=\"coupon_issue\"})",
+          "expr": "sum(kafka_consumergroup_lag{topic=\"coupon-issue\"})",
           "refId": "A",
-          "legendFormat": "Max Lag"
+          "legendFormat": "Issue Lag"
         }
       ],
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "last"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0"
+        }
       },
       "gridPos": {
         "h": 8,
@@ -76,29 +93,20 @@
     },
     {
       "type": "stat",
-      "title": "Consumer Lag Count (retry)",
+      "title": "Consumer Lag Count (DLQ Topic)",
       "id": 3,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "sum(spring_kafka_listener_records_lag{group=\"group_1\", topic=\"coupon_issue_retry\"})",
+          "expr": "sum(kafka_consumergroup_lag{topic=\"coupon-issue-dlq\"})",
           "refId": "A",
-          "legendFormat": "Max Lag (Retry)"
+          "legendFormat": "DLQ Lag"
         }
       ],
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "last"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0"
+        }
       },
       "gridPos": {
         "h": 8,
@@ -109,12 +117,12 @@
     },
     {
       "type": "timeseries",
-      "title": "Kafka Listener Error Rate",
+      "title": "Kafka Listener Error Rate [%]",
       "id": 4,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "100 * sum(rate(spring_kafka_listener_seconds_count{instance=\"host.docker.internal:8083\", result=\"failure\"}[1m])) by (listener_id) / sum(rate(spring_kafka_listener_seconds_count{instance=\"host.docker.internal:8083\"}[1m])) by (listener_id)",
+          "expr": "100 * (sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\", result=\"failure\"}[1m])) or vector(0)) / (sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\"}[1m])) or vector(1))",
           "refId": "A",
           "legendFormat": "{{listener_id}} - Error Rate"
         }
@@ -145,7 +153,7 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "(sum(rate(spring_kafka_listener_seconds_sum{instance=\"host.docker.internal:8083\"}[1m])) by (listener_id) / sum(rate(spring_kafka_listener_seconds_count{instance=\"host.docker.internal:8083\"}[1m])) by (listener_id)) * 1000",
+          "expr": "(sum(rate(spring_kafka_listener_seconds_sum{instance=~\"$instance\"}[1m])) by (listener_id) / sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\"}[1m])) by (listener_id)) * 1000",
           "refId": "A",
           "legendFormat": "{{listener_id}} Avg Time (ms)"
         }
@@ -174,7 +182,7 @@
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "spring_kafka_listener_seconds_max{instance=\"host.docker.internal:8083\"} * 1000",
+          "expr": "spring_kafka_listener_seconds_max{instance=~\"$instance\"} * 1000",
           "refId": "A",
           "legendFormat": "{{listener_id}} Max Time (ms)"
         }
@@ -198,153 +206,12 @@
     },
     {
       "type": "timeseries",
-      "title": "Threads",
+      "title": "DB Active Connections [Count]",
       "id": 7,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "jvm_threads_live_threads{instance=\"host.docker.internal:8083\"}",
-          "refId": "A",
-          "legendFormat": "Live"
-        },
-        {
-          "expr": "jvm_threads_daemon_threads{instance=\"host.docker.internal:8083\"}",
-          "refId": "B",
-          "legendFormat": "Daemon"
-        },
-        {
-          "expr": "jvm_threads_peak_threads{instance=\"host.docker.internal:8083\"}",
-          "refId": "C",
-          "legendFormat": "Peak"
-        }
-      ],
-      "yaxes": [
-        {
-          "format": "short",
-          "label": "Count",
-          "min": 0,
-          "show": true
-        },
-        {
-          "show": false
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
-        "y": 8
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "Threads Status",
-      "id": 8,
-      "datasource": "coupon-prometheus",
-      "targets": [
-        {
-          "expr": "jvm_threads_states_threads{instance=\"host.docker.internal:8083\", state=~\"runnable|blocked|waiting|timed_waiting\"}",
-          "refId": "A",
-          "legendFormat": "{{state}}"
-        }
-      ],
-      "stack": true,
-      "yaxes": [
-        {
-          "format": "short",
-          "label": "Count",
-          "min": 0,
-          "show": true
-        },
-        {
-          "show": false
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 8
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "CPU Usage (%)",
-      "id": 9,
-      "datasource": "coupon-prometheus",
-      "targets": [
-        {
-          "expr": "system_cpu_usage{instance=\"host.docker.internal:8083\"} * 100",
-          "refId": "A",
-          "legendFormat": "System"
-        },
-        {
-          "expr": "process_cpu_usage{instance=\"host.docker.internal:8083\"} * 100",
-          "refId": "B",
-          "legendFormat": "Process"
-        }
-      ],
-      "yaxes": [
-        {
-          "format": "percent",
-          "label": "CPU Usage (%)",
-          "min": 0,
-          "max": 100,
-          "show": true
-        },
-        {
-          "show": false
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 0,
-        "y": 16
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "JVM Heap Memory",
-      "id": 10,
-      "datasource": "coupon-prometheus",
-      "targets": [
-        {
-          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=\"host.docker.internal:8083\"}) / (1024*1024)",
-          "refId": "A",
-          "legendFormat": "{{instance}} Heap Used"
-        },
-        {
-          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=\"host.docker.internal:8083\"}) / (1024*1024)",
-          "refId": "B",
-          "legendFormat": "{{instance}} Heap Max"
-        }
-      ],
-      "yaxes": [
-        {
-          "format": "mbytes",
-          "label": "Memory (MB)",
-          "show": true
-        },
-        {
-          "show": false
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 16
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "DB Active Connections",
-      "id": 11,
-      "datasource": "coupon-prometheus",
-      "targets": [
-        {
-          "expr": "hikaricp_connections_active{instance=\"host.docker.internal:8083\"}",
+          "expr": "hikaricp_connections_active{instance=~\"$instance\"}",
           "refId": "A",
           "legendFormat": "{{pool}} Active"
         }
@@ -363,19 +230,168 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 16
+        "y": 8
       }
     },
     {
       "type": "timeseries",
       "title": "DB Pending Connections",
+      "id": 8,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_pending{instance=~\"$instance\"}",
+          "refId": "A",
+          "legendFormat": "{{pool}} Pending"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Count",
+          "min": 0,
+          "max": 25,
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU Usage [%]",
+      "id": 9,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "system_cpu_usage{instance=~\"$instance\"} * 100",
+          "refId": "A",
+          "legendFormat": "System"
+        },
+        {
+          "expr": "process_cpu_usage{instance=~\"$instance\"} * 100",
+          "refId": "B",
+          "legendFormat": "Process"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "CPU Usage (%)",
+          "min": 0,
+          "max": 100,
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 16 }
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM Heap Memory [MB]",
+      "id": 10,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=~\"$instance\"}) / (1024*1024)",
+          "refId": "A",
+          "legendFormat": "{{instance}} Heap Used"
+        },
+        {
+          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=~\"$instance\"}) / (1024*1024)",
+          "refId": "B",
+          "legendFormat": "{{instance}} Heap Max"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "mbytes",
+          "label": "Memory (MB)",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 16 }
+    },
+    {
+      "type": "timeseries",
+      "title": "GC Count",
+      "id": 11,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(jvm_gc_pause_seconds_count{instance=~\"$instance\"}[1m])) by (action)",
+          "refId": "A",
+          "legendFormat": "{{action}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Count/s",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 16 }
+    },
+    {
+      "type": "timeseries",
+      "title": "GC Duration (Seconds)",
       "id": 12,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "hikaricp_connections_pending{instance=\"host.docker.internal:8083\"}",
+          "expr": "sum(rate(jvm_gc_pause_seconds_sum{instance=~\"$instance\"}[1m])) by (action)",
           "refId": "A",
-          "legendFormat": "{{pool}} Pending"
+          "legendFormat": "{{action}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "Seconds",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 16 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Threads",
+      "id": 13,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{instance=~\"$instance\"}",
+          "refId": "A",
+          "legendFormat": "Live"
+        },
+        {
+          "expr": "jvm_threads_daemon_threads{instance=~\"$instance\"}",
+          "refId": "B",
+          "legendFormat": "Daemon"
+        },
+        {
+          "expr": "jvm_threads_peak_threads{instance=~\"$instance\"}",
+          "refId": "C",
+          "legendFormat": "Peak"
         }
       ],
       "yaxes": [
@@ -389,16 +405,121 @@
           "show": false
         }
       ],
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 16
-      }
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 24 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Threads Status",
+      "id": 14,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "jvm_threads_states_threads{instance=~\"$instance\", state=~\"runnable|blocked|waiting|timed_waiting\"}",
+          "refId": "A",
+          "legendFormat": "{{state}}"
+        }
+      ],
+      "stack": true,
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Count",
+          "min": 0,
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 24 }
+    },
+    {
+      "type": "stat",
+      "title": "Rebalance Rate [Count]",
+      "id": 15,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "(sum(delta(kafka_consumergroup_group_rebalances_total{group=\"coupon-issue-group\"}[1m])) or vector(0))",
+          "legendFormat": "Rebalances",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 32 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Time Between Poll [ms]",
+      "id": 16,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "avg(kafka_consumer_time_between_poll_avg) by (client_id)",
+          "legendFormat": "{{client_id}}",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "ms",
+          "label": "Milliseconds",
+          "show": true
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 32 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Fetch Latency [ms]",
+      "id": 17,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "avg(kafka_consumer_fetch_manager_fetch_latency_avg) by (client_id)",
+          "legendFormat": "{{client_id}}",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "ms",
+          "label": "Milliseconds",
+          "show": true
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 32 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Avg Records Per Request [Count]",
+      "id": 18,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "avg(kafka_consumer_fetch_manager_records_per_request_avg) by (client_id)",
+          "legendFormat": "{{client_id}}",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Records",
+          "show": true
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 32 }
     }
   ],
   "tags": [
     "coupon-consumer-server",
+    "kafka",
     "performance"
   ]
 }

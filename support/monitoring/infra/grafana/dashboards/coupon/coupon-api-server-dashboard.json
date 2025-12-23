@@ -5,29 +5,53 @@
   "editable": true,
   "timezone": "browser",
   "schemaVersion": 36,
-  "version": 3,
-  "refresh": "5s",
+  "version": 2,
+  "refresh": "3s",
   "time": {
     "from": "now-5m",
     "to": "now"
   },
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "coupon-prometheus",
+        "definition": "label_values(jvm_memory_used_bytes, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "instance",
+        "options": [],
+        "query": "label_values(jvm_memory_used_bytes, instance)",
+        "refresh": 1,
+        "regex": "/.*:8082/",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
   "panels": [
     {
       "type": "timeseries",
-      "title": "TPS (req/s)",
+      "title": "TPS [req/s]",
       "id": 1,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])",
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m]))",
           "refId": "A",
-          "legendFormat": "{{uri}} {{instance}} - TPS"
+          "legendFormat": "{{uri}} - Total TPS"
         }
       ],
       "yaxes": [
         {
           "format": "short",
-          "label": "req/s",
+          "label": "Requests/sec",
           "show": true
         },
         {
@@ -43,20 +67,20 @@
     },
     {
       "type": "timeseries",
-      "title": "Average Response Time (ms)",
+      "title": "Average Response Time [ms]",
       "id": 2,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "(rate(http_server_requests_seconds_sum{uri=~\"/api/coupon/.*/issue/test\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m])) * 1000",
+          "expr": "(rate(http_server_requests_seconds_sum{uri=~\"/api/coupon/.*/issue/test\", instance=~\"$instance\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\", instance=~\"$instance\"}[1m])) * 1000",
           "refId": "A",
-          "legendFormat": "{{uri}} {{instance}} - Avg Response Time"
+          "legendFormat": "{{instance}} - Avg Latency"
         }
       ],
       "yaxes": [
         {
           "format": "ms",
-          "label": "Time (ms)",
+          "label": "Milliseconds",
           "show": true
         },
         {
@@ -72,14 +96,14 @@
     },
     {
       "type": "timeseries",
-      "title": "Request Count (Total)",
+      "title": "Request Count (Total) [Count]",
       "id": 3,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "sum(http_server_requests_seconds_count{instance=\"host.docker.internal:8082\"})",
+          "expr": "sum(http_server_requests_seconds_count{instance=~\"$instance\"})",
           "refId": "A",
-          "legendFormat": "{{uri}} {{instance}} - Request Count"
+          "legendFormat": "{{instance}} - Total Requests"
         }
       ],
       "yaxes": [
@@ -101,14 +125,14 @@
     },
     {
       "type": "timeseries",
-      "title": "5xx Error Rate (%)",
+      "title": "Coupon Issue Error Rate [%]",
       "id": 4,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "100 * sum(rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\", status=~\"5..\"}[1m])) by (job, instance, uri) / sum(rate(http_server_requests_seconds_count{uri=~\"/api/v[12]/coupon/.*/issue/test\"}[1m])) by (job, instance, uri)",
+          "expr": "100 * (sum(rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\", status=~\"5..\", instance=~\"$instance\"}[1m])) or vector(0)) / (sum(rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\", instance=~\"$instance\"}[1m])) or vector(1))",
           "refId": "A",
-          "legendFormat": "{{uri}} {{instance}} - 5xx Error Rate"
+          "legendFormat": "API Error Rate"
         }
       ],
       "yaxes": [
@@ -116,6 +140,7 @@
           "format": "percent",
           "label": "Error Rate (%)",
           "min": 0,
+          "max": 100,
           "show": true
         },
         {
@@ -131,17 +156,17 @@
     },
     {
       "type": "timeseries",
-      "title": "CPU Usage (%)",
+      "title": "CPU Usage [%]",
       "id": 5,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "system_cpu_usage{instance=\"host.docker.internal:8082\"} * 100",
+          "expr": "system_cpu_usage{instance=~\"$instance\"} * 100",
           "refId": "A",
           "legendFormat": "System"
         },
         {
-          "expr": "process_cpu_usage{instance=\"host.docker.internal:8082\"} * 100",
+          "expr": "process_cpu_usage{instance=~\"$instance\"} * 100",
           "refId": "B",
           "legendFormat": "Process"
         }
@@ -167,19 +192,19 @@
     },
     {
       "type": "timeseries",
-      "title": "JVM Heap Memory",
+      "title": "JVM Heap Memory [MB]",
       "id": 6,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=\"host.docker.internal:8082\"}) / (1024*1024)",
+          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=~\"$instance\"}) / (1024*1024)",
           "refId": "A",
-          "legendFormat": "{{instance}} App Heap Used (MB)"
+          "legendFormat": "{{instance}} Heap Used"
         },
         {
-          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=\"host.docker.internal:8082\"}) / (1024*1024)",
+          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=~\"$instance\"}) / (1024*1024)",
           "refId": "B",
-          "legendFormat": "{{instance}} App Heap Max (MB)"
+          "legendFormat": "{{instance}} Heap Max"
         }
       ],
       "yaxes": [
@@ -201,22 +226,22 @@
     },
     {
       "type": "timeseries",
-      "title": "Threads (Live, Daemon, Peak)",
-      "id": 7,
+      "title": "Threads [Count]",
+      "id": 9,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "jvm_threads_live_threads{instance=\"host.docker.internal:8082\"}",
+          "expr": "jvm_threads_live_threads{instance=~\"$instance\"}",
           "refId": "A",
           "legendFormat": "Live"
         },
         {
-          "expr": "jvm_threads_daemon_threads{instance=\"host.docker.internal:8082\"}",
+          "expr": "jvm_threads_daemon_threads{instance=~\"$instance\"}",
           "refId": "B",
           "legendFormat": "Daemon"
         },
         {
-          "expr": "jvm_threads_peak_threads{instance=\"host.docker.internal:8082\"}",
+          "expr": "jvm_threads_peak_threads{instance=~\"$instance\"}",
           "refId": "C",
           "legendFormat": "Peak"
         }
@@ -241,12 +266,12 @@
     },
     {
       "type": "timeseries",
-      "title": "Threads Status",
-      "id": 8,
+      "title": "Threads Status [Count]",
+      "id": 10,
       "datasource": "coupon-prometheus",
       "targets": [
         {
-          "expr": "jvm_threads_states_threads{instance=\"host.docker.internal:8082\", state=~\"runnable|blocked|waiting|timed_waiting\"}",
+          "expr": "jvm_threads_states_threads{instance=~\"$instance\", state=~\"runnable|blocked|waiting|timed_waiting\"}",
           "refId": "A",
           "legendFormat": "{{state}}"
         }
@@ -272,25 +297,83 @@
     },
     {
       "type": "timeseries",
-      "title": "Redis CPU Usage",
-      "id": 9,
+      "title": "GC Count [Count]",
+      "id": 7,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(jvm_gc_pause_seconds_count{instance=~\"$instance\"}[1m])) by (action)",
+          "refId": "A",
+          "legendFormat": "{{action}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Count/s",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "GC Duration [s]",
+      "id": 8,
+      "datasource": "coupon-prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(jvm_gc_pause_seconds_sum{instance=~\"$instance\"}[1m])) by (action)",
+          "refId": "A",
+          "legendFormat": "{{action}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "Seconds",
+          "show": true
+        },
+        {
+          "show": false
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 16
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Redis CPU Usage [%]",
+      "id": 11,
       "datasource": "coupon-prometheus",
       "targets": [
         {
           "expr": "rate(redis_cpu_user_seconds_total[1m]) * 100",
           "refId": "A",
-          "legendFormat": "{{instance}} - CPU User (%)"
+          "legendFormat": "{{instance}} - User"
         },
         {
           "expr": "rate(redis_cpu_system_seconds_total[1m]) * 100",
           "refId": "B",
-          "legendFormat": "{{instance}} - CPU System (%)"
+          "legendFormat": "{{instance}} - System"
         }
       ],
       "yaxes": [
         {
           "format": "percent",
-          "label": "CPU Utilization (%)",
+          "label": "CPU (%)",
           "min": 0,
           "show": true
         },
@@ -302,20 +385,20 @@
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 0,
+        "x": 12,
         "y": 16
       }
     },
     {
       "type": "timeseries",
-      "title": "Redis Memory Usage",
-      "id": 10,
+      "title": "Redis Memory Usage [MB]",
+      "id": 12,
       "datasource": "coupon-prometheus",
       "targets": [
         {
           "expr": "redis_memory_used_bytes / (1024*1024)",
           "refId": "A",
-          "legendFormat": "{{instance}} - Used Memory (MB)"
+          "legendFormat": "{{instance}} - Used"
         }
       ],
       "yaxes": [
@@ -331,7 +414,7 @@
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 6,
+        "x": 18,
         "y": 16
       }
     }

@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# NOTE: targets - 모니터링 서버 내부에서 실행 중이라면 localhost 또는 컨테이너명 사용
+scrape_configs:
+  - job_name: 'coupon-api'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ '<API_서버_Private_IP>:8082' ]
+
+  - job_name: 'coupon-consumer'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ '<Consumer_서버_Private_IP>:8083', '<Consumer_서버_Private_IP>:8183' ] # 컨슈머 수가 2대일 경우
+
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: [ 'redis-exporter:9121' ]
+
+  - job_name: 'kafka-exporter'
+    static_configs:
+      - targets: [ 'kafka-exporter:9308' ]
