@@ -24,7 +24,11 @@ public class MdcConsumerRecordInterceptor implements RecordInterceptor<String, C
     public ConsumerRecord<String, CouponIssueMessage> intercept(
             @NonNull ConsumerRecord<String, CouponIssueMessage> record,
             @NonNull Consumer<String, CouponIssueMessage> consumer) {
-        Header header = record.headers().lastHeader(GLOBAL_TRACE_ID_KEY);
+
+        final int keySize = record.serializedKeySize();
+        final int valueSize = record.serializedValueSize();
+        final Header header = record.headers().lastHeader(GLOBAL_TRACE_ID_KEY);
+
         if (Objects.nonNull(header)) {
             String globalTraceId = new String(header.value(), StandardCharsets.UTF_8);
             MDC.put(GLOBAL_TRACE_ID_KEY, globalTraceId);
@@ -32,6 +36,9 @@ public class MdcConsumerRecordInterceptor implements RecordInterceptor<String, C
                 log.debug("[intercept] MDC 컨텍스트 설정 [{}]: {}", GLOBAL_TRACE_ID_KEY, globalTraceId);
             }
         }
+
+        log.debug("[MessageSize] Topic: {}, Partition: {}, Offset: {}, KeySize: {} bytes, ValueSize: {} bytes",
+                record.topic(), record.partition(), record.offset(), keySize, valueSize);
         return record;
     }
 
