@@ -19,7 +19,7 @@ import static org.mockito.Mockito.verify;
 class CouponRedisDuplicateValidateTest {
 
     @InjectMocks
-    private CouponRedisDuplicateValidate sut;
+    private CouponRedisDuplicateValidate couponRedisDuplicateValidate;
 
     @Mock
     private StringRedisTemplate redisTemplate;
@@ -28,44 +28,44 @@ class CouponRedisDuplicateValidateTest {
     private SetOperations<String, String> setOperations;
 
     @Test
-    @DisplayName("[Success] 최초 사용자는 Set에 추가되고 true를 반환한다.")
-    void isFirstUser_success_first() {
+    @DisplayName("최초 사용자가 쿠폰을 요청하면 Redis Set에 저장하고 true를 반환한다.")
+    void should_return_true_when_first_user_requests_coupon() {
         // given
         UUID couponId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         String key = "coupon:participation_set:" + couponId;
 
         given(redisTemplate.opsForSet()).willReturn(setOperations);
-        given(setOperations.add(key, userId.toString())).willReturn(1L);
+        given(setOperations.add(key, userId.toString())).willReturn(1L); // 1L: 신규 추가 성공
 
         // when
-        Boolean result = sut.isFirstUser(couponId, userId);
+        Boolean result = couponRedisDuplicateValidate.isFirstUser(couponId, userId);
 
         // then
         assertThat(result).isTrue();
     }
 
     @Test
-    @DisplayName("[Success] 이미 존재하는 사용자는 false를 반환한다.")
-    void isFirstUser_success_duplicate() {
+    @DisplayName("이미 참여한 사용자가 재요청하면 false를 반환한다.")
+    void should_return_false_when_duplicate_user_requests_coupon() {
         // given
         UUID couponId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         String key = "coupon:participation_set:" + couponId;
 
         given(redisTemplate.opsForSet()).willReturn(setOperations);
-        given(setOperations.add(key, userId.toString())).willReturn(0L);
+        given(setOperations.add(key, userId.toString())).willReturn(0L); // 0L: 이미 존재함
 
         // when
-        Boolean result = sut.isFirstUser(couponId, userId);
+        Boolean result = couponRedisDuplicateValidate.isFirstUser(couponId, userId);
 
         // then
         assertThat(result).isFalse();
     }
 
     @Test
-    @DisplayName("[Success] 사용자를 Set에서 제거한다.")
-    void remove_success() {
+    @DisplayName("보상 로직 수행 시 Redis Set에서 사용자 기록을 정상적으로 삭제한다.")
+    void should_remove_user_from_set_successfully() {
         // given
         UUID couponId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
@@ -74,7 +74,7 @@ class CouponRedisDuplicateValidateTest {
         given(redisTemplate.opsForSet()).willReturn(setOperations);
 
         // when
-        sut.remove(couponId, userId);
+        couponRedisDuplicateValidate.remove(couponId, userId);
 
         // then
         verify(setOperations).remove(key, userId.toString());
