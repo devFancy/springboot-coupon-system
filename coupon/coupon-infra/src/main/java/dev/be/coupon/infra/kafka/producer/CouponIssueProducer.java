@@ -1,5 +1,6 @@
 package dev.be.coupon.infra.kafka.producer;
 
+import dev.be.coupon.infra.exception.CouponInfraException;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
@@ -28,8 +29,12 @@ public class CouponIssueProducer {
     public void issue(final UUID userId, final UUID couponId) {
         CouponIssueMessage payload = new CouponIssueMessage(userId, couponId);
         ProducerRecord<String, Object> record = new ProducerRecord<>(issueTopic, userId.toString(), payload);
-
-        sendAndWaitForCompletion(record, payload);
+        try {
+            sendAndWaitForCompletion(record, payload);
+        } catch (Exception e) {
+            log.error("[KAFKA_SEND_FAIL] 메시지 발행 실패. Record: {} errorMessage={}", record, e.getMessage(), e);
+            throw new CouponInfraException("Kafka 메시지 발행이 실패했습니다.");
+        }
     }
 
     private void sendAndWaitForCompletion(final ProducerRecord<String, Object> record, final CouponIssueMessage payload) {

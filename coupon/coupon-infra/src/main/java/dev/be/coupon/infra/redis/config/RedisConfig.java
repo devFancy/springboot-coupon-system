@@ -1,5 +1,6 @@
 package dev.be.coupon.infra.redis.config;
 
+import dev.be.coupon.infra.exception.CouponInfraException;
 import org.redisson.Redisson;
 import org.redisson.api.RRateLimiter;
 import org.redisson.api.RateIntervalUnit;
@@ -37,19 +38,17 @@ public class RedisConfig {
         Config config = new Config();
         config.useSingleServer()
                 .setAddress(REDISSON_HOST_PREFIX + redisHost + ":" + redisPort)
-                .setConnectionPoolSize(128)
-                .setConnectionMinimumIdleSize(24)
-                .setConnectTimeout(10000)
-                .setTimeout(5000);
+                .setConnectionPoolSize(65)
+                .setConnectionMinimumIdleSize(12)
+                .setConnectTimeout(2000)
+                .setTimeout(1000);
 
-        log.info("[RedisConfig] Redisson Client 생성 시도: {}{}:{}", REDISSON_HOST_PREFIX, redisHost, redisPort);
+        log.info("[RedisConfig] Redisson Client 연결 시도: {}:{}", redisHost, redisPort);
         try {
-            RedissonClient redisson = Redisson.create(config);
-            log.info("[RedisConfig] Redisson Client 생성 성공");
-            return redisson;
+            return Redisson.create(config);
         } catch (Exception e) {
-            log.error("[RedisConfig] Redisson Client 생성 실패", e);
-            throw e;
+            log.error("[RedisConfig] Redisson Client 생성 실패. 인프라 설정을 확인해 주세요. host={}", redisHost, e);
+            throw new CouponInfraException(" Redis 연결 설정에 실패했습니다.");
         }
     }
 
