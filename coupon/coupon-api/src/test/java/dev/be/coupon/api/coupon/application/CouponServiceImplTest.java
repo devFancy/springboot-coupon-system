@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
@@ -38,6 +39,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -78,6 +80,9 @@ class CouponServiceImplTest {
     @Autowired
     private IssuedCouponJpaRepository issuedCouponRepository;
 
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
@@ -100,7 +105,8 @@ class CouponServiceImplTest {
 
     @AfterEach
     void tearDown() {
-        testConsumer.close();
+        if (testConsumer != null) testConsumer.close();
+        if (redisTemplate.getConnectionFactory() != null) redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
         issuedCouponRepository.deleteAllInBatch();
         couponRepository.deleteAllInBatch();
     }

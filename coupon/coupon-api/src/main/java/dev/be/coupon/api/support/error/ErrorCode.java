@@ -21,4 +21,6 @@ public enum ErrorCode {
     E3000,
     E3001,
     E3002,
+    E3003,
+    E3004,
 }

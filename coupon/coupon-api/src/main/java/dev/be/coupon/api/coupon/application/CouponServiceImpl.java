@@ -16,6 +16,7 @@ import dev.be.coupon.domain.coupon.CouponRepository;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.IssuedCouponRepository;
 import dev.be.coupon.domain.coupon.exception.CouponDomainException;
+import dev.be.coupon.infra.exception.CouponInfraException;
 import dev.be.coupon.infra.kafka.producer.CouponIssueProducer;
 import dev.be.coupon.infra.redis.CouponEntryRedisCounter;
 import dev.be.coupon.infra.redis.CouponRedisCache;
@@ -78,30 +79,40 @@ public class CouponServiceImpl implements CouponService {
     }
 
 
-    // 중복 발급 방지 -> 선착순 보장 -> 카프카
     public CouponIssueRequestResult issue(final CouponIssueCommand command) {
         final UUID couponId = command.couponId();
         final UUID userId = command.userId();
         final int totalQuantity = getTotalQuantityWithCaching(couponId);
 
-        // 1. 중복 발급 방지 (Redis Set 활용)
+        // NOTE: 1. 중복 발급 방지
         Boolean isFirstUser = couponRedisDuplicateValidate.isFirstUser(couponId, userId);
         if (!isFirstUser) {
-            log.info("[COUPON_ISSUE_DUPLICATE] 중복 발급 요청으로 인해 거절되었습니다. userId: {}, couponId: {}", userId, couponId);
+            log.info("[COUPON_ISSUE_DUPLICATE] userId: {}, couponId: {}", userId, couponId);
             return CouponIssueRequestResult.DUPLICATE;
         }
 
-        // 2. 선착순 보장 (Redis INCR 활용)
-        long entryOrder = couponEntryRedisCounter.increment(couponId);
-        if (entryOrder > totalQuantity) {
-            log.info("[COUPON_ISSUE_SOLD_OUT] 선착순 쿠폰 이벤트가 마감되었습니다. userId: {}, couponId: {}, order: {}/{}", userId, couponId, entryOrder, totalQuantity);
+        // NOTE: 2.선착순 재고 확인
+        try {
+            long entryOrder = couponEntryRedisCounter.increment(couponId);
+            if (entryOrder > totalQuantity) {
+                couponRedisDuplicateValidate.remove(couponId, userId);
+                log.info("[COUPON_ISSUE_SOLD_OUT] order: {}/{}", entryOrder, totalQuantity);
+                return CouponIssueRequestResult.SOLD_OUT;
+            }
+        } catch (Exception e) {
+            log.error("[REDIS_INCR_FAIL] Redis 카운팅 실패로 인한 보상 처리. userId: {}", userId, e);
             couponRedisDuplicateValidate.remove(couponId, userId);
-            return CouponIssueRequestResult.SOLD_OUT;
+            throw new CouponException(ErrorType.COUPON_ISSUE_REDIS_ERROR);
         }
 
-        // 3. 선착순 성공 시, Kafka 프로듀서에 즉시 메시지 발행
-        couponIssueProducer.issue(userId, couponId);
-        log.info("[COUPON_ISSUE_REQUESTED] 선착순 진입 성공 및 발급 메시지를 발행했습니다. userId: {}, couponId: {}, entryOrder: {}", userId, couponId, entryOrder);
+        // NOTE: 3. 선착순 성공 시, Kafka 메시지 발행
+        try {
+            couponIssueProducer.issue(userId, couponId);
+        } catch (Exception e) {
+            log.error("[KAFKA_SEND_FAIL] Kafka 발행 실패로 인한 보상 처리. userId: {}", userId, e);
+            couponRedisDuplicateValidate.remove(couponId, userId);
+            throw new CouponException(ErrorType.COUPON_ISSUE_KAFKA_ERROR);
+        }
         return CouponIssueRequestResult.SUCCESS;
     }
 
@@ -111,10 +122,12 @@ public class CouponServiceImpl implements CouponService {
             return totalQuantity;
         }
 
-        log.info("[COUPON_CACHE_MISS] 쿠폰 메타 정보를 DB에서 조회합니다. couponId: {}", couponId);
-        Coupon couponFromDb = couponRepository.findById(couponId).orElseThrow(() -> new CouponException(ErrorType.COUPON_NOT_FOUND));
-
-        couponRedisCache.save(couponFromDb);
+        final Coupon couponFromDb = couponRepository.findById(couponId).orElseThrow(() -> new CouponException(ErrorType.COUPON_NOT_FOUND));
+        try {
+            couponRedisCache.save(couponFromDb);
+        } catch (CouponInfraException e) {
+            log.warn("[] 쿠폰을 캐시에 저장하는 데 실패했습니다.");
+        }
         return couponFromDb.getTotalQuantity();
     }
 

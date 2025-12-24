@@ -25,6 +25,8 @@ public enum ErrorType {
     COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorCode.E3000, "존재하지 않는 쿠폰입니다.", LogLevel.INFO),
     ISSUED_COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorCode.E3001, "발급되지 않았거나 소유하지 않은 쿠폰입니다.", LogLevel.INFO),
     COUPON_NOT_ACTIVE(HttpStatus.NOT_FOUND, ErrorCode.E3002, "발급되지 않았거나 소유하지 않은 쿠폰입니다.", LogLevel.INFO),
+    COUPON_ISSUE_REDIS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.E3003, "일시적인 시스템 오류로 쿠폰 발급에 실패했습니다. 잠시 후 다시 시도해주세요.", LogLevel.ERROR),
+    COUPON_ISSUE_KAFKA_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.E3004, "쿠폰 발급 요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.", LogLevel.ERROR),
     ;
 
     private final HttpStatus status;
