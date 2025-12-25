@@ -1,0 +1,76 @@
+# NOTE: 모니터링 전용 컨테이너 - t3.small
+version: "3.8"
+services:
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/prometheus/prometheus-dev.yml:/etc/prometheus/prometheus.yml:ro
+    environment:
+      - TZ=Asia/Seoul
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - TZ=Asia/Seoul
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/loki/loki-config.yml:/etc/loki/local-config.yaml
+
+  influxdb:
+    image: influxdb:1.8.10
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.59.0
+    container_name: redis-exporter
+    environment:
+      - REDIS_ADDR=<인프라_서버_Private_IP>:6379
+    ports:
+      - "9121:9121"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.7.0
+    container_name: kafka-exporter
+    command:
+      - "--kafka.server=<인프라_서버_Private_IP>:9092"
+    ports:
+      - "9308:9308"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: always

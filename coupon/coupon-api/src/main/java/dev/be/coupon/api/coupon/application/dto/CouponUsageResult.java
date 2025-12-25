@@ -9,13 +9,7 @@ public record CouponUsageResult(
         boolean used,
         LocalDateTime usedAt
 ) {
-    public static CouponUsageResult from(
-            final UUID userId, final UUID couponId, final boolean used, final LocalDateTime usedAt) {
-        return new CouponUsageResult(
-                userId,
-                couponId,
-                used,
-                usedAt
-        );
+    public static CouponUsageResult of(final UUID userId, final UUID couponId, final boolean used, final LocalDateTime usedAt) {
+        return new CouponUsageResult(userId, couponId, used, usedAt);
     }
 }

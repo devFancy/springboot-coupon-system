@@ -10,12 +10,6 @@ import dev.be.coupon.domain.user.vo.PasswordHasher;
 import dev.be.coupon.domain.user.vo.Username;
 import org.springframework.stereotype.Service;
 
-/**
- * User(사용자) 서비스.
- * <p>
- * 현재는 규모가 크지 않기 때문에 단일 클래스로 유지하지만,
- * 추후 기능이 많아질 경우 Reader, Writer 등 역할 기반 구현체로 분리할 수 있습니다.
- */
 @Service
 public class UserService {
 

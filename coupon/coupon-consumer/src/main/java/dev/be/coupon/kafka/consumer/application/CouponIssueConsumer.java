@@ -1,61 +1,69 @@
 package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
+import dev.be.coupon.kafka.consumer.support.error.CouponConsumerException;
+import dev.be.coupon.kafka.consumer.support.error.CouponConsumerRetryableException;
+import dev.be.coupon.kafka.consumer.support.error.ErrorType;
 import org.redisson.api.RRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
-
 @Component
 public class CouponIssueConsumer {
 
-    private final CouponIssuanceFacade couponIssuanceFacade;
-    private final CouponIssueFailureHandler couponIssueFailureHandler;
+    private final CouponIssueService couponIssueService;
     private final RRateLimiter rateLimiter;
     private final Logger log = LoggerFactory.getLogger(CouponIssueConsumer.class);
 
-    public CouponIssueConsumer(final CouponIssuanceFacade couponIssuanceFacade,
-                               final CouponIssueFailureHandler couponIssueFailureHandler,
+    public CouponIssueConsumer(final CouponIssueService couponIssueService,
                                final RRateLimiter rateLimiter) {
-        this.couponIssuanceFacade = couponIssuanceFacade;
-        this.couponIssueFailureHandler = couponIssueFailureHandler;
+        this.couponIssueService = couponIssueService;
         this.rateLimiter = rateLimiter;
     }
 
-    /**
-     * Kafka 토픽으로부터 메시지를 수신하여 쿠폰을 발급합니다.
-     * 발급 처리 도중 예외가 발생할 경우 실패 이력을 저장한 뒤 예외를 던져 재처리 대상에 포함시킵니다.
-     * 저장된 실패 이력은 coupon-api 모듈의 스케줄러(FailedCouponIssueRetryScheduler)를 통해 재처리됩니다.
-     */
-    @KafkaListener(topics = "${kafka.topic.coupon-issue}", groupId = "group_1")
+    @KafkaListener(
+            topics = "${kafka.topic.coupon-issue}",
+            groupId = "coupon-issue-group"
+    )
     public void listener(final CouponIssueMessage message,
                          final Acknowledgment ack) {
-        // NOTE: 설정된 TPS를 초과하면 다음 토큰이 생길 때까지 스레드가 대기합니다.
         rateLimiter.acquire(1);
 
-        log.info("[CouponIssueConsumer_listener] 발급 처리 메시지 수신: userId={}, couponId={}", message.userId(), message.couponId());
+        log.info("[CONSUMER_LISTENER] 메시지 처리를 시작합니다. userId={}, couponId={}", message.userId(), message.couponId());
         try {
-            couponIssuanceFacade.process(message);
+            couponIssueService.issue(message.userId(), message.couponId());
+            ack.acknowledge();
+            log.info("[COUPON_ISSUE_SUCCESS] 쿠폰 발급이 완료되었습니다. userId={}", message.userId());
+        } catch (CouponConsumerException e) {
+            log.info("[COUPON_ISSUE_BUSINESS_ERROR] 비즈니스 오류로 인해 발급을 진행하지 않습니다. 사유: {}, userId={}", e.getMessage(), message.userId());
+            ack.acknowledge();
+        } catch (DataIntegrityViolationException e) {
+            log.warn("[COUPON_ISSUE_SKIP] 중복 발급이 감지되었습니다. 이미 발급된 건이므로 해당 처리를 스킵합니다. userId={}", message.userId());
             ack.acknowledge();
         } catch (Exception e) {
-            couponIssueFailureHandler.handle(message, ack, e);
+            log.error("[COUPON_ISSUE_FAIL] 시스템 장애로 인해 쿠폰 발급이 실패했습니다. error={}", e.getMessage());
+            throw new CouponConsumerRetryableException(ErrorType.COUPON_ISSUANCE_FAILED);
         }
     }
 
-    @KafkaListener(topics = "${kafka.topic.coupon-issue-retry}", groupId = "group_1")
-    public void listenerRetry(final CouponIssueMessage message,
-                              final Acknowledgment ack) {
-        rateLimiter.acquire(1);
-
-        log.info("[CouponIssueConsumer_listenerRetry] 재시도 발급 처리 메시지 수신: userId={}, couponId={}", message.userId(), message.couponId());
+    // NOTE: 대규모 서비스와 같은 운영 환경에서는 별도의 재처리 전용 애플리케이션 서버를 실행해서 처리합니다.
+    @KafkaListener(
+            id = "dlq-consumer",
+            topics = "${kafka.topic.coupon-issue}-dlq",
+            groupId = "coupon-issue-dlq-group",
+            autoStartup = "false"
+    )
+    public void listenDlq(final CouponIssueMessage message, final Acknowledgment ack) {
+        log.info("[COUPON_ISSUE_DLQ_RETRY] 쿠폰 발급 실패 건에 대한 재처리를 시작합니다. userId={}", message.userId());
         try {
-            couponIssuanceFacade.processRetry(message);
+            couponIssueService.issue(message.userId(), message.couponId());
             ack.acknowledge();
         } catch (Exception e) {
-            couponIssueFailureHandler.handleRetry(message, ack, e);
+            log.error("[COUPON_ISSUE_DLQ_FAIL] 재처리 중 시스템 장애로 인해 쿠폰 발급이 실패했습니다. error={}", e.getMessage());
         }
     }
 }

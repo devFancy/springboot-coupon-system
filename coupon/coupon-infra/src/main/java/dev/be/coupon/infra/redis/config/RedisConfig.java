@@ -1,5 +1,6 @@
 package dev.be.coupon.infra.redis.config;
 
+import dev.be.coupon.infra.exception.CouponInfraException;
 import org.redisson.Redisson;
 import org.redisson.api.RRateLimiter;
 import org.redisson.api.RateIntervalUnit;
@@ -32,30 +33,28 @@ public class RedisConfig {
 
     private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
 
-    @Bean(destroyMethod = "shutdown") // 애플리케이션 종료 시 RedissonClient 자원 해제
+    @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         Config config = new Config();
         config.useSingleServer()
                 .setAddress(REDISSON_HOST_PREFIX + redisHost + ":" + redisPort)
-                .setConnectionPoolSize(128)
-                .setConnectionMinimumIdleSize(24)
-                .setConnectTimeout(10000)
-                .setTimeout(5000);
+                .setConnectionPoolSize(65)
+                .setConnectionMinimumIdleSize(12)
+                .setConnectTimeout(2000)
+                .setTimeout(1000);
 
-        log.info("[RedisConfig] Redisson Client 생성 시도: {}{}:{}", REDISSON_HOST_PREFIX, redisHost, redisPort);
+        log.info("[RedisConfig] Redisson Client 연결 시도: {}:{}", redisHost, redisPort);
         try {
-            RedissonClient redisson = Redisson.create(config);
-            log.info("[RedisConfig] Redisson Client 생성 성공");
-            return redisson;
+            return Redisson.create(config);
         } catch (Exception e) {
-            log.error("[RedisConfig] Redisson Client 생성 실패", e);
-            throw e;
+            log.error("[RedisConfig] Redisson Client 생성 실패. 인프라 설정을 확인해 주세요. host={}", redisHost, e);
+            throw new CouponInfraException(" Redis 연결 설정에 실패했습니다.");
         }
     }
 
     @Primary
     @Bean
-    public RedisTemplate<String, String> couponRedisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, String> couponRedisTemplate(final RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
@@ -72,10 +71,9 @@ public class RedisConfig {
     }
 
     @Bean
-    public RRateLimiter couponConsumerRateLimiter(RedissonClient redissonClient) {
-        log.info("[RedisConfig] RRateLimiter Bean 생성 시도 (Total TPS: {})", totalMaxTps);
+    public RRateLimiter couponConsumerRateLimiter(final RedissonClient redissonClient) {
+        log.info("[RedisConfig] RRateLimiter Bean 생성 시도 (RateLimiter Total TPS: {})", totalMaxTps);
 
-        // NOTE: 모든 Consumer가 공유할 Redis 키 이름
         final String RATE_LIMITER = "coupon_issuance_rate_limiter";
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(RATE_LIMITER);
 

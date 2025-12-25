@@ -26,20 +26,4 @@ public record CouponIssueResult(
                 issuedCoupon.getIssuedAt()
         );
     }
-
-    public static CouponIssueResult success(final UUID userId, final UUID couponId) {
-        return new CouponIssueResult(userId, couponId, false, false, false, LocalDateTime.now());
-    }
-
-    public static CouponIssueResult alreadyIssued(final UUID userId, final UUID couponId) {
-        return new CouponIssueResult(userId, couponId, false, true, false, LocalDateTime.now());
-    }
-
-    public static CouponIssueResult quantityExceeded(final UUID userId, final UUID couponId) {
-        return new CouponIssueResult(userId, couponId, false, false, true, LocalDateTime.now());
-    }
-
-    public static CouponIssueResult failure(final UUID userId, final UUID couponId) {
-        return new CouponIssueResult(userId, couponId, false, false, false, LocalDateTime.now());
-    }
 }

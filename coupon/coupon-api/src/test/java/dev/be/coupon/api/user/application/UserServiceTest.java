@@ -7,13 +7,12 @@ import dev.be.coupon.api.user.infrastructure.FakePasswordHasherClient;
 import dev.be.coupon.domain.user.UserRepository;
 import dev.be.coupon.domain.user.vo.PasswordHasher;
 import org.assertj.core.api.Assertions;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ActiveProfiles;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
 class UserServiceTest {
@@ -31,7 +30,7 @@ class UserServiceTest {
 
     @DisplayName("아이디와 비밀번호를 입력하면 정상적으로 회원가입 성공한다.")
     @Test
-    void success_signUp() {
+    void should_signUp_successfully_when_input_is_valid() {
         // given
         final UserSignUpCommand expected = new UserSignUpCommand("user1", "password1234");
 
@@ -44,7 +43,7 @@ class UserServiceTest {
 
     @DisplayName("같은 아이디로 회원가입을 시도하면 예외가 발생한다.")
     @Test
-    void signUp_should_throw_exception_when_user_input_same_username() {
+    void should_throw_exception_when_username_is_duplicate() {
         // given
         final UserSignUpCommand first = new UserSignUpCommand("user1", "password1234");
         final UserSignUpCommand duplicate = new UserSignUpCommand("user1", "password1234");

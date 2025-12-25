@@ -1,0 +1,19 @@
+# NOTE: 애플리케이션 전용 docker-compos.yml - t3.medium 기준
+version: "3.8"
+services:
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/promtail/promtail-config-dev.yml:/etc/promtail/config.yaml
+      - /home/ubuntu/springboot-coupon-system/logs/coupon-consumer:/var/logs
+    ports:
+      - "9080:9080"
+    command: -config.file=/etc/promtail/config.yaml
+    environment:
+      - TZ=Asia/Seoul
+    deploy:
+      resources:
+        limits:
+          memory: 256M

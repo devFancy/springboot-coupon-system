@@ -2,8 +2,8 @@
 
 ## 용어 사전 만들기
 
-> 용어 사전은 프로젝트(또는 서비스)에 참여하는 도메인 전문가, 개발자, 기획자, 디자이너 등 다양한 직군 간의 의사소통을 명확하게 하기 위한 도구입니다. 이 사전은 하위 도메인과 바운디드 컨텍스트를 기준으로
-> 도메인 내 개념을 일관되게 설명합니다.
+> 용어 사전은 프로젝트(또는 서비스)에 참여하는 도메인 전문가, 개발자, 기획자, 디자이너 등 다양한 직군 간의 의사소통을 명확하게 하기 위한 도구입니다.
+> 이 사전은 하위 도메인과 바운디드 컨텍스트를 기준으로 도메인 내 개념을 일관되게 설명합니다.
 
 하위 도메인은 자연스럽게 나뉘는 주제 영역입니다.
 
@@ -57,43 +57,30 @@
 
 > 쿠폰 발급의 템플릿을 정의하고, 쿠폰의 속성 및 정책을 관리하는 도메인입니다.
 
-| 한글명        | 영문명                 | 설명                                                       |
-|------------|---------------------|----------------------------------------------------------|
-| 쿠폰 ID      | couponId            | 쿠폰 정의의 고유 식별자 (UUID)                                     |
-| 쿠폰 이름      | couponName          | 쿠폰 제목                                                    |
-| 쿠폰 타입      | couponType          | CHICKEN, PIZZA, BURGER 등                                 |
-| 쿠폰 할인 유형   | couponDiscountType  | FIXED(정액), PERCENTAGE(정률)                                |                            
-| 쿠폰 할인 금액   | couponDiscountValue | 	할인 금액(5,000원)                                           |
-| 쿠폰 상태      | couponStatus        | PENDING(대기), ACTIVE(사용 가능), EXPIRED(만료됨), DISABLED(비활성화) |
-| 쿠폰 총 발급 수량 | totalQuantity       | 발급 가능한 총 수량                                              |
-| 유효 기간일     | expiredAt           | 유효 기간일                                                   |
+| 한글명        | 영문명                 | 설명                                          |
+|------------|---------------------|---------------------------------------------|
+| 쿠폰 ID      | couponId            | 쿠폰 정의의 고유 식별자 (UUID)                        |
+| 쿠폰 이름      | couponName          | 쿠폰 제목                                       |
+| 쿠폰 타입      | couponType          | CHICKEN, PIZZA, BURGER 등                    |
+| 쿠폰 할인 유형   | couponDiscountType  | FIXED(정액), PERCENTAGE(정률)                   |                            
+| 쿠폰 할인 금액   | couponDiscountValue | 	할인 금액(5,000원)                              |
+| 쿠폰 상태      | couponStatus        | ACTIVE(사용 가능), EXPIRED(만료됨), DISABLED(비활성화) |
+| 쿠폰 총 발급 수량 | totalQuantity       | 발급 가능한 총 수량                                 |
+| 유효 기간일     | expiredAt           | 유효 기간일                                      |
 
 ### IssuedCoupon (발급된 쿠폰)
 
 > 사용자에게 발급된 쿠폰을 관리하며, 발급, 중복 방지, 사용 처리 등의 비즈니스 로직을 포함하는 도메인입니다.
 
-| 한글명      | 영문명             | 설명                      |
-|----------|-----------------|-------------------------|
-| 발급 쿠폰 ID | issuedCouponId  | 사용자에게 발급된 쿠폰의 고유 식별자    |
-| 사용자 ID   | userId          | 해당 쿠폰을 발급받은 사용자         |
-| 쿠폰 ID    | couponId        | 어떤 쿠폰이 발급되었는지 참조        |
-| 발급일      | issuedAt        | 쿠폰이 발급된 시점              |
-| 사용 여부    | used            | 쿠폰이 사용되었는지 여부 (boolean) |
-| 사용일      | usedAt          | 쿠폰 사용 시점                |
-| 중복 방지 키  | userId+couponId | 복합 유니크 키로 중복 발급 방지      |
-
-### FailedIssuedCoupon (쿠폰 발급 실패 이력)
-
-> 쿠폰 발급 처리 도중 실패한 이력을 저장하고, 추후 재처리 스케줄러 or DLQ 에서 재시도하는 도메인입니다.
-
-| 한글명    | 영문명        | 설명                                         |
-|--------|------------|--------------------------------------------|
-| 실패 ID  | id         | 실패 이력의 고유 식별자 (UUID)                       |
-| 사용자 ID | userId     | 발급 실패가 발생한 사용자 식별자                         |
-| 쿠폰 ID  | couponId   | 발급에 실패한 쿠폰의 식별자                            |
-| 재시도 횟수 | retryCount | 해당 실패 이력에 대해 재시도한 횟수                       |
-| 해결 여부  | isResolved | 실패 건이 정상적으로 재처리되어 해결되었는지 여부 (`true` = 해결됨) |
-| 실패 일시  | failedAt   | 쿠폰 발급 실패가 발생한 시점                           |
+| 한글명           | 영문명             | 설명                      |
+|---------------|-----------------|-------------------------|
+| 발급 쿠폰 ID      | issuedCouponId  | 사용자에게 발급된 쿠폰의 고유 식별자    |
+| 사용자 ID        | userId          | 해당 쿠폰을 발급받은 사용자         |
+| 쿠폰 ID         | couponId        | 어떤 쿠폰이 발급되었는지 참조        |
+| 발급일           | issuedAt        | 쿠폰이 발급된 시점              |
+| 사용 여부         | used            | 쿠폰이 사용되었는지 여부 (boolean) |
+| 사용일           | usedAt          | 쿠폰 사용 시점                |
+| 사용자 쿠폰 유니크 제약 | userId+couponId | 복합 유니크 키로 중복 발급 방지      |
 
 ---
 
@@ -154,7 +141,7 @@
 
 * 쿠폰에는 쿠폰 이름, 쿠폰 타입, 쿠폰 할인 유형, 쿠폰 할인 금액, 쿠폰 상태, 쿠폰 총 발급 수량, 유효 기간일가 있다.
 * 쿠폰 타입에는 치킨(`CHICKEN`), 햄버거(`HAMBURGER`), 피자(`PIZZA`)가 있다.
-* 쿠폰 상태는 `PENDING`(대기), `ACTIVE`(사용 가능), `EXPIRED`(사용됨), `DISABLED`(사용 불가)가 있다.
+* 쿠폰 상태는 `PENDING`(대기), `ACTIVE`(사용 가능), `EXPIRED`(만료됨), `DISABLED`(비활성화)가 있다.
 
 행위(기능)
 
@@ -220,59 +207,45 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   actor User
-  participant API Server
-  participant Redis
-  participant Kafka
-  participant Consumer Server
+  participant API as API Server (Producer)
+  participant Redis as Redis
+  participant Kafka as Kafka (Broker)
+  participant Consumer as Consumer Server
   participant DB as MySQL
 
-  User->>API Server: 쿠폰 발급 요청
+  User->>API: 쿠폰 발급 요청
+  
+  note over API, Redis: [Stage 1] 중복 참여 및 선착순 검증
+  API->>Redis: 중복 확인 (SADD) & 순번 증가 (INCR)
 
-  note over API Server, Redis: 선착순 & 중복 참여 검증
-  API Server->>Redis: 중복 확인 & 순번 증가
-
-  alt 선착순 성공
-    API Server->>Kafka: [신규 토픽] 발급 요청 발행
-    API Server-->>User: 발급 요청 접수 완료
-  else 선착순 마감
-    API Server-->>User: 선착순 마감 응답
+  alt 검증 성공
+    API->>Kafka: [coupon-issue] 메시지 발행
+    API-->>User: 발급 요청 접수 완료
+  else 중복 또는 수량 소진 (Duplicate/Sold Out)
+    API-->>User: 발급 제한 응답
   end
 
-  note over Kafka, DB: 비동기 발급 처리 (핵심 흐름)
-  Consumer Server->>Kafka: 메시지 가져오기 (poll)
-  Kafka-->>Consumer Server: 메시지 전달
+  note over Kafka, DB: [Stage 2] 비동기 발급 및 영속화
+  Consumer->>Kafka: 메시지 폴링 및 수신
+  
+  note over Consumer, Redis: 처리율 제한 (Redisson RRateLimiter)
+  Consumer->>Redis: 처리 권한 획득 요청
+  Redis-->>Consumer: 승인 (Token 제공)
 
-  Consumer Server->>DB: (분산 락 시도) & 쿠폰 발급 처리 시도
+  Consumer->>DB: 발급 내역 저장 (Insert)
 
-  alt 발급 처리 성공
-    Consumer Server->>DB: 쿠폰 발급 정보 저장 (Commit)
-    note right of Consumer Server: 성공: 메시지 처리 완료
-    Consumer Server->>Kafka: 처리 완료 (ack)
-
-  else 비즈니스 오류 (e.g. 쿠폰 없음, 만료)
-    note right of Consumer Server: 최종 실패: 재시도 불필요
-    Consumer Server->>Kafka: 처리 완료 (ack, 메시지 폐기)
-
-  else 인프라 오류 (e.g. DB 락, DB 다운)
-    note right of Consumer Server: 재시도 필요: 실패 처리 분기
-    alt 실패 기록 성공 (DB 정상)
-      Consumer Server->>DB: 실패 이력 저장 (Commit)
-      Consumer Server->>Kafka: 처리 완료 (ack)
-      note right of Consumer Server: 1차 재시도: 스케줄러가 담당
-    else 실패 기록 실패 (DB 다운)
-      note right of Consumer Server: 2차 재시도: Kafka ErrorHandler 담당 (최대 5회)
-      note right of Consumer Server: 최종 실패 시 DLQ 전송
-      Consumer Server->>Kafka: 처리 실패 (ack 안 함 -> ErrorHandler 작동)
+  alt 저장 성공
+    Consumer->>Kafka: 처리 완료 (ack)
+  else 비즈니스 예외 (중복 데이터 등)
+    note right of Consumer: 재시도 불필요: ack
+    Consumer->>Kafka: 처리 완료 (ack)
+  else 시스템 장애 (DB Down 등)
+    note right of Consumer: [재시도 전략] BackOff 적용
+    loop Max Attempts (e.g. 5회)
+        Consumer -> Consumer: 로직 재시행
     end
-  end
-
-  note over API Server, DB: 스케줄러 기반 재처리(주기적) - API 서버에서 실행
-  loop 5분마다
-    API Server->>DB: 미처리 및 재시도 5회 미만 실패 건 조회
-    DB-->>API Server: 실패 목록
-
-    opt 실패 건 하나 이상 존재시
-      API Server->>Kafka: [재처리 토픽]으로 실패 건 재발행
+    opt 최종 실패 시
+        Consumer->>Kafka: DLQ 전송
     end
   end
 ```
@@ -308,19 +281,3 @@ sequenceDiagram
     API Server-->>사용자 (User): 쿠폰 사용 성공 응답
     deactivate API Server
 ```
-
-### FailedIssuedCoupon (쿠폰 발급 실패 이력)
-
-속성(상태)
-
-* 실패 ID, 사용자 ID, 쿠폰 ID, 실패 일시(=생성일), 재시도 횟수, 해결 여부
-
-행위(기능)
-
-* 재처리 스케줄러가 해결되지 않은(isResolved = false) 실패 건을 조회한다.
-* 실패 건을 재처리(쿠폰 발급 재시도)한다.
-
-정책(제약사항)
-
-* 재시도 횟수(retryCount)가 5회를 초과하면 더 이상 재시도하지 않는다. (확장되면 관리자 또는 운영자에게 알림을 보낼 수 있다.)
-* 재처리에 성공하면 `isResolved`를 `true` 로 변경한다.

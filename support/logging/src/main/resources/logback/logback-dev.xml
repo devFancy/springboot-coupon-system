@@ -7,7 +7,7 @@
                     defaultValue="coupon-app"
     />
 
-    <property name="LOG_DIR" value="logs/${APP_NAME}"/>
+    <springProperty scope="context" name="LOG_DIR" source="logging.file.path" defaultValue="logs/${APP_NAME}"/>
     <property name="LOG_RETENTION_DAYS" value="30"/>
     <property name="MAX_FILE_SIZE" value="100MB"/>
 

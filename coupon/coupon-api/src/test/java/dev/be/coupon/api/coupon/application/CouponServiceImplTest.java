@@ -8,28 +8,42 @@ import dev.be.coupon.api.support.error.CouponException;
 import dev.be.coupon.domain.coupon.Coupon;
 import dev.be.coupon.domain.coupon.CouponDiscountType;
 import dev.be.coupon.domain.coupon.CouponIssueRequestResult;
-import dev.be.coupon.domain.coupon.CouponStatus;
 import dev.be.coupon.domain.coupon.CouponType;
 import dev.be.coupon.domain.coupon.IssuedCoupon;
 import dev.be.coupon.domain.coupon.exception.CouponDomainException;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
+import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.test.EmbeddedKafkaBroker;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static dev.be.coupon.domain.coupon.CouponFixtures.정상_쿠폰;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,17 +51,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 /**
- * CouponServiceImplTest 주의사항:
- * <p>
- * 이 테스트는 Kafka Consumer 가 실제 DB(JPA Repository)에 접근해 데이터를 저장하는 구조이므로,
- * 테스트에서도 Spring Context 에서 관리하는 실제 JPA 기반 Repository 를 사용해야 합니다.
- * <p>
- * 해당 테스트를 하기 위한 사전 준비 사항
- * - Docker Compose 실행 - MySQL, Redis, Kafka 구동되어야 함
- * - Kafka Application 실행
+ * NOTE: 해당 테스트를 하기 위한 사전 준비 사항
+ * - Docker Compose 실행 (MySQL, Redis 가 구동되어야 한다.)
  */
 @ActiveProfiles("test")
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
+        "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}",
+        "spring.kafka.consumer.group-id=${random.uuid}",
+})
+@EmbeddedKafka(
+        partitions = 1,
+        topics = {"coupon-issue-test"},
+        brokerProperties = {
+                "listeners=PLAINTEXT://localhost:0",
+                "port=0",
+        }
+)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class CouponServiceImplTest {
 
     @Autowired
@@ -59,15 +80,40 @@ class CouponServiceImplTest {
     @Autowired
     private IssuedCouponJpaRepository issuedCouponRepository;
 
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    @Autowired
+    private EmbeddedKafkaBroker embeddedKafkaBroker;
+
+    @Value("${kafka.topic.coupon-issue}")
+    private String issueTopic;
+
+    private Consumer<String, CouponIssueMessage> testConsumer;
+
+    @BeforeEach
+    void setUp() {
+        // NOTE: 테스트의 목적이 메시지 전송 여부 확인에 있기 때문에, 여기서는 자동 커밋으로 설정했다.
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("coupon-issue-test", "true", embeddedKafkaBroker);
+        DefaultKafkaConsumerFactory<String, CouponIssueMessage> factory = new DefaultKafkaConsumerFactory<>(
+                consumerProps, new StringDeserializer(), new JsonDeserializer<>(CouponIssueMessage.class));
+
+        testConsumer = factory.createConsumer();
+        embeddedKafkaBroker.consumeFromAnEmbeddedTopic(testConsumer, issueTopic);
+    }
+
     @AfterEach
     void tearDown() {
+        if (testConsumer != null) testConsumer.close();
+        if (redisTemplate.getConnectionFactory() != null) redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
         issuedCouponRepository.deleteAllInBatch();
         couponRepository.deleteAllInBatch();
     }
 
-    @DisplayName("사용자가 쿠폰 발급을 요청하면 성공적으로 접수된다.")
+    @DisplayName("사용자가 쿠폰 발급을 요청하면 성공적으로 접수되고 Kafka 메시지가 발행된다.")
     @Test
-    void success_issue_request() {
+    void should_issue_successfully_when_request_is_valid() {
         // given
         final UUID userId = UUID.randomUUID();
         final UUID couponId = createCoupon(100).getId();
@@ -78,11 +124,15 @@ class CouponServiceImplTest {
 
         // then
         assertThat(result).isEqualTo(CouponIssueRequestResult.SUCCESS);
+
+        ConsumerRecord<String, CouponIssueMessage> received = KafkaTestUtils.getSingleRecord(testConsumer, issueTopic);
+        assertThat(received.value().userId()).isEqualTo(userId);
+        assertThat(received.value().couponId()).isEqualTo(couponId);
     }
 
-    @DisplayName("동일한 사용자가 중복으로 쿠폰 발급을 요청하면 'DUPLICATE' 를 반환한다.")
+    @DisplayName("동일한 사용자가 중복으로 쿠폰 발급을 요청하면 'DUPLICATE' 를 반환하고 메시지는 발행되지 않는다.")
     @Test
-    void fail_issue_request_due_to_duplicate_entry() {
+    void should_return_duplicate_when_already_issued() {
         // given
         final UUID userId = UUID.randomUUID();
         final UUID couponId = createCoupon(10).getId();
@@ -94,11 +144,13 @@ class CouponServiceImplTest {
 
         // then
         assertThat(secondResult).isEqualTo(CouponIssueRequestResult.DUPLICATE);
+        ConsumerRecords<String, CouponIssueMessage> records = KafkaTestUtils.getRecords(testConsumer, Duration.ofSeconds(2));
+        assertThat(records.count()).isEqualTo(1);
     }
 
     @DisplayName("쿠폰이 모두 소진된 후 추가 발급을 요청하면 'SOLD_OUT'을 반환한다.")
     @Test
-    void fail_issue_request_due_to_sold_out() {
+    void should_return_sold_out_when_quantity_is_exhausted() {
         // given
         final UUID couponId = createCoupon(1).getId();
         final UUID user1 = UUID.randomUUID();
@@ -113,48 +165,40 @@ class CouponServiceImplTest {
         assertThat(result2).isEqualTo(CouponIssueRequestResult.SOLD_OUT);
     }
 
-    @DisplayName("선착순 쿠폰 이벤트로 여러명의 사용자가 동시에 요청해도 쿠폰 총 수량만 발급되도록 한다.")
+    @DisplayName("여러명의 사용자가 동시에 요청해도 쿠폰 총 수량만 발급되도록 한다.")
     @Test
-    void success_issue_request_multiThreaded_success() throws InterruptedException {
+    void should_issue_exactly_as_much_as_quantity_under_high_concurrency() throws InterruptedException {
         // given
-        final int totalQuantity = 100;
-        final UUID couponId = createCoupon(100).getId();
+        final int totalQuantity = 50;
+        final UUID couponId = createCoupon(totalQuantity).getId();
 
         final int threadCount = 100;
         final int requestCount = 10000;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(requestCount);
 
-        AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger soldOutCount = new AtomicInteger(0);
-
         // when
         for (int i = 0; i < requestCount; i++) {
             final UUID userId = UUID.randomUUID();
             executorService.submit(() -> {
                 try {
-                    CouponIssueRequestResult result = couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));
-                    if (result == CouponIssueRequestResult.SUCCESS) {
-                        successCount.incrementAndGet();
-                    } else if (result == CouponIssueRequestResult.SOLD_OUT) {
-                        soldOutCount.incrementAndGet();
-                    }
+                    couponServiceImpl.issue(new CouponIssueCommand(userId, couponId));
                 } finally {
                     latch.countDown();
                 }
             });
         }
-        latch.await(10, TimeUnit.SECONDS);
+        latch.await();
         executorService.shutdown();
 
         // then
-        assertThat(successCount.get()).isEqualTo(100);
-        assertThat(soldOutCount.get()).isEqualTo(requestCount - totalQuantity);
+        ConsumerRecords<String, CouponIssueMessage> records = KafkaTestUtils.getRecords(testConsumer, Duration.ofSeconds(5));
+        assertThat(records.count()).isEqualTo(totalQuantity);
     }
 
     @DisplayName("사용자가 발급받은 쿠폰이 1개 이상 있을 떄, 쿠폰 목록을 리스트로 반환한다.")
     @Test
-    void success_should_return_all_coupons_for_a_user() {
+    void should_return_all_owned_coupons_when_user_has_coupons() {
         // given
         final UUID userId = UUID.randomUUID();
 
@@ -180,9 +224,9 @@ class CouponServiceImplTest {
                 );
     }
 
-    @DisplayName("[성공] 사용자가 발급받은 쿠폰이 없으면, 빈 리스트를 반환한다.")
+    @DisplayName("사용자가 발급받은 쿠폰이 없으면, 빈 리스트를 반환한다.")
     @Test
-    void success_should_return_empty_list_when_user_has_no_coupons() {
+    void should_return_empty_list_when_no_coupons_exist() {
         // given
         final UUID userId = UUID.randomUUID();
 
@@ -195,7 +239,7 @@ class CouponServiceImplTest {
 
     @DisplayName("발급된 쿠폰의 원본 쿠폰이 삭제된 경우 해당 쿠폰을 제외하고 반환한다.")
     @Test
-    void fail_should_filter_out_coupons_with_missing_definitions() {
+    void should_filter_out_coupons_when_original_definition_is_deleted() {
         // given
         final UUID userId = UUID.randomUUID();
 
@@ -216,7 +260,7 @@ class CouponServiceImplTest {
 
     @DisplayName("사용자가 발급된 쿠폰을 사용하면 사용 처리된다.")
     @Test
-    void success_coupon_usage() {
+    void should_use_coupon_successfully_when_valid() {
         // given
         final UUID userId = UUID.randomUUID();
         final UUID couponId = createCoupon(1).getId();
@@ -234,7 +278,7 @@ class CouponServiceImplTest {
 
     @DisplayName("사용자가 소유하지 않은 쿠폰을 사용하면 예외가 발생한다.")
     @Test
-    void fail_usage_when_coupon_is_not_owned_by_user() {
+    void should_throw_exception_when_coupon_is_not_owned() {
         // given
         final UUID userA = UUID.randomUUID(); // 쿠폰 소유자
         final UUID userB = UUID.randomUUID(); // 사용 시도자
@@ -250,7 +294,7 @@ class CouponServiceImplTest {
 
     @DisplayName("사용자가 이미 사용한 쿠폰을 재사용하면 예외가 발생한다.")
     @Test
-    void fail_usage_when_coupon_already_used() {
+    void should_throw_exception_when_coupon_is_already_used() {
         // given
         final UUID userId = UUID.randomUUID();
         final UUID couponId = createCoupon(100).getId();
@@ -266,7 +310,7 @@ class CouponServiceImplTest {
 
     @DisplayName("유효 기간이 만료된 쿠폰을 사용하면 예외가 발생한다.")
     @Test
-    void fail_usage_when_coupon_is_expired() throws InterruptedException {
+    void should_throw_exception_when_coupon_is_expired() throws InterruptedException {
         // given
         final UUID userId = UUID.randomUUID();
         final LocalDateTime now = LocalDateTime.now();
@@ -285,8 +329,7 @@ class CouponServiceImplTest {
 
         // when & then
         assertThatThrownBy(() -> couponServiceImpl.usage(new CouponUsageCommand(userId, expiredCoupon.getId())))
-                .isInstanceOf(CouponDomainException.class)
-                .hasMessage("쿠폰 상태가 활성 상태가 아닙니다. 현재 상태: " + CouponStatus.EXPIRED);
+                .isInstanceOf(CouponException.class);
     }
 
     private Coupon createCoupon(final int totalQuantity) {

@@ -2,6 +2,9 @@ auth_enabled: false
 
 server:
   http_listen_port: 3100
+  # 모든 네트워크 인터페이스(0.0.0.0)에서의 접속 허용
+  # - Docker 컨테이너 외부나 다른 서버(Promtail)에서 접근하기 위해 필수
+  http_listen_address: 0.0.0.0
 
 common:
   instance_addr: 127.0.0.1

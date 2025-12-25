@@ -11,10 +11,12 @@ spring:
 
 server:
   tomcat:
-    max-connections: 20000
+    max-connections: 10000
+    accept-count: 200
     threads:
-      max: 600
-      min-spare: 100
+      max: 200
+      min-spare: 50
+    connection-timeout: 3000
 
 management:
   server:

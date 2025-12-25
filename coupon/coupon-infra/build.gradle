@@ -17,10 +17,9 @@ dependencies {
     // jackson
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-    // awaitility
-    testImplementation("org.awaitility:awaitility:${awaitilityVersion}")
+    testImplementation("org.awaitility:awaitility:${awaitilityVersion}") // awaitility
 }
 
 tasks.withType(Test).configureEach {

@@ -1,13 +1,13 @@
 package dev.be.coupon.infra.redis;
 
+import dev.be.coupon.infra.exception.CouponInfraException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
-/**
- * Redis의 INCR 명령어를 사용하여 쿠폰 이벤트의 참여자 수를 카운팅하는 컴포넌트입니다.
- */
+
 @Component
 public class CouponEntryRedisCounter {
 
@@ -19,11 +19,15 @@ public class CouponEntryRedisCounter {
         this.redisTemplate = redisTemplate;
     }
 
-    /**
-     * 특정 쿠폰 이벤트의 참여자 수를 1 증가시키고, 현재까지의 총 참여자 수를 반환합니다.
-     */
     public long increment(final UUID couponId) {
-        String key = KEY_PREFIX + couponId;
-        return redisTemplate.opsForValue().increment(key);
+        final String key = KEY_PREFIX + couponId;
+        final Long count = redisTemplate.opsForValue().increment(key);
+        if (count == null) {
+            throw new CouponInfraException("Redis 카운팅이 실패했습니다.");
+        }
+        if (count == 1) {
+            redisTemplate.expire(key, 3, TimeUnit.DAYS);
+        }
+        return count;
     }
 }

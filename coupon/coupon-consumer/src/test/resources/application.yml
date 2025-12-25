@@ -10,10 +10,10 @@ spring:
 
 server:
   tomcat:
-    max-connections: 20000
+    max-connections: 2000
     threads:
-      max: 600
-      min-spare: 100
+      max: 100
+      min-spare: 20
 
 ---
 spring.config.activate.on-profile: local
