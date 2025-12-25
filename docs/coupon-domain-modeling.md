@@ -2,8 +2,8 @@
 
 ## 용어 사전 만들기
 
-> 용어 사전은 프로젝트(또는 서비스)에 참여하는 도메인 전문가, 개발자, 기획자, 디자이너 등 다양한 직군 간의 의사소통을 명확하게 하기 위한 도구입니다. 이 사전은 하위 도메인과 바운디드 컨텍스트를 기준으로
-> 도메인 내 개념을 일관되게 설명합니다.
+> 용어 사전은 프로젝트(또는 서비스)에 참여하는 도메인 전문가, 개발자, 기획자, 디자이너 등 다양한 직군 간의 의사소통을 명확하게 하기 위한 도구입니다.
+> 이 사전은 하위 도메인과 바운디드 컨텍스트를 기준으로 도메인 내 개념을 일관되게 설명합니다.
 
 하위 도메인은 자연스럽게 나뉘는 주제 영역입니다.
 
@@ -81,7 +81,6 @@
 | 사용 여부         | used            | 쿠폰이 사용되었는지 여부 (boolean) |
 | 사용일           | usedAt          | 쿠폰 사용 시점                |
 | 사용자 쿠폰 유니크 제약 | userId+couponId | 복합 유니크 키로 중복 발급 방지      |
-
 
 ---
 
@@ -208,43 +207,45 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   actor User
-  participant API Server
-  participant Redis
-  participant Kafka
-  participant Consumer Server
+  participant API as API Server (Producer)
+  participant Redis as Redis
+  participant Kafka as Kafka (Broker)
+  participant Consumer as Consumer Server
   participant DB as MySQL
 
-  User->>API Server: 쿠폰 발급 요청
+  User->>API: 쿠폰 발급 요청
+  
+  note over API, Redis: [Stage 1] 중복 참여 및 선착순 검증
+  API->>Redis: 중복 확인 (SADD) & 순번 증가 (INCR)
 
-  note over API Server, Redis: 중복 참여 및 선착순 검증
-  API Server->>Redis: 중복 확인 & 순번 증가
-
-  alt 선착순 성공
-    API Server->>Kafka: [쿠폰 발급 토픽] 메시지 발행
-    API Server-->>User: 발급 요청 접수 완료
-  else 중복 또는 선착순 마감
-    API Server-->>User: 발급 제한 응답
+  alt 검증 성공
+    API->>Kafka: [coupon-issue] 메시지 발행
+    API-->>User: 발급 요청 접수 완료
+  else 중복 또는 수량 소진 (Duplicate/Sold Out)
+    API-->>User: 발급 제한 응답
   end
 
-  note over Kafka, DB: 비동기 발급 처리
-  Consumer Server->>Kafka: 메시지 수신
+  note over Kafka, DB: [Stage 2] 비동기 발급 및 영속화
+  Consumer->>Kafka: 메시지 폴링 및 수신
   
-  Consumer Server->>DB: 쿠폰 발급 저장 시도 (Unique Key 검증)
+  note over Consumer, Redis: 처리율 제한 (Redisson RRateLimiter)
+  Consumer->>Redis: 처리 권한 획득 요청
+  Redis-->>Consumer: 승인 (Token 제공)
 
-  alt 발급 성공
-    Consumer Server->>DB: 저장 완료
-    Consumer Server->>Kafka: 처리 완료 (ack)
-  else 비즈니스 오류 (e.g. 중복 발급, 만료)
-    note right of Consumer Server: 재시도 불필요: 로그 기록 후 종료
-    Consumer Server->>Kafka: 처리 완료 (ack)
-  else 시스템 장애
-    note right of Consumer Server: [재시도 처리]
-    Consumer Server-->>Kafka: 예외 발생
-    loop 일정 횟수 재시도 (BackOff)
-        Consumer Server -> Consumer Server: 로직 재시행 (Retry Logic)
+  Consumer->>DB: 발급 내역 저장 (Insert)
+
+  alt 저장 성공
+    Consumer->>Kafka: 처리 완료 (ack)
+  else 비즈니스 예외 (중복 데이터 등)
+    note right of Consumer: 재시도 불필요: ack
+    Consumer->>Kafka: 처리 완료 (ack)
+  else 시스템 장애 (DB Down 등)
+    note right of Consumer: [재시도 전략] BackOff 적용
+    loop Max Attempts (e.g. 5회)
+        Consumer -> Consumer: 로직 재시행
     end
-    opt 재시도 횟수 모두 실패 시
-        Consumer Server->>Kafka: DLQ로 메시지 전송
+    opt 최종 실패 시
+        Consumer->>Kafka: DLQ 전송
     end
   end
 ```
