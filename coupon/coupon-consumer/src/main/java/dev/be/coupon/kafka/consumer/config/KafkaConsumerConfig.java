@@ -78,9 +78,9 @@ public class KafkaConsumerConfig {
         config.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 600000); // 10분
         config.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, "org.apache.kafka.clients.consumer.CooperativeStickyAssignor");
 
-        config.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1024 * 1024);  // 1MB
-        config.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 500); // 0.5초 대기
-        config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500); // NOTE: Rate Limiter 값에 따라 변동있음
+        config.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1024);
+        config.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 200);
+        config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1000); // NOTE: Rate Limiter 값에 따라 변동있음
 
         log.info("""
                 [KafkaConsumerConfig] Internal Detailed Settings:
