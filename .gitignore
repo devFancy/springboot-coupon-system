@@ -4,6 +4,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+### AWS ###
+**/docker-compose-live.yml
+
 ### Application ###
 **/application-staging.yml
 **/application-live.yml
@@ -11,6 +14,12 @@ build/
 ### Logging ###
 **/logback-staging.xml
 **/logback-live.xml
+
+### Monitoring ###
+**/prometheus-staging.yml
+**/prometheus-live.yml
+**/promtail-config-staging.yml
+**/promtail-config-live.yml
 
 ### IntelliJ IDEA ###
 .idea

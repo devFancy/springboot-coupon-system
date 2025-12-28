@@ -14,12 +14,16 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: [ '<Consumer_서버_Private_IP>:8083', '<Consumer_서버_Private_IP>:8183' ] # 컨슈머 수가 2대일 경우
+      - targets: [ '<Consumer_서버_Private_IP>:8083', '<Consumer_서버2_Private_IP>:8183' ] # 컨슈머 수가 2대일 경우
+
+  - job_name: 'mysql-exporter'
+    static_configs:
+      - targets: [ 'mysql-exporter:9104' ] # 또는 <모니터링_서버_Private_IP>:9104
 
   - job_name: 'redis-exporter'
     static_configs:
-      - targets: [ 'redis-exporter:9121' ]
+      - targets: [ 'redis-exporter:9121' ] # 또는 <모니터링_서버_Private_IP>:9121
 
   - job_name: 'kafka-exporter'
     static_configs:
-      - targets: [ 'kafka-exporter:9308' ]
+      - targets: [ 'kafka-exporter:9308' ] # 또는 <모니터링_서버_Private_IP>:9308

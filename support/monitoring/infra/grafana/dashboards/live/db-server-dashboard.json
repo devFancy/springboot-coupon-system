@@ -1,0 +1,108 @@
+{
+  "uid": "db-server-dashboard",
+  "title": "DB Server (MySQL) - Dashboard (live)",
+  "editable": true,
+  "timezone": "browser",
+  "refresh": "3s",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Data Source",
+        "hide": 2,
+        "current": {
+          "text": "coupon-prometheus",
+          "value": "coupon-prometheus"
+        }
+      },
+      {
+        "datasource": "${datasource}",
+        "name": "instance",
+        "query": "label_values(mysql_up, instance)",
+        "type": "query",
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "title": "Hikari Active Connections",
+      "type": "timeseries",
+      "id": 1001,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active",
+          "legendFormat": "{{instance}}"
+        }
+      ]
+    },
+    {
+      "title": "Hikari Pending Connections",
+      "type": "timeseries",
+      "id": 1002,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_pending",
+          "legendFormat": "{{instance}}"
+        }
+      ]
+    },
+    {
+      "title": "MySQL QPS",
+      "type": "timeseries",
+      "id": 1003,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "rate(mysql_global_status_questions[1m])",
+          "legendFormat": "QPS"
+        }
+      ]
+    },
+    {
+      "title": "MySQL Real Threads Connected",
+      "type": "timeseries",
+      "id": 1004,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "mysql_global_status_threads_connected",
+          "legendFormat": "Connections"
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "db-server",
+    "mysql"
+  ]
+}

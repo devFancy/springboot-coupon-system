@@ -1,8 +1,8 @@
 #!/bin/bash
 
-PORT=8081
-WAR=coupon-consumer-{APP_VERSION}.jar
-PID_NAME=coupon_consumer_${PORT}.pid
+PORT=8080
+WAR=coupon-api-{APP_VERSION}.jar
+PID_NAME=coupon_api_${PORT}.pid
 
 function stop_process {
     max_try=5
@@ -30,17 +30,17 @@ function stop_process {
 case "$1" in
 start)
    nohup java -server \
-   -Xms750m \
-   -Xmx750m \
+   -Xms2048m \
+   -Xmx2048m \
    -Dspring.jpa.hibernate.ddl-auto=update \
-   -Dspring.kafka.listener.concurrency=15 \
+   -Dserver.tomcat.threads.max=200 \
+   -Dserver.tomcat.threads.min-spare=50 \
+   -Dserver.tomcat.accept-count=2000 \
    -Duser.timezone=Asia/Seoul \
    -Dspring.profiles.active=live \
-   -Dserver.port=${PORT} \
-   -Dmanagement.server.port=8083 \
-   -Dspring.kafka.bootstrap-servers={{인프라_서버_Private_IP}:9092 \
-   -Dlogging.file.path=/home/ubuntu/springboot-coupon-system/logs/coupon-consumer \
-   -Dredisson.rate-limiter.coupon-issue.tps=1800 \
+   -Dspring.kafka.bootstrap-servers={인프라_서버_Private_IP}:9092,{인프라_서버_Private_IP}:9093 \
+   -Dlogging.file.path=/home/ubuntu/springboot-coupon-system/logs/coupon-api \
+   -Dredisson.rate-limiter.coupon-issue.tps=2700 \
    -jar ./${WAR} 1>nohup.out 2>&1 & echo $! > ${PID_NAME}
 
    tail -f ./nohup.out
