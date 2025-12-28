@@ -75,7 +75,7 @@
       "description": "쿠폰 발행 토픽의 미처리 메시지 수입니다.",
       "targets": [
         {
-          "expr": "sum(kafka_consumergroup_lag{topic=\"coupon-issue\"})"
+          "expr": "clamp_min(sum(kafka_consumergroup_lag{topic=\"coupon-issue\"}), 0)"
         }
       ],
       "fieldConfig": {
@@ -97,7 +97,7 @@
       "datasource": "${datasource}",
       "targets": [
         {
-          "expr": "sum(kafka_consumergroup_lag{topic=\"coupon-issue-dlq\"})"
+          "expr": "clamp_min(sum(kafka_consumergroup_lag{topic=\"coupon-issue-dlq\"}), 0)"
         }
       ],
       "fieldConfig": {
@@ -131,7 +131,7 @@
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 0,
+        "x": 18,
         "y": 8
       },
       "description": "서비스 시작 이후 DLQ 토픽에 누적된 전체 에러 메시지 총합입니다.",
@@ -191,7 +191,7 @@
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 18,
+        "x": 0,
         "y": 8
       },
       "datasource": "${datasource}",
@@ -214,7 +214,7 @@
       "description": "컨슈머가 메시지를 Poll 한 뒤 다음 Poll까지 걸린 최대 시간입니다. 설정된 max.poll.interval.ms에 근접하면 리밸런싱 위험이 있습니다.",
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 16
       },
@@ -233,15 +233,34 @@
       "description": "컨슈머가 브로커로부터 데이터를 가져오는 초당 횟수입니다.",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 16
       },
       "datasource": "${datasource}",
       "targets": [
         {
-          "expr": "sum(rate(kafka_consumer_fetch_manager_fetch_rate{instance=~\"$instance\"}[1m])) by (client_id)",
+          "expr": "sum(kafka_consumer_fetch_manager_fetch_rate{instance=~\"$instance\"}) by (client_id)",
           "legendFormat": "Fetch Rate - {{client_id}}"
+        }
+      ]
+    },
+    {
+      "title": "Kafka Consumer Records Consumed Rate [Records/sec]",
+      "type": "timeseries",
+      "id": 1011,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 24
+      },
+      "datasource": "${datasource}",
+      "description": "컨슈머가 브로커로부터 가져와 실제로 소비(Consume)하는 초당 메시지 수입니다.",
+      "targets": [
+        {
+          "expr": "sum(kafka_consumer_fetch_manager_records_consumed_rate{instance=~\"$instance\"}) by (client_id)",
+          "legendFormat": "Consumed Rate - {{client_id}}"
         }
       ]
     },

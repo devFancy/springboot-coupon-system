@@ -49,7 +49,7 @@
       ]
     },
     {
-      "title": "Latency Analysis (Avg, p95, p99) [ms]",
+      "title": "Latency Analysis (Avg) [ms]",
       "type": "timeseries",
       "id": 1002,
       "gridPos": {
@@ -63,14 +63,6 @@
         {
           "expr": "(rate(http_server_requests_seconds_sum{uri=~\"/api/coupon/.*/issue/test\", instance=~\"$instance\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\", instance=~\"$instance\"}[1m])) * 1000",
           "legendFormat": "Avg"
-        },
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{uri=~\"/api/coupon/.*/issue/test\", instance=~\"$instance\"}[1m])) by (le)) * 1000",
-          "legendFormat": "p95"
-        },
-        {
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{uri=~\"/api/coupon/.*/issue/test\", instance=~\"$instance\"}[1m])) by (le)) * 1000",
-          "legendFormat": "p99"
         }
       ]
     },
