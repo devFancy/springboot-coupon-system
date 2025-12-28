@@ -26,7 +26,7 @@ public class CouponIssueConsumer {
     }
 
     @KafkaListener(
-            topics = "${kafka.topic.coupon-issue}",
+            topics = "${kafka.topic.coupon-issue.name}",
             groupId = "coupon-issue-group"
     )
     public void listener(final CouponIssueMessage message,
@@ -53,7 +53,7 @@ public class CouponIssueConsumer {
     // NOTE: 대규모 서비스와 같은 운영 환경에서는 별도의 재처리 전용 애플리케이션 서버를 실행해서 처리합니다.
     @KafkaListener(
             id = "dlq-consumer",
-            topics = "${kafka.topic.coupon-issue}-dlq",
+            topics = "${kafka.topic.coupon-issue.name}-dlq",
             groupId = "coupon-issue-dlq-group",
             autoStartup = "true"
     )
