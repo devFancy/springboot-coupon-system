@@ -32,7 +32,7 @@ spring:
   kafka:
     bootstrap-servers: <인프라_서버_IP>:9092
     listener:
-      concurrency: 3
+      concurrency: 10
       ack-mode: manual
     producer:
       bootstrap-servers: <인프라_서버_IP>:9092
@@ -51,7 +51,11 @@ redisson:
 
 kafka:
   topic:
-    coupon-issue: coupon-issue
+    coupon-issue:
+      name: coupon-issue
+      partitions: 10
+      replicas: 1
+      min-insync-replicas: 1
 
 sentry:
   dsn: ${SENTRY_DSN}

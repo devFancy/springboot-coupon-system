@@ -19,34 +19,40 @@ import org.springframework.kafka.config.TopicBuilder;
 public class KafkaTopicConfig {
 
     private final Logger log = LoggerFactory.getLogger(KafkaTopicConfig.class);
-    @Bean
-    public NewTopic couponIssueTopic(@Value("${kafka.topic.coupon-issue}") final String topic) {
-        final int partitions = 30;
-        final int replicas = 1;
 
-        log.info("[KafkaTopicConfig] Creating Topic: {}, Partitions: {}, Replicas: {}",
-                topic, partitions, replicas);
+    @Bean
+    public NewTopic couponIssueTopic(
+            @Value("${kafka.topic.coupon-issue.name}") final String topic,
+            @Value("${kafka.topic.coupon-issue.partitions}") final int partitions,
+            @Value("${kafka.topic.coupon-issue.replicas}") final int replicas,
+            @Value("${kafka.topic.coupon-issue.min-insync-replicas}") final String minInsyncReplicas
+    ) {
+        log.info("[KafkaTopicConfig] Creating Topic: {}, Partitions: {}, Replicas: {}, Min-ISR: {}",
+                topic, partitions, replicas, minInsyncReplicas);
 
         return TopicBuilder.name(topic)
                 .partitions(partitions)
                 .replicas(replicas)
-                .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "1")
+                .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, minInsyncReplicas)
                 .build();
     }
 
     @Bean
-    public NewTopic couponIssueDlqTopic(@Value("${kafka.topic.coupon-issue}") final String topic) {
+    public NewTopic couponIssueDlqTopic(
+            @Value("${kafka.topic.coupon-issue.name}") final String topic,
+            @Value("${kafka.topic.coupon-issue.partitions}") final int partitions,
+            @Value("${kafka.topic.coupon-issue.replicas}") final int replicas,
+            @Value("${kafka.topic.coupon-issue.min-insync-replicas}") final String minInsyncReplicas
+    ) {
         final String dlqTopicName = topic + "-dlq";
-        final int partitions = 3;
-        final int replicas = 1;
 
-        log.info("[KafkaTopicConfig] Creating DLQ Topic: {}, Partitions: {}, Replicas: {}",
-                dlqTopicName, partitions, replicas);
+        log.info("[KafkaTopicConfig] Creating DLQ Topic: {}, Partitions: {}, Replicas: {}, Min-ISR: {}",
+                dlqTopicName, partitions, replicas, minInsyncReplicas);
 
         return TopicBuilder.name(dlqTopicName)
                 .partitions(partitions)
                 .replicas(replicas)
-                .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "1")
+                .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, minInsyncReplicas)
                 .build();
     }
 }

@@ -55,7 +55,7 @@ public class CouponIssueConsumer {
             id = "dlq-consumer",
             topics = "${kafka.topic.coupon-issue}-dlq",
             groupId = "coupon-issue-dlq-group",
-            autoStartup = "false"
+            autoStartup = "true"
     )
     public void listenDlq(final CouponIssueMessage message, final Acknowledgment ack) {
         log.info("[COUPON_ISSUE_DLQ_RETRY] 쿠폰 발급 실패 건에 대한 재처리를 시작합니다. userId={}", message.userId());
