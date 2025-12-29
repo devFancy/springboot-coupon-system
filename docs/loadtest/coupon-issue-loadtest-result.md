@@ -1,8 +1,10 @@
 # 쿠폰 발급 시스템 - 부하 테스트 결과 보고서
 
-대규모 트래픽 상황에서 쿠폰 발급 시스템의 안정성과 성능을 검증하고 최적화한 과정을 기술한다.
+대규모 트래픽과 같은 상황에서 쿠폰 발급 시스템의 안정성과 성능을 검증하고 최적화한 과정을 기술한다.
 
-최종 성과: (최대) 1,500 TPS (안정성 최우선 설정 기준)
+최종 성과: (안정성 최우선 설정 기준)
+- (최대) 1,800 TPS
+- (평균) 1,500 TPS
 
 > 핵심 달성
 
@@ -223,6 +225,8 @@
     - connectTimeout: 3000
     - timeout: 1000
 
+![](/docs/loadtest/image/coupon-issue-redis-config.png)
+
 - Rate Limiter 값 수정: 1,300 -> 2,700
 
 - 모니터링 지표 개선
@@ -286,35 +290,55 @@
 
 ![](/docs/loadtest/image/coupon-issue-load-test-k6-result-3-1.png)
 
-> API Server 결과 - 최대 TPS: 1,500
+약 210만 건의 요청 중 실패 없이 100% 성공했다.
+
+설정한 임계치(5s)를 소폭 상회하는 결과는 API 서버의 CPU 포화로 인한 병목임을 확인했다.
+
+> API Server 결과 - 최대 TPS: 1,830, 평균: 1,550
 
 ![](/docs/loadtest/image/coupon-issue-load-test-api-server-3-1.png)
 
-> Consumer Server 결과 - 최대 TPS: 1,500
+> Consumer Server 결과 - 최대 TPS: 1,820, 평균: 1,550
 
-![](/docs/loadtest/image/coupon-issue-load-test-consumer-server-3-1.png)
+![](/docs/loadtest/image/coupon-issue-load-test-consumer-server-3-1-1.png)
 
-API 서버와 비슷한 TPS로 Consumer Lag 증가에 대한 문제는 해결되었다.
+![](/docs/loadtest/image/coupon-issue-load-test-consumer-server-3-1-2.png)
+
+대량의 메시지가 인입되는 순간 일시적인 지연(Lag)이 발생했으나, Consumer 서버의 TPS가 API 서버의 TPS를 따라잡으면서 Consumer Lag이 0에 수렴하는 안정적인 구조를 확인했다.
 
 > Infra Server - Monitoring
 
 ![](/docs/loadtest/image/coupon-issue-load-test-infra-server-monitoring-3-1.png)
 
-> Database Server - Monitoring
+Redis Throughput이 약 20,000 ops/sec를 안정적으로 유지하며 중복 체크 및 선착순 로직의 병목을 해소했다.
 
-![](/docs/loadtest/image/coupon-issue-load-test-db-server-monitoring-3-1-1.png)
+> Database Server(MySQL) - Monitoring
 
-![](/docs/loadtest/image/coupon-issue-load-test-db-server-monitoring-3-1-2.png)
+![](/docs/loadtest/image/coupon-issue-load-test-db-server-monitoring-3-1.png)
+
+HikariCP 활성 연결 수가 설정 범위 내에서 안정적으로 유지되며, 대량의 쿼리(QPS 약 11,000)를 지연 없이 소화하고 있다.
+
+> Infra Server(Redis, Kafka) & Database Server(MySQL) - Docker Monitoring
+
+![](/docs/loadtest/image/coupon-issue-load-test-infra-and-db-server-monitoring-3-1.png)
+
+MySQL의 CPU 사용량이 347.16%(CPU 점유율: 86.79%)를 기록했다. 이는 수직 확장(Scale-up)된 서버의 4-core 자원을 활용하여 쓰기 성능을 극대화하고 있다는 걸 증명했다.
+
+> Monitoring - Prometheus
+
+![](/docs/loadtest/image/coupon-issue-monitoring-promethues.png)
+
+모든 지표 수집 타겟이 UP 상태를 유지하며 데이터 누락 없는 신뢰도 높은 관측 환경을 구축했다.
 
 ### 성과 및 결론
 
 - Kafka 프로듀서 및 컨슈머의 Config 튜닝을 통해 대량 유입 상황에서도 Consumer Lag을 실시간으로 해소하는 구조를 완성했다.
 - 브로커 이중화 및 복제 설정을 통해 성능(2,700 TPS -> 1,500 TPS)을 일부 희생하는 대신, 운영 환경 수준의 데이터 안정성과 고가용성을 확보했다.
-- 현재 시스템의 최대 한계는 API 서버의 CPU 자원 고갈임이 확인되었으나, 컨슈머와 DB 서버는 여전히 80% 미만의 여유 자원을 보유하고 있어 API 서버 확장 시 선형적인 성능 향상이 가능할 것으로 판단된다.
+- 현재 시스템의 최대 한계는 API 서버의 CPU 자원 고갈임이 확인되었으나, 컨슈머와 DB 서버는 여전히 여유 자원을 보유하고 있어 API 서버 확장 시 선형적인 성능 향상이 가능할 것으로 판단된다.
 
 ### 향후 개선 계획
 
 - 현재 CPU 사용률 100%에 도달한 API 서버를 증설하여 부하를 분산하고, p95 응답 시간을 목표치인 3초 이내로 단축할 계획이다.
 - API 서버의 TPS 유입량에 맞춰 컨슈머 서버의 Rate Limiter 값을 유동적으로 조정함으로써, 시스템 전반의 처리 효율을 극대화할 계획이다.
-- 아직 컨슈머 서버와 DB 서버는 여전히 80% 미만의 CPU 여유 자원을 보유하고 있음을 확인했다.
-- 따라서 API 서버 확장 시 전체 시스템의 TPS가 선형적으로 향상될 수 있는 구조적 여력이 충분하다고 판단한다.
+- 아직 컨슈머 서버는 약 20~30%, DB 서버는 약 13%의 CPU 가용 리소스를 보유하고 있음을 확인했다.
+- 따라서 API 서버 확장 시 전체 시스템의 TPS가 임계치까지 선형적으로 향상될 수 있는 구조적 여력이 충분하다고 판단한다.

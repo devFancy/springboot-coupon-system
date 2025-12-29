@@ -1,4 +1,4 @@
-# NOTE: DB 전용 컨테이너 - t3.xlarge 기준
+# NOTE: DB 전용 컨테이너 - t3.small 기준
 version: "3.8"
 services:
   mysql:

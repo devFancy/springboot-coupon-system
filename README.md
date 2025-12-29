@@ -26,6 +26,8 @@
 
 ## Blog Posts
 
+* 부하 테스트 및 성능 개선: [부하 테스트를 통한 아키텍처 점진적 개선기](https://github.com/devFancy/springboot-coupon-system/blob/main/docs/loadtest/coupon-issue-loadtest-result.md)
+
 * 에러 추적: [Spring Boot에서 Sentry를 이용한 에러 추적 시스템 개선하기](https://devfancy.github.io/spring-boot-sentry/)
 
 * 분산 추적: [MDC와 GlobalTraceId를 활용한 분산 추적](https://devfancy.github.io/SpringBoot-Distributed-Tracing-With-MDC/)
