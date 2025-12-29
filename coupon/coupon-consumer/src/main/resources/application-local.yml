@@ -23,7 +23,7 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     listener:
-      concurrency: 3
+      concurrency: 5
       ack-mode: manual
     producer:
       bootstrap-servers: localhost:9092
@@ -42,4 +42,8 @@ redisson:
 
 kafka:
   topic:
-    coupon-issue: coupon-issue
+    coupon-issue:
+      name: coupon-issue
+      partitions: 5
+      replicas: 1
+      min-insync-replicas: 1

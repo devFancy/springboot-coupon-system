@@ -6,8 +6,8 @@ services:
     image: grafana/promtail:2.9.0
     container_name: promtail
     volumes:
-      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/promtail/promtail-config-dev.yml:/etc/promtail/config.yaml
-      - /home/ubuntu/springboot-coupon-system/logs/coupon-api:/var/logs
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/promtail/promtail-config-live.yml:/etc/promtail/config.yaml
+      - /home/ubuntu/springboot-coupon-system/logs/coupon-consumer:/var/logs
     ports:
       - "9080:9080"
     command: -config.file=/etc/promtail/config.yaml

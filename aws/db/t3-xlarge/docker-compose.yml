@@ -1,4 +1,4 @@
-# NOTE: DB 전용 컨테이너 - t3.small 기준
+# NOTE: DB 전용 컨테이너 - t3.xlarge 기준
 version: "3.8"
 services:
   mysql:
@@ -11,10 +11,13 @@ services:
       - MYSQL_ROOT_PASSWORD=1234
       - TZ=Asia/Seoul
     command:
-      - --innodb-buffer-pool-size=1G
-      - --innodb-log-file-size=256M
+      - --innodb-buffer-pool-size=10G
+      - --innodb-log-file-size=1G
       - --innodb-flush-log-at-trx-commit=2
-      - --max-connections=100
+      - --max-connections=150
+      - --innodb_flush_method=O_DIRECT
+      - --innodb_write_io_threads=8
+      - --innodb_read_io_threads=8
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     volumes:

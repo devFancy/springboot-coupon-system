@@ -39,8 +39,8 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 1000);
         config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120000);
 
-        config.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384); // 16KB
-        config.put(ProducerConfig.LINGER_MS_CONFIG, 10);
+        config.put(ProducerConfig.BATCH_SIZE_CONFIG, 32768); // 32KB
+        config.put(ProducerConfig.LINGER_MS_CONFIG, 5);
         config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
 
         config.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, MdcProducerInterceptor.class.getName());

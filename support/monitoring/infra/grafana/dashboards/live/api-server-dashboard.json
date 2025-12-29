@@ -1,0 +1,238 @@
+{
+  "uid": "api-server-dashboard",
+  "title": "API Server(Producer) - Dashboard (live)",
+  "editable": true,
+  "timezone": "browser",
+  "refresh": "3s",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Data Source",
+        "hide": 2,
+        "current": {
+          "text": "coupon-prometheus",
+          "value": "coupon-prometheus"
+        }
+      },
+      {
+        "datasource": "${datasource}",
+        "name": "instance",
+        "query": "label_values(jvm_memory_used_bytes, instance)",
+        "regex": "/.*:8082/",
+        "type": "query",
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "title": "TPS [req/s]",
+      "type": "timeseries",
+      "id": 1001,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\"}[1m]))",
+          "refId": "A",
+          "legendFormat": "Total TPS"
+        }
+      ]
+    },
+    {
+      "title": "Latency Analysis (Avg) [ms]",
+      "type": "timeseries",
+      "id": 1002,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "(rate(http_server_requests_seconds_sum{uri=~\"/api/coupon/.*/issue/test\", instance=~\"$instance\"}[1m]) / rate(http_server_requests_seconds_count{uri=~\"/api/coupon/.*/issue/test\", instance=~\"$instance\"}[1m])) * 1000",
+          "legendFormat": "Avg"
+        }
+      ]
+    },
+    {
+      "title": "Total Requests [count]",
+      "type": "timeseries",
+      "id": 1003,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(http_server_requests_seconds_count{instance=~\"$instance\"})",
+          "legendFormat": "{{instance}}"
+        }
+      ]
+    },
+    {
+      "title": "Error Rate [%]",
+      "type": "timeseries",
+      "id": 1004,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "100 * (sum(rate(http_server_requests_seconds_count{status=~\"5..\", instance=~\"$instance\"}[1m])) or vector(0)) / (sum(rate(http_server_requests_seconds_count{instance=~\"$instance\"}[1m])) or vector(1))"
+        }
+      ]
+    },
+    {
+      "title": "CPU Usage [%]",
+      "type": "timeseries",
+      "id": 2001,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "system_cpu_usage{instance=~\"$instance\"} * 100",
+          "refId": "A",
+          "legendFormat": "System"
+        },
+        {
+          "expr": "process_cpu_usage{instance=~\"$instance\"} * 100",
+          "refId": "B",
+          "legendFormat": "Process"
+        }
+      ]
+    },
+    {
+      "title": "JVM Heap [MB]",
+      "type": "timeseries",
+      "id": 2002,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=~\"$instance\"}) / (1024*1024)",
+          "refId": "A",
+          "legendFormat": "{{instance}} Heap Used"
+        },
+        {
+          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=~\"$instance\"}) / (1024*1024)",
+          "refId": "B",
+          "legendFormat": "{{instance}} Heap Max"
+        }
+      ]
+    },
+    {
+      "title": "Threads [Live]",
+      "type": "timeseries",
+      "id": 2003,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{instance=~\"$instance\"}",
+          "refId": "A",
+          "legendFormat": "Live"
+        },
+        {
+          "expr": "jvm_threads_daemon_threads{instance=~\"$instance\"}",
+          "refId": "B",
+          "legendFormat": "Daemon"
+        },
+        {
+          "expr": "jvm_threads_peak_threads{instance=~\"$instance\"}",
+          "refId": "C",
+          "legendFormat": "Peak"
+        }
+      ]
+    },
+    {
+      "title": "Threads Status",
+      "type": "timeseries",
+      "id": 2004,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "jvm_threads_states_threads{instance=~\"$instance\"}",
+          "legendFormat": "{{state}}"
+        }
+      ],
+      "stack": true
+    },
+    {
+      "title": "GC Count",
+      "type": "timeseries",
+      "id": 2005,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(rate(jvm_gc_pause_seconds_count{instance=~\"$instance\"}[1m])) by (action)"
+        }
+      ]
+    },
+    {
+      "title": "GC Duration [s]",
+      "type": "timeseries",
+      "id": 2006,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(rate(jvm_gc_pause_seconds_sum{instance=~\"$instance\"}[1m])) by (action)"
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "api-server"
+  ]
+}

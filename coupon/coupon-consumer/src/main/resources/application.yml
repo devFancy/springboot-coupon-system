@@ -9,6 +9,7 @@ spring:
       - logging.yml
   web.resources.add-mappings: false
 
+## Live 환경 기준 (aws ec2 - t3.medium)
 server:
   tomcat:
     max-connections: 10000
@@ -24,6 +25,9 @@ management:
   metrics:
     enable:
       kafka: true
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
 
 ---
 spring.config.activate.on-profile: local

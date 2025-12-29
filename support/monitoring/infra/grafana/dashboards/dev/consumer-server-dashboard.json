@@ -1,0 +1,377 @@
+{
+  "uid": "coupon-consumer-prometheus",
+  "title": "Consumer Server - Dashboard (dev)",
+  "editable": true,
+  "timezone": "browser",
+  "refresh": "3s",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Data Source",
+        "hide": 2,
+        "current": {
+          "text": "coupon-prometheus",
+          "value": "coupon-prometheus"
+        }
+      },
+      {
+        "datasource": "${datasource}",
+        "name": "instance",
+        "query": "label_values(jvm_memory_used_bytes, instance)",
+        "regex": "/.*:8[01]83/",
+        "type": "query",
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "title": "Kafka Listener Process [count]",
+      "type": "timeseries",
+      "id": 1001,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\"}[1m])) by (listener_id, instance)",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
+        },
+        {
+          "expr": "sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\"}[1m]))",
+          "refId": "B",
+          "legendFormat": "Total TPS"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "ops",
+          "label": "Messages / sec",
+          "show": true
+        }
+      ]
+    },
+    {
+      "title": "Issue Topic Consumer Lag [count]",
+      "type": "stat",
+      "id": 1002,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(kafka_consumergroup_lag{topic=\"coupon-issue\"})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "title": "DLQ Topic Consumer Lag [count]",
+      "type": "stat",
+      "id": 1003,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(kafka_consumergroup_lag{topic=\"coupon-issue-dlq\"})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "title": "Kafka Listener Error Rate [%]",
+      "type": "timeseries",
+      "id": 1004,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "100 * (sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\", result=\"failure\"}[1m])) or vector(0)) / (sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\"}[1m])) or vector(1))",
+          "legendFormat": "{{listener_id}} - Error Rate"
+        }
+      ]
+    },
+    {
+      "title": "Total DLQ [count]",
+      "type": "stat",
+      "id": 1005,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "description": "Total cumulative error messages in the DLQ topic",
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(kafka_topic_partition_current_offset{topic=\"coupon-issue-dlq\"})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "title": "Kafka Listener Processing Time (Avg)",
+      "type": "timeseries",
+      "id": 1006,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "(sum(rate(spring_kafka_listener_seconds_sum{instance=~\"$instance\"}[1m])) by (listener_id) / sum(rate(spring_kafka_listener_seconds_count{instance=~\"$instance\"}[1m])) by (listener_id)) * 1000",
+          "legendFormat": "{{listener_id}} Avg Time (ms)"
+        }
+      ]
+    },
+    {
+      "title": "Kafka Listener Processing Time (Max)",
+      "type": "timeseries",
+      "id": 1007,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "spring_kafka_listener_seconds_max{instance=~\"$instance\"} * 1000",
+          "legendFormat": "{{listener_id}} Max Time (ms)"
+        }
+      ]
+    },
+    {
+      "title": "Rebalance Rate",
+      "type": "stat",
+      "id": 1008,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(delta(kafka_consumergroup_group_rebalances_total[1m]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0"
+        }
+      }
+    },
+    {
+      "title": "DB Active Connections [Count]",
+      "type": "timeseries",
+      "id": 3001,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 16
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{instance=~\"$instance\"}",
+          "legendFormat": "Active"
+        }
+      ]
+    },
+    {
+      "title": "DB Pending Connections",
+      "type": "timeseries",
+      "id": 3002,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 16
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_pending{instance=~\"$instance\"}",
+          "legendFormat": "Pending"
+        }
+      ]
+    },
+    {
+      "title": "CPU Usage [%]",
+      "type": "timeseries",
+      "id": 2001,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 16
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "system_cpu_usage{instance=~\"$instance\"} * 100",
+          "legendFormat": "System"
+        },
+        {
+          "expr": "process_cpu_usage{instance=~\"$instance\"} * 100",
+          "legendFormat": "Process"
+        }
+      ]
+    },
+    {
+      "title": "JVM Heap Memory [MB]",
+      "type": "timeseries",
+      "id": 2002,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 16
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum without (id) (jvm_memory_used_bytes{area=\"heap\", instance=~\"$instance\"}) / (1024*1024)",
+          "refId": "A",
+          "legendFormat": "{{instance}} Heap Used"
+        },
+        {
+          "expr": "sum without (id) (jvm_memory_max_bytes{area=\"heap\", instance=~\"$instance\"}) / (1024*1024)",
+          "refId": "B",
+          "legendFormat": "{{instance}} Heap Max"
+        }
+      ]
+    },
+    {
+      "title": "Threads",
+      "type": "timeseries",
+      "id": 2003,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 24
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads{instance=~\"$instance\"}",
+          "refId": "A",
+          "legendFormat": "Live"
+        },
+        {
+          "expr": "jvm_threads_daemon_threads{instance=~\"$instance\"}",
+          "refId": "B",
+          "legendFormat": "Daemon"
+        },
+        {
+          "expr": "jvm_threads_peak_threads{instance=~\"$instance\"}",
+          "refId": "C",
+          "legendFormat": "Peak"
+        }
+      ]
+    },
+    {
+      "title": "Threads Status",
+      "type": "timeseries",
+      "id": 2004,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 24
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "jvm_threads_states_threads{instance=~\"$instance\"}",
+          "legendFormat": "{{state}}"
+        }
+      ],
+      "stack": true
+    },
+    {
+      "title": "GC Count",
+      "type": "timeseries",
+      "id": 2005,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 24
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(rate(jvm_gc_pause_seconds_count{instance=~\"$instance\"}[1m])) by (action)",
+          "legendFormat": "{{action}}"
+        }
+      ]
+    },
+    {
+      "title": "GC Duration [s]",
+      "type": "timeseries",
+      "id": 2006,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 24
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "sum(rate(jvm_gc_pause_seconds_sum{instance=~\"$instance\"}[1m])) by (action)",
+          "legendFormat": "{{action}}"
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "consumer-server",
+    "kafka-consumer"
+  ]
+}

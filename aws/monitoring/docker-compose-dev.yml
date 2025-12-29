@@ -7,7 +7,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/prometheus/prometheus-dev.yml:/etc/prometheus/prometheus.yml:ro
+      - /home/ubuntu/springboot-coupon-system/support/monitoring/infra/prometheus/prometheus-live.yml:/etc/prometheus/prometheus.yml:ro
     environment:
       - TZ=Asia/Seoul
     deploy:
@@ -50,6 +50,20 @@ services:
     environment:
       - INFLUXDB_DB=k6
 
+  mysql-exporter:
+    image: prom/mysqld-exporter:v0.15.1
+    container_name: mysql-exporter
+    command:
+      - "--mysqld.address=<DB_서버_Private_IP>:3306"
+      - "--mysqld.username=root:1234"
+    ports:
+      - "9104:9104"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: always
+
   redis-exporter:
     image: oliver006/redis_exporter:v1.59.0
     container_name: redis-exporter
@@ -67,6 +81,7 @@ services:
     container_name: kafka-exporter
     command:
       - "--kafka.server=<인프라_서버_Private_IP>:9092"
+      - "--kafka.server=<인프라_서버_Private_IP>:9093"
     ports:
       - "9308:9308"
     deploy:

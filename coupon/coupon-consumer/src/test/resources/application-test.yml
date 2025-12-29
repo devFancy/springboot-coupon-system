@@ -33,4 +33,8 @@ spring:
 
 kafka:
   topic:
-    coupon-issue: coupon-issue-test
+    coupon-issue:
+      name: coupon-issue-test
+      partitions: 1
+      replicas: 1
+      min-insync-replicas: 1

@@ -20,10 +20,9 @@
 
 ![](/docs/image/kudadak-system-architecture.png)
 
-## Observability Architecture
+## Monitoring Architecture
 
-![](/docs/image/kudadak-observability-architecture.png)
-
+![](/docs/image/kudadak-monitoring-architecture.png)
 
 ## Blog Posts
 

@@ -9,10 +9,11 @@ spring:
       - logging.yml
   web.resources.add-mappings: false
 
+## Live 환경 기준 (aws ec2 - t3.medium)
 server:
   tomcat:
     max-connections: 10000
-    accept-count: 200
+    accept-count: 2000
     threads:
       max: 200
       min-spare: 50

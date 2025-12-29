@@ -1,0 +1,175 @@
+{
+  "uid": "infra-server-dashboard",
+  "title": "Infra Server (Redis, Kafka) - Dashboard (live)",
+  "editable": true,
+  "timezone": "browser",
+  "refresh": "3s",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Data Source",
+        "hide": 2,
+        "current": {
+          "text": "coupon-prometheus",
+          "value": "coupon-prometheus"
+        }
+      },
+      {
+        "datasource": "${datasource}",
+        "name": "instance",
+        "query": "label_values(redis_up, instance)",
+        "type": "query",
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "title": "Redis CPU Usage [%]",
+      "type": "timeseries",
+      "id": 1001,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "rate(redis_cpu_user_seconds_total{instance=~\"$instance\"}[1m]) * 100",
+          "legendFormat": "User"
+        },
+        {
+          "expr": "rate(redis_cpu_system_seconds_total{instance=~\"$instance\"}[1m]) * 100",
+          "legendFormat": "System"
+        }
+      ]
+    },
+    {
+      "title": "Redis Memory [MB]",
+      "type": "timeseries",
+      "id": 1002,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "redis_memory_used_bytes{instance=~\"$instance\"} / (1024*1024)",
+          "legendFormat": "Used"
+        }
+      ]
+    },
+    {
+      "title": "Redis Connected Clients",
+      "type": "timeseries",
+      "id": 1003,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "datasource": "${datasource}",
+      "description": "애플리케이션 서버와 컨슈머 서버에서 Redis로 연결된 총 커넥션 수",
+      "targets": [
+        {
+          "expr": "redis_connected_clients{instance=~\"$instance\"}",
+          "legendFormat": "Clients"
+        }
+      ]
+    },
+    {
+      "title": "Redis Throughput [Ops/sec]",
+      "type": "timeseries",
+      "id": 1004,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "datasource": "${datasource}",
+      "description": "Redis가 초당 처리하고 있는 명령어의 수",
+      "targets": [
+        {
+          "expr": "rate(redis_commands_processed_total{instance=~\"$instance\"}[1m])",
+          "legendFormat": "ops/sec"
+        }
+      ]
+    },
+    {
+      "title": "Under Replicated Partitions [URP]",
+      "type": "timeseries",
+      "id": 2001,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "datasource": "${datasource}",
+      "description": "클러스터 내 복제가 정상적으로 이뤄지지 않은 파티션의 총합입니다. 0보다 크면 브로커 상태를 점검해야 합니다.",
+      "targets": [
+        {
+          "expr": "sum(kafka_topic_partition_under_replicated_partition)"
+        }
+      ]
+    },
+    {
+      "title": "Kafka Consumer Group Members",
+      "type": "stat",
+      "id": 2002,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "datasource": "${datasource}",
+      "description": "컨슈머 그룹에 참여 중인 총 컨슈머 스레드 수입니다. (No Data 시 0으로 표시)",
+      "targets": [
+        {
+          "expr": "max(kafka_consumergroup_members{consumergroup=\"coupon-issue-group\"}) or vector(0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 30
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "tags": [
+    "infra-server",
+    "redis",
+    "kafka"
+  ]
+}
