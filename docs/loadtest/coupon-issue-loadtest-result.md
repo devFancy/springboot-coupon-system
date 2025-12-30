@@ -38,10 +38,7 @@
 
 ![](/docs/loadtest/image/kudadak-system-architecture-1.png)
 
-#### 1-1. 부하 테스트 결과
-
-- 사용자 500명 기준
-- Rate Limiter: 100
+### 1-1. 부하 테스트 결과 (VU 500 / Rate Limiter 100)
 
 > K6 결과 - p95 응답 시간: 75.16ms, 안정적인 처리량 확인.
 
@@ -57,10 +54,7 @@
 
 저부하 상황에서는 지연 없이 정상 동작함을 검증했다.
 
-#### 1-2. 부하 테스트 결과
-
-- 사용자 1,000명 기준
-- Rate Limiter: 200
+### 1-2. 부하 테스트 결과  (VU 1,000 / Rate Limiter 200)
 
 > K6 결과 - p95 응답 시간: 2.95s
 
@@ -76,10 +70,7 @@
 
 단일 인스턴스 내 리소스 경합으로 인해 레이턴시가 이전 대비 약 40배(0.075s -> 2.95s) 가까이 상승하며 시스템이 포화점에 도달했음을 확인했다.
 
-#### 1-3. 부하 테스트 결과
-
-- 사용자 5,000명 기준
-- Rate Limiter: 200
+### 1-3. 부하 테스트 결과 (VU 5,000 / Rate Limiter 200)
 
 > K6 결과 - p95 응답 시간: 6.75s
 
@@ -102,9 +93,9 @@
 
 사용자 증가에 따른 리소스 포화를 분석하고, 서버 인스턴스 분리 및 코드 리팩터링(분산락 제거), 인프라 튜닝 값을 통해 처리량을 극대화했다.
 
-### System Architecture 개선
+> System Architecture
 
-기존 단일 인스턴스 서버에서 아래와 같이 인스턴스 서버를 분리함
+기존 단일 인스턴스 서버에서 아래와 같이 인스턴스 서버를 분리했다.
 
 - API 서버 - t3.medium
 - 인프라 서버(Redis, Kafka, DB) - t3.medium
@@ -112,7 +103,7 @@
 - 모니터링 서버 - t3.small
 - 부하 테스트 서버 - t3.medium
 
-### Monitoring Architecture 개선
+> Monitoring Architecture
 
 ![](/docs/loadtest/image/kudadak-monitoring-architecture-1.png)
 
@@ -143,7 +134,7 @@
 - 모니터링 지표 추가
     - kafka-exporter 추가
 
-### 2-1. 부하 테스트 결과 (VU 7,000 / Rate Limiter 1,000)
+### 2-1. 부하 테스트 결과 (아키텍처 개선 후 VU 7,000 / Rate Limiter 1,000)
 
 > K6 결과 - p95 응답 시간: 5.55s
 
@@ -163,6 +154,8 @@
 
 이를 해결하기 위해 DB 서버를 인프라 서버에서 분리하여 전용 서버(t3.small)로 구축하고 아래와 같이 시스템 아키텍처를 개선했다.
 
+> System Architecture
+
 ![](/docs/loadtest/image/kudadak-system-architecture-2.png)
 
 - API 서버 - 톰캣 튜닝
@@ -179,7 +172,7 @@
 - DB 튜닝
     - HikariCP maximum-pool-size: 10 -> 15
 
-#### 2-2. 부하 테스트 결과 (DB 분리 후 VU 7,000 / Rate Limiter 1,300)
+### 2-2. 부하 테스트 결과 (DB 분리 후 VU 7,000 / Rate Limiter 1,300)
 
 > K6 결과 - p95 응답 시간: 2.49s
 
@@ -210,6 +203,8 @@
 
 이를 기반으로 시스템 아키텍처를 개선하고 세부 설정을 조정했다.
 
+> System Architecture
+
 ![](/docs/loadtest/image/kudadak-system-architecture-3.png)
 
 - 컨슈머 스레드 및 파티션 수 조정
@@ -231,7 +226,7 @@
 
 - 모니터링 지표 개선
 
-#### 2-3. 부하 테스트 결과 (VU 10,000 / Rate Limiter 2,700)
+### 2-3. 부하 테스트 결과 (아키텍처 개선 후 VU 10,000 / Rate Limiter 2,700)
 
 > API Server 결과 - 최대 TPS: 2,500
 
@@ -284,7 +279,7 @@
 
 ![](/docs/loadtest/image/kudadak-monitoring-architecture-2.png)
 
-### 부하 테스트 결과 ( VU 7,000 / Rate Limiter 2,700)
+### 부하 테스트 결과 (아키텍처 개선 후 VU 7,000 / Rate Limiter 2,700)
 
 > K6 결과 - p95 응답 시간: 5.97s
 
