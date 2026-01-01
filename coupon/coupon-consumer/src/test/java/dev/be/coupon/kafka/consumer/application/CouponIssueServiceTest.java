@@ -1,6 +1,9 @@
 package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.domain.coupon.CouponIssueFailedEvent;
+import dev.be.coupon.domain.coupon.FailedEventStatus;
+import dev.be.coupon.infra.jpa.CouponIssueFailedEventJpaRepository;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import dev.be.coupon.kafka.consumer.support.error.CouponConsumerException;
@@ -15,6 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static dev.be.coupon.domain.coupon.CouponFixtures.정상_쿠폰;
@@ -35,8 +39,12 @@ class CouponIssueServiceTest {
     @Autowired
     private IssuedCouponJpaRepository issuedCouponRepository;
 
+    @Autowired
+    private CouponIssueFailedEventJpaRepository failedEventRepository;
+
     @AfterEach
     void tearDown() {
+        failedEventRepository.deleteAllInBatch();
         issuedCouponRepository.deleteAllInBatch();
         couponRepository.deleteAllInBatch();
     }
@@ -73,7 +81,7 @@ class CouponIssueServiceTest {
     @DisplayName("유효기간이 지난 쿠폰 요청 시 예외가 발생한다.")
     void should_throw_exception_when_issuing_expired_coupon() {
         // given
-        Coupon coupon = 정상_쿠폰(100);
+        final Coupon coupon = 정상_쿠폰(100);
 
         // NOTE: 리플렉션을 사용하여 강제로 만료일(expiredAt)을 '과거'로 변경
         ReflectionTestUtils.setField(coupon, "expiredAt", LocalDateTime.now().minusDays(1));
@@ -90,8 +98,8 @@ class CouponIssueServiceTest {
     @DisplayName("이미 발급받은 유저가 재요청 시 예외가 발생한다.")
     void should_throw_exception_when_user_already_has_coupon() {
         // given
-        Coupon coupon = createCoupon();
-        UUID userId = UUID.randomUUID();
+        final Coupon coupon = createCoupon();
+        final UUID userId = UUID.randomUUID();
 
         // 1차 발급 (성공)
         couponIssueService.issue(userId, coupon.getId());
@@ -100,6 +108,30 @@ class CouponIssueServiceTest {
         assertThatThrownBy(() -> couponIssueService.issue(userId, coupon.getId()))
                 .isInstanceOf(CouponConsumerException.class)
                 .hasMessage(ErrorType.COUPON_ALREADY_ISSUED.getMessage());
+    }
+
+    @Test
+    @DisplayName("발급 실패 시 실패 이력이 정상적으로 저장된다.")
+    void should_save_failed_event_successfully() {
+        // given
+        final Coupon coupon = createCoupon();
+        final UUID userId = UUID.randomUUID();
+        final String errorReason = "Simulated Error";
+        final String payload = "{\"userId\": \"" + userId + "\", \"couponId\": \"" + coupon.getId() + "\"}";
+
+        // when
+        couponIssueService.saveFailedEvent(userId, coupon.getId(), errorReason, payload);
+
+        // then
+        List<CouponIssueFailedEvent> failedEvents = failedEventRepository.findAll();
+        assertThat(failedEvents).hasSize(1);
+
+        CouponIssueFailedEvent savedEvent = failedEvents.get(0);
+        assertThat(savedEvent.getUserId()).isEqualTo(userId);
+        assertThat(savedEvent.getCouponId()).isEqualTo(coupon.getId());
+        assertThat(savedEvent.getErrorMessage()).isEqualTo(errorReason);
+        assertThat(savedEvent.getPayload()).isEqualTo(payload);
+        assertThat(savedEvent.getStatus()).isEqualTo(FailedEventStatus.READY);
     }
 
     private Coupon createCoupon() {

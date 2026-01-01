@@ -1,5 +1,7 @@
 package dev.be.coupon.kafka.consumer.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import dev.be.coupon.kafka.consumer.support.error.CouponConsumerException;
 import dev.be.coupon.kafka.consumer.support.error.CouponConsumerRetryableException;
@@ -17,6 +19,7 @@ public class CouponIssueConsumer {
 
     private final CouponIssueService couponIssueService;
     private final RRateLimiter rateLimiter;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final Logger log = LoggerFactory.getLogger(CouponIssueConsumer.class);
 
     public CouponIssueConsumer(final CouponIssueService couponIssueService,
@@ -50,7 +53,7 @@ public class CouponIssueConsumer {
         }
     }
 
-    // NOTE: 대규모 서비스와 같은 운영 환경에서는 별도의 재처리 전용 애플리케이션 서버를 실행해서 처리합니다.
+    // NOTE: 대규모 서비스와 같은 운영 환경에서는 별도의 재처리 전용 애플리케이션 서버(DL 서버)를 실행해서 처리합니다.
     @KafkaListener(
             id = "dlq-consumer",
             topics = "${kafka.topic.coupon-issue.name}-dlq",
@@ -62,8 +65,22 @@ public class CouponIssueConsumer {
         try {
             couponIssueService.issue(message.userId(), message.couponId());
             ack.acknowledge();
+            log.info("[COUPON_ISSUE_DLQ_SUCCESS] DLQ 재처리가 성공적으로 완료되었습니다. userId={}", message.userId());
         } catch (Exception e) {
-            log.error("[COUPON_ISSUE_DLQ_FAIL] 재처리 중 시스템 장애로 인해 쿠폰 발급이 실패했습니다. error={}", e.getMessage());
+            // NOTE: 만약 DLQ 에서도 실패된다면 무한 루프를 방지하기 위해 ack 처리하고, 이후에 운영자가 실패 이력 테이블을 보고 수동 조치하도록 한다.
+            log.error("[COUPON_ISSUE_DLQ_FAIL] DLQ 재처리가 최종적으로 실패했습니다. 실패 이력을 DB에 저장합니다. userId={}, error={}",
+                    message.userId(), e.getMessage());
+            String payload = convertToJson(message);
+            couponIssueService.saveFailedEvent(message.userId(), message.couponId(), e.getMessage(), payload);
+            ack.acknowledge();
+        }
+    }
+
+    private String convertToJson(final Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            return String.valueOf(object);
         }
     }
 }
