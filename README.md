@@ -26,7 +26,7 @@
 
 ## Blog Posts
 
-* 부하 테스트 및 성능 개선: [부하 테스트를 통한 아키텍처 점진적 개선기](https://github.com/devFancy/springboot-coupon-system/blob/main/docs/loadtest/coupon-issue-loadtest-result.md)
+* 성능 개선: [AWS EC2 기반 부하 테스트를 진행하며 시스템 아키텍처 및 성능 개선하기](https://devfancy.github.io/spring-boot-coupon-system-performance-improvement/)
 
 * 에러 추적: [Spring Boot에서 Sentry를 이용한 에러 추적 시스템 개선하기](https://devfancy.github.io/spring-boot-sentry/)
 
