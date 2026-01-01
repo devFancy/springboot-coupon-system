@@ -1,14 +1,12 @@
 package dev.be.coupon.kafka.consumer.application;
 
 import dev.be.coupon.domain.coupon.Coupon;
+import dev.be.coupon.infra.jpa.CouponIssueFailedEventJpaRepository;
 import dev.be.coupon.infra.jpa.CouponJpaRepository;
 import dev.be.coupon.infra.jpa.IssuedCouponJpaRepository;
 import dev.be.coupon.infra.kafka.dto.CouponIssueMessage;
 import dev.be.coupon.kafka.consumer.support.error.CouponConsumerException;
 import dev.be.coupon.kafka.consumer.support.error.ErrorType;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,18 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +27,8 @@ import static dev.be.coupon.domain.coupon.CouponFixtures.정상_쿠폰;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
@@ -69,15 +62,11 @@ import static org.mockito.Mockito.verify;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class CouponIssueConsumerTest {
 
-    @Value("${kafka.topic.coupon-issue}")
+    @Value("${kafka.topic.coupon-issue.name}")
     private String issueTopic;
 
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
-
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    @Autowired
-    private EmbeddedKafkaBroker embeddedKafkaBroker;
 
     @Autowired
     private CouponJpaRepository couponRepository;
@@ -85,11 +74,16 @@ class CouponIssueConsumerTest {
     @Autowired
     private IssuedCouponJpaRepository issuedCouponRepository;
 
+    @Autowired
+    private CouponIssueFailedEventJpaRepository failedEventRepository;
+
     @SpyBean
     private CouponIssueService couponIssueService;
 
+
     @AfterEach
     void tearDown() {
+        failedEventRepository.deleteAllInBatch();
         issuedCouponRepository.deleteAllInBatch();
         couponRepository.deleteAllInBatch();
         reset(couponIssueService);
@@ -181,39 +175,56 @@ class CouponIssueConsumerTest {
         final UUID userId = UUID.randomUUID();
         final CouponIssueMessage message = new CouponIssueMessage(userId, coupon.getId());
 
-        doThrow(new RuntimeException("Persistent DB Error")).when(couponIssueService).issue(any(UUID.class), any(UUID.class));
-
-        // DLQ 검증용 컨슈머 (EmbeddedBroker 주소 사용)
-        Consumer<String, Object> testConsumer = createTestConsumer();
-        testConsumer.subscribe(Collections.singletonList(issueTopic + "-dlq"));
+        doThrow(new RuntimeException("Main Consumer Error"))
+                .doThrow(new RuntimeException("Main Consumer Error"))
+                .doThrow(new RuntimeException("Main Consumer Error"))
+                .doThrow(new RuntimeException("Main Consumer Error"))
+                .doThrow(new RuntimeException("Main Consumer Error"))
+                .doCallRealMethod() // 6번째 호출(DLQ)에서는 정상 실행
+                .when(couponIssueService).issue(any(UUID.class), any(UUID.class));
 
         // when
         kafkaTemplate.send(issueTopic, message);
 
         // then
-        await().atMost(20, TimeUnit.SECONDS).until(() -> {
-            ConsumerRecords<String, Object> records = KafkaTestUtils.getRecords(testConsumer, Duration.ofSeconds(1));
-            return records.count() > 0;
+        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
+            boolean exists = issuedCouponRepository.existsByUserIdAndCouponId(userId, coupon.getId());
+            assertThat(exists).isTrue();
         });
 
-        // NOTE: 최초 실행 1회 + 재시도 4회 = 총 5회
-        verify(couponIssueService, atLeast(5)).issue(any(UUID.class), any(UUID.class));
+        // NOTE: 최초 실행 1회 + 재시도 5회 = 총 6회
+        verify(couponIssueService, times(6)).issue(any(UUID.class), any(UUID.class));
+    }
 
-        testConsumer.close();
+    @Test
+    @DisplayName("DLQ 재처리마저 실패하면 실패 이력이 DB에 저장된다.")
+    void should_save_failed_event_when_dlq_retry_fails() {
+        // given
+        final Coupon coupon = createCoupon();
+        final UUID userId = UUID.randomUUID();
+        final CouponIssueMessage message = new CouponIssueMessage(userId, coupon.getId());
+
+        // 시나리오: 메인 리스너(5회) + DLQ 리스너(1회) 모두 실패
+        doThrow(new RuntimeException("Persistent Error"))
+                .when(couponIssueService).issue(any(UUID.class), any(UUID.class));
+
+        // when
+        kafkaTemplate.send(issueTopic, message);
+
+        // then
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
+            long count = failedEventRepository.count();
+            assertThat(count).isEqualTo(1);
+        });
+
+        // 1. 발급 시도 횟수 검증 - 메인 횟수(초기 시도 + 재시도 횟수) + DLQ 1회
+        verify(couponIssueService, atLeast(6)).issue(any(UUID.class), any(UUID.class));
+        verify(couponIssueService, times(1))
+                .saveFailedEvent(eq(userId), eq(coupon.getId()), anyString(), anyString());
     }
 
     private Coupon createCoupon() {
         Coupon coupon = 정상_쿠폰(100);
         return couponRepository.save(coupon);
-    }
-
-    private Consumer<String, Object> createTestConsumer() {
-        String brokerAddresses = embeddedKafkaBroker.getBrokersAsString();
-        Map<String, Object> config = KafkaTestUtils.consumerProps(brokerAddresses, "dlq-test", "false");
-
-        JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>();
-        jsonDeserializer.addTrustedPackages("*");
-
-        return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), jsonDeserializer).createConsumer();
     }
 }

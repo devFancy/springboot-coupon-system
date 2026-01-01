@@ -83,17 +83,17 @@ public class KafkaConsumerConfig {
         config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1000); // NOTE: Rate Limiter 값에 따라 변동있음
 
         log.info("""
-                [KafkaConsumerConfig] Internal Detailed Settings:
-                  - Group ID            : {}
-                  - Concurrency         : {}
-                  - Max Poll Records    : {}
-                  - Max Poll Interval   : {} ms
-                  - Session Timeout     : {} ms
-                  - Heartbeat Interval  : {} ms
-                  - Fetch Min Bytes     : {} bytes
-                  - Fetch Max Wait      : {} ms
-                  - Assignor Strategy   : {}
-                """,
+                        [KafkaConsumerConfig] Internal Detailed Settings:
+                          - Group ID            : {}
+                          - Concurrency         : {}
+                          - Max Poll Records    : {}
+                          - Max Poll Interval   : {} ms
+                          - Session Timeout     : {} ms
+                          - Heartbeat Interval  : {} ms
+                          - Fetch Min Bytes     : {} bytes
+                          - Fetch Max Wait      : {} ms
+                          - Assignor Strategy   : {}
+                        """,
                 config.get(ConsumerConfig.GROUP_ID_CONFIG),
                 concurrency,
                 config.get(ConsumerConfig.MAX_POLL_RECORDS_CONFIG),
@@ -116,6 +116,7 @@ public class KafkaConsumerConfig {
     /**
      * Note: Kafka 리스너 예외 발생 시 'Exponential Backoff' 재시도 처리 및 DLQ 전송
      * - 재시도를 모두 실패하게 되면, DLQ로 전송하여 메시지 유실을 방지한다.
+     * - (주의사항) 원본 파티션 번호를 그대로 사용한다면 DLQ 토픽의 파티션 개수는 반드시 원본 토픽의 파티션 개수보다 같거나 많아야 한다.
      */
     @Bean
     public DefaultErrorHandler couponIssueErrorHandler(final KafkaTemplate<String, Object> kafkaTemplate) {
@@ -131,8 +132,12 @@ public class KafkaConsumerConfig {
                     );
                 });
 
-        // NOTE: 재시도 간격: initialInterval x multiplier
-        // e.g. initialInterval = 2, multiplier = 2 => 2s -> 4s -> 8s -> 16s
+        /*
+          NOTE: 재시도 정책 (ExponentialBackOff)
+          - initialInterval: 초기 재시도 간격 (multiplier 배수로 증가)
+          - 총 실행 횟수 = 초기 실행(1회) + 재시도(maxAttempts)
+          - e.g. maxAttempts=5 설정 시 -> 1(초기) + 5(재시도) = 총 6회 실행 후 실패하면 DLQ로 이동
+         */
         ExponentialBackOff backOff = new ExponentialBackOff(initialInterval, multiplier);
         backOff.setMaxAttempts(maxAttempts);
 

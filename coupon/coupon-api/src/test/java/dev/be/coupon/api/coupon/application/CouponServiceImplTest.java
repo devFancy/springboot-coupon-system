@@ -39,7 +39,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -87,7 +86,7 @@ class CouponServiceImplTest {
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
-    @Value("${kafka.topic.coupon-issue}")
+    @Value("${kafka.topic.coupon-issue.name}")
     private String issueTopic;
 
     private Consumer<String, CouponIssueMessage> testConsumer;
