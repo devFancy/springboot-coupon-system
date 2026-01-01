@@ -240,8 +240,8 @@
       "datasource": "${datasource}",
       "targets": [
         {
-          "expr": "sum(kafka_consumer_fetch_manager_fetch_rate{instance=~\"$instance\"}) by (client_id)",
-          "legendFormat": "Fetch Rate - {{client_id}}"
+          "expr": "sum(kafka_consumer_fetch_manager_fetch_rate{instance=~\"$instance\"}) by (group_id)",
+          "legendFormat": "Fetch Rate - {{group_id}}"
         }
       ]
     },
@@ -259,8 +259,8 @@
       "description": "컨슈머가 브로커로부터 가져와 실제로 소비(Consume)하는 초당 메시지 수입니다.",
       "targets": [
         {
-          "expr": "sum(kafka_consumer_fetch_manager_records_consumed_rate{instance=~\"$instance\"}) by (client_id)",
-          "legendFormat": "Consumed Rate - {{client_id}}"
+          "expr": "sum(kafka_consumer_fetch_manager_records_consumed_rate{instance=~\"$instance\"}) by (group_id)",
+          "legendFormat": "Consumed Rate - {{group_id}}"
         }
       ]
     },
