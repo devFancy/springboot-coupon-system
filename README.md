@@ -26,6 +26,8 @@
 
 ## Blog Posts
 
+* 재처리 및 DLQ 적용: [시스템 장애를 처리하기 위해 재처리 및 DLQ 적용하기](https://devfancy.github.io/spring-boot-kafka-dlq/)
+
 * 성능 개선: [AWS EC2 기반 부하 테스트를 진행하며 시스템 아키텍처 및 성능 개선하기](https://devfancy.github.io/spring-boot-coupon-system-performance-improvement/)
 
 * 에러 추적: [Spring Boot에서 Sentry를 이용한 에러 추적 시스템 개선하기](https://devfancy.github.io/spring-boot-sentry/)
