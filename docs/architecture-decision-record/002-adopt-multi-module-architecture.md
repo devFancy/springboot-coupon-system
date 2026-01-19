@@ -20,8 +20,8 @@ Accepted
 ### 모듈 구성
 
 - `coupon-domain`: 도메인 엔티티와 순수 비즈니스 로직을 포함한다. (가장 내부에 위치, 외부 의존성 최소화)
-- `coupon-api`: 사용자 트래픽을 처리하는 웹 계층이다. `coupon-core`를 의존한다.
-- `coupon-consumer`: Kafka 메시지를 비동기로 처리하는 워커 계층이다. `coupon-core`를 의존한다.
+- `coupon-api`: 사용자 트래픽을 처리하는 웹 계층이다. `coupon-domain`를 의존한다.
+- `coupon-consumer`: Kafka 메시지를 비동기로 처리하는 워커 계층이다. `coupon-domain`를 의존한다.
 - `support`: 로깅, 공통 유틸리티 등 범용 기능을 제공한다.
 
 ### 의존성 규칙
