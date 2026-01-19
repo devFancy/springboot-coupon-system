@@ -1,6 +1,6 @@
 # ADR 011: 최종 데이터 정합성 보장을 위한 Kafka DLQ 및 재처리 전략
 
-DATE: 2024.12.30 (PR [#66](https://github.com/devFancy/springboot-coupon-system/pull/66) 참고)
+DATE: 2025.12.30 (PR [#66](https://github.com/devFancy/springboot-coupon-system/pull/66) 참고)
 - 관련 포스팅 링크: [시스템 장애를 처리하기 위해 재처리 및 DLQ 적용하기](https://devfancy.github.io/spring-boot-kafka-dlq/)
 
 ## 상태 (Status)

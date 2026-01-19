@@ -24,6 +24,12 @@
 
 ![](/docs/image/kudadak-monitoring-architecture.png)
 
+## Docs
+
+* 도메인 모델링 관련 문서: [Domain Modeling](https://github.com/devFancy/springboot-coupon-system/blob/main/docs/coupon-domain-modeling.md)
+
+* 아키텍쳐와 관련된 결정을 내렸을 때 그 과정을 기록해 두는 문서: [ADR](https://github.com/devFancy/springboot-coupon-system/tree/main/docs/architecture-decision-record)
+
 ## Blog Posts
 
 * 재처리 및 DLQ 적용: [시스템 장애를 처리하기 위해 재처리 및 DLQ 적용하기](https://devfancy.github.io/spring-boot-kafka-dlq/)
