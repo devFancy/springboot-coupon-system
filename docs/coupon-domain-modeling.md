@@ -162,18 +162,14 @@ sequenceDiagram
     actor 관리자 (Admin)
     participant API Server
     participant DB as MySQL
-
-    관리자 (Admin)->>API Server: 쿠폰 생성 요청
+    관리자 (Admin) ->> API Server: 쿠폰 생성 요청
     activate API Server
-
     note over API Server: 관리자 권한 확인 (내부 처리)
-
-    API Server->>DB: Coupon 정보 저장
+    API Server ->> DB: Coupon 정보 저장
     activate DB
-    DB-->>API Server: 저장 완료
+    DB -->> API Server: 저장 완료
     deactivate DB
-
-    API Server-->>관리자 (Admin): 쿠폰 생성 성공 응답
+    API Server -->> 관리자 (Admin): 쿠폰 생성 성공 응답
     deactivate API Server
 ```
 
@@ -206,48 +202,44 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  actor User
-  participant API as API Server (Producer)
-  participant Redis as Redis
-  participant Kafka as Kafka (Broker)
-  participant Consumer as Consumer Server
-  participant DB as MySQL
+    actor User
+    participant API as API Server (Producer)
+    participant Redis as Redis
+    participant Kafka as Kafka (Broker)
+    participant Consumer as Consumer Server
+    participant DB as MySQL
+    User ->> API: 쿠폰 발급 요청
+    note over API, Redis: [Stage 1] 중복 참여 및 선착순 검증
+    API ->> Redis: 중복 확인 (SADD) & 순번 증가 (INCR)
 
-  User->>API: 쿠폰 발급 요청
-  
-  note over API, Redis: [Stage 1] 중복 참여 및 선착순 검증
-  API->>Redis: 중복 확인 (SADD) & 순번 증가 (INCR)
-
-  alt 검증 성공
-    API->>Kafka: [coupon-issue] 메시지 발행
-    API-->>User: 발급 요청 접수 완료
-  else 중복 또는 수량 소진 (Duplicate/Sold Out)
-    API-->>User: 발급 제한 응답
-  end
-
-  note over Kafka, DB: [Stage 2] 비동기 발급 및 영속화
-  Consumer->>Kafka: 메시지 폴링 및 수신
-  
-  note over Consumer, Redis: 처리율 제한 (Redisson RRateLimiter)
-  Consumer->>Redis: 처리 권한 획득 요청
-  Redis-->>Consumer: 승인 (Token 제공)
-
-  Consumer->>DB: 발급 내역 저장 (Insert)
-
-  alt 저장 성공
-    Consumer->>Kafka: 처리 완료 (ack)
-  else 비즈니스 예외 (중복 데이터 등)
-    note right of Consumer: 재시도 불필요: ack
-    Consumer->>Kafka: 처리 완료 (ack)
-  else 시스템 장애 (DB Down 등)
-    note right of Consumer: [재시도 전략] BackOff 적용
-    loop Max Attempts (e.g. 5회)
-        Consumer -> Consumer: 로직 재시행
+    alt 검증 성공
+        API ->> Kafka: [coupon-issue] 메시지 발행
+        API -->> User: 발급 요청 접수 완료
+    else 중복 또는 수량 소진 (Duplicate/Sold Out)
+        API -->> User: 발급 제한 응답
     end
-    opt 최종 실패 시
-        Consumer->>Kafka: DLQ 전송
+
+    note over Kafka, DB: [Stage 2] 비동기 발급 및 영속화
+    Consumer ->> Kafka: 메시지 폴링 및 수신
+    note over Consumer, Redis: 처리율 제한 (Redisson RRateLimiter)
+    Consumer ->> Redis: 처리 권한 획득 요청
+    Redis -->> Consumer: 승인 (Token 제공)
+    Consumer ->> DB: 발급 내역 저장 (Insert)
+
+    alt 저장 성공
+        Consumer ->> Kafka: 처리 완료 (ack)
+    else 비즈니스 예외 (중복 데이터 등)
+        note right of Consumer: 재시도 불필요: ack
+        Consumer ->> Kafka: 처리 완료 (ack)
+    else 시스템 장애 (DB Down 등)
+        note right of Consumer: [재시도 전략] BackOff 적용
+        loop Max Attempts (e.g. 5회)
+            Consumer -> Consumer: 로직 재시행
+        end
+        opt 최종 실패 시
+            Consumer ->> Kafka: DLQ 전송
+        end
     end
-  end
 ```
 
 #### 처리 흐름: 쿠폰 사용
@@ -257,27 +249,38 @@ sequenceDiagram
     actor 사용자 (User)
     participant API Server
     participant DB as MySQL
-
-    사용자 (User)->>API Server: 쿠폰 사용 요청
+    사용자 (User) ->> API Server: 쿠폰 사용 요청
     activate API Server
-
-    API Server->>DB: 1. 발급된 쿠폰 조회 (IssuedCoupon)
+    API Server ->> DB: 1. 발급된 쿠폰 조회 (IssuedCoupon)
     activate DB
-    DB-->>API Server: 발급된 쿠폰 정보
+    DB -->> API Server: 발급된 쿠폰 정보
     deactivate DB
-
-    API Server->>DB: 2. 원본 쿠폰 정보 조회 (Coupon)
+    API Server ->> DB: 2. 원본 쿠폰 정보 조회 (Coupon)
     activate DB
-    DB-->>API Server: 원본 쿠폰 정보
+    DB -->> API Server: 원본 쿠폰 정보
     deactivate DB
-
     note over API Server: 쿠폰 유효성 검증 (기간, 상태 등)
-
-    API Server->>DB: 3. '사용됨' 상태로 업데이트
+    API Server ->> DB: 3. '사용됨' 상태로 업데이트
     activate DB
-    DB-->>API Server: 업데이트 완료
+    DB -->> API Server: 업데이트 완료
     deactivate DB
-
-    API Server-->>사용자 (User): 쿠폰 사용 성공 응답
+    API Server -->> 사용자 (User): 쿠폰 사용 성공 응답
     deactivate API Server
 ```
+
+## CouponIssueFailedEvent (쿠폰 발급 실패 이력)
+
+대용량 트래픽 처리 중 발생한 예외 상황이나 시스템 오류로 인해 쿠폰 발급이 실패했을 때, 해당 요청을 유실하지 않고 기록하여 추후 **재처리**하거나 **원인 분석**을 하기 위한 도메인 모델이다.
+
+| 한글명         | 영문명 (Code)               | 설명                                    | 비고          |
+|:------------|:-------------------------|:--------------------------------------|:------------|
+| 쿠폰 발급 실패 이력 | `CouponIssueFailedEvent` | 발급 요청이 실패했을 때 생성되는 불변 기록 객체.          | 재처리의 기준 데이터 |
+| 원본 메시지      | `payload`                | Kafka 등 메시지 큐에서 수신했던 원본 요청 데이터(JSON). | 재발행 시 사용됨   |
+| 에러 메시지      | `errorMessage`           | 발급 실패의 원인이 된 구체적인 예외 메시지.             | 디버깅 용도      |
+| 처리 상태       | `FailedEventStatus`      | 실패 기록의 현재 처리 상태.                      | Enum        |
+| - 처리 대기     | `READY`                  | 실패가 기록되었으나 아직 재처리되지 않은 초기 상태.         |             |
+| - 처리 완료     | `PROCESSED`              | 배치 프로그램이나 관리자에 의해 재처리가 완료된 상태.        |             |
+
+### 주요 규칙
+1. 기록의 보존: 실패 이력은 생성 시 `READY` 상태를 가지며, 재처리가 성공적으로 끝나면 `PROCESSED`로 상태가 변경된다 (삭제하지 않음).
+2. 필수 정보: 실패 이력 생성 시 `사용자ID`, `쿠폰ID`, `원본 메시지`, `에러 사유`는 반드시 포함되어야 한다.
